@@ -1,18 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Mars Stats - Your source for Mars mission statistics">
-    <title>Mars Stats</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <div class="container">
-        <h1 id="welcome-message">Mars Stats</h1>
-        <p>This is a starter page for Mars statistics and information.</p>
-        <p>Explore data about Mars missions, weather, and more!</p>
-    </div>
-    <script src="js/script.js"></script>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="description"
+            content="Mars Stats - Your source for Mars mission statistics"
+        />
+        <title>Mars Stats</title>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <header class="main-header">
+                <div class="stats-summary">
+                    <div class="score-card kasia-card">
+                        <span class="label">Kasia</span>
+                        <span class="value" id="kasia-wins">0</span>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="score-card dawid-card">
+                        <span class="value" id="dawid-wins">0</span>
+                        <span class="label">Dawid</span>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="add-game-btn" class="btn-primary">
+                        <span class="icon">+</span> Nowa Gra
+                    </button>
+                </div>
+            </header>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-lp">LP</th>
+                    <th>WT</th>
+                    <th>Nagrody</th>
+                    <th>Tytuły</th>
+                    <th>Plansza</th>
+                    <th>Karty</th>
+                    <th>Suma</th>
+                    <th>Wygrana?</th>
+                    <th>Zdj</th>
+                    <th>Komentarz</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody id="results_table_body"></tbody>
+        </table>
+        <script src="js/supaBaseScript.js"></script>
+        <script src="js/start.js"></script>
+    </body>
 </html>

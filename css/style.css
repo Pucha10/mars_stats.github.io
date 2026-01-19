@@ -1,33 +1,208 @@
-/* Mars Stats - Starter Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 30px;
+    background-color: #f4f7f6; 
+    color: #333;
+}
 
-* {
-    margin: 0;
-    padding: 0;
+.edit-input {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
     box-sizing: border-box;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #f4f4f4;
-    padding: 20px;
+.btn-action {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 2px;
+}
+
+.btn-save { background-color: #1e8e3e; color: white; }
+.btn-cancel { background-color: #d94c25; color: white; }
+.btn-edit { background-color: #476703; color: white; }
+.btn-delete { background-color: #d93025; color: white; }
+
+.readonly-input {
+    background-color: rgba(255,255,255,0.5);
+    border: none;
+    font-weight: bold;
+    width: 40px;
+    text-align: center;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    background-color: white;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    background: white;
     padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.stats-summary {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.score-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 25px;
+    border-radius: 10px;
+    min-width: 100px;
+}
+
+.kasia-card {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    border: 1px solid #1a73e8;
+}
+
+.dawid-card {
+    background-color: #edacac;
+    color: #ff0000;
+    border: 1px solid #ff0000;
+}
+
+.score-card .label {
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.score-card .value {
+    font-size: 32px;
+    font-weight: 900;
+}
+
+.vs-divider {
+    font-weight: bold;
+    color: #999;
+    font-style: italic;
+}
+.btn-primary {
+    background-color: #444; 
+    color: white;
+    border: none;
+    padding: 12px 24px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-h1 {
-    color: #c1440e;
-    margin-bottom: 20px;
+.btn-primary:hover {
+    background-color: #ff5722; 
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 87, 34, 0.3);
 }
 
-p {
-    margin-bottom: 10px;
+.btn-primary .icon {
+    font-size: 20px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    border-radius: 8px;
+    overflow: hidden; 
+}
+
+thead th {
+    background-color: #ffffff;
+    padding: 15px 10px;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+    border-bottom: 3px solid #eee;
+    font-weight: bold;
+}
+
+th, td {
+    border: 1px solid #e0e0e0;
+    padding: 10px;
+    text-align: center;
+}
+
+
+tbody tr:nth-child(odd) {
+    background-color: #e8f0fe; 
+    color: #1a73e8;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #edacac; 
+    color: #ff0000;
+}
+
+tbody tr:nth-child(even) td {
+    border-bottom: 6px solid #f4f7f6; 
+}
+
+.no-player-cell, .merged-cell {
+    background-color: white !important; 
+    color: #333 !important;
+    font-weight: bold;
+    border-bottom: 6px solid #f4f7f6 !important; 
+}
+
+
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%; /* Okrągły kształt */
+    border: 2px solid currentColor;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+input[type="checkbox"]:checked {
+    background-color: currentColor;
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✔';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+a {
+    text-decoration: none;
+    font-size: 20px;
+}
+
+tbody tr:hover {
+    filter: brightness(0.98);
 }
