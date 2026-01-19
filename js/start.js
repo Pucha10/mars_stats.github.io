@@ -17,6 +17,7 @@ async function renderTable() {
         const trKasia = document.createElement('tr');
         trKasia.innerHTML = `
             <td rowspan="2" class="no-player-cell">${game.game_number}</td>
+            <td>${game.Kasia_corporation || ''}</td>
             <td>${game.Kasia_wt}</td>
             <td>${game.Kasia_awards}</td>
             <td>${game.Kasia_titles}</td>
@@ -31,13 +32,14 @@ async function renderTable() {
                 ${game.comment || ''}
             </td>
             <td rowspan="2" class="merged-cell">
-                <button class="btn-action btn-edit" onclick="editLesson(${game.id})">Edytuj</button>
-                <button class="btn-action btn-delete" onclick="deleteLesson(${game.id})">Usuń</button>
+                <button class="btn-action btn-edit" onclick="handleEditGame(${game.id})">Edytuj</button>
+                <button class="btn-action btn-delete" onclick="handleDeleteGame(${game.id})">Usuń</button>
             </td>
         `;
 
         const trDawid = document.createElement('tr');
         trDawid.innerHTML = `
+            <td>${game.Dawid_corporation || ''}</td>
             <td>${game.Dawid_wt}</td>
             <td>${game.Dawid_awards}</td>
             <td>${game.Dawid_titles}</td>
@@ -66,6 +68,7 @@ function showAddRow() {
 
     trKasia.innerHTML = `
         <td rowspan="2" class="merged-cell"id="new_game_number">${number_of_rows + 1}</td>
+        <td><input type="text" class="edit-input kasia-in" data-field="Kasia_corporation"></td>
         <td><input type="number" class="edit-input kasia-in" data-field="Kasia_wt" value="20"></td>
         <td><input type="number" class="edit-input kasia-in" data-field="Kasia_awards" value="0"></td>
         <td><input type="number" class="edit-input kasia-in" data-field="Kasia_titles" value="0"></td>
@@ -84,6 +87,7 @@ function showAddRow() {
     `;
 
     trDawid.innerHTML = `
+        <td><input type="text" class="edit-input dawid-in" data-field="Dawid_corporation"></td>
         <td><input type="number" class="edit-input dawid-in" data-field="Dawid_wt" value="20"></td>
         <td><input type="number" class="edit-input dawid-in" data-field="Dawid_awards" value="0"></td>
         <td><input type="number" class="edit-input dawid-in" data-field="Dawid_titles" value="0"></td>
@@ -132,21 +136,22 @@ async function saveNewGame() {
 
     const fileInput = document.getElementById('new-img-file');
     let uploadedImageUrl = await addBoardImage(fileInput);
-    // let uploadedImageUrl = "";
 
     const gameData = {
-        Kasia_wt: parseInt(document.querySelector('[data-field="Kasia_wt"]').value),
-        Kasia_awards: parseInt(document.querySelector('[data-field="Kasia_awards"]').value),
-        Kasia_titles: parseInt(document.querySelector('[data-field="Kasia_titles"]').value),
-        Kasia_board_score: parseInt(document.querySelector('[data-field="Kasia_board_score"]').value),
-        Kasia_cards_score: parseInt(document.querySelector('[data-field="Kasia_cards_score"]').value),
+        Kasia_corporation: document.querySelector('.kasia-in[data-field="Kasia_corporation"]').value,
+        Kasia_wt: parseInt(document.querySelector('[data-field="Kasia_wt"]').value) || 0,
+        Kasia_awards: parseInt(document.querySelector('[data-field="Kasia_awards"]').value) || 0,
+        Kasia_titles: parseInt(document.querySelector('[data-field="Kasia_titles"]').value) || 0,
+        Kasia_board_score: parseInt(document.querySelector('[data-field="Kasia_board_score"]').value) || 0,
+        Kasia_cards_score: parseInt(document.querySelector('[data-field="Kasia_cards_score"]').value) || 0,
         Kasia_total_score: kSum,
         
-        Dawid_wt: parseInt(document.querySelector('[data-field="Dawid_wt"]').value),
-        Dawid_awards: parseInt(document.querySelector('[data-field="Dawid_awards"]').value),
-        Dawid_titles: parseInt(document.querySelector('[data-field="Dawid_titles"]').value),
-        Dawid_board_score: parseInt(document.querySelector('[data-field="Dawid_board_score"]').value),
-        Dawid_cards_score: parseInt(document.querySelector('[data-field="Dawid_cards_score"]').value),
+        Dawid_corporation: document.querySelector('.dawid-in[data-field="Dawid_corporation"]').value,
+        Dawid_wt: parseInt(document.querySelector('[data-field="Dawid_wt"]').value) || 0,
+        Dawid_awards: parseInt(document.querySelector('[data-field="Dawid_awards"]').value) || 0,
+        Dawid_titles: parseInt(document.querySelector('[data-field="Dawid_titles"]').value) || 0,
+        Dawid_board_score: parseInt(document.querySelector('[data-field="Dawid_board_score"]').value) || 0,
+        Dawid_cards_score: parseInt(document.querySelector('[data-field="Dawid_cards_score"]').value) || 0,
         Dawid_total_score: dSum,
         
         game_number: parseInt(document.getElementById('new_game_number').innerText),
@@ -168,4 +173,122 @@ function cancelAddRow() {
 
     if (rowKasia) rowKasia.remove();
     if (rowDawid) rowDawid.remove();
+}
+
+async function handleDeleteGame(id) {
+    if (confirm(`Czy na pewno chcesz usunąć grę nr ${id}? Tej operacji nie można cofnąć.`)) {
+        const success = await deleteGameRecord(id);
+        
+        if (success) {
+            renderTable(); 
+        }
+    }
+}
+
+
+async function handleEditGame(id) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/game_results?id=eq.${id}`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    const data = await response.json();
+    const game = data[0];
+
+    const tbody = document.getElementById('results_table_body');
+    const rows = Array.from(tbody.rows);
+    
+    let kasiaRow = rows.find(r => r.cells[0] && r.cells[0].innerText == id);
+    if (!kasiaRow) return;
+    let dawidRow = kasiaRow.nextElementSibling;
+
+    kasiaRow.innerHTML = `
+        <td rowspan="2" class="merged-cell">${game.id}</td>
+        <td><input type="text" class="edit-input kasia-edit" data-field="Kasia_corporation" value="${game.Kasia_corporation || ''}"></td>
+        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_wt" value="${game.Kasia_wt}"></td>
+        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_awards" value="${game.Kasia_awards}"></td>
+        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_titles" value="${game.Kasia_titles}"></td>
+        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_board_score" value="${game.Kasia_board_score}"></td>
+        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_cards_score" value="${game.Kasia_cards_score}"></td>
+        <td><span id="edit-sum-kasia" class="readonly-input">${game.Kasia_total_score}</span></td>
+        <td><input type="checkbox" id="edit-win-kasia" ${game.winner === 'Kasia' ? 'checked' : ''} disabled></td>
+        <td rowspan="2" class="merged-cell">
+            <input type="file" id="edit-img-file" style="width: 120px;">
+            <input type="hidden" id="old-img-url" value="${game.img_url || ''}">
+        </td>
+        <td rowspan="2" class="merged-cell">
+            <textarea id="edit-comment" class="edit-input" style="height: 60px;">${game.comment || ''}</textarea>
+        </td>
+        <td rowspan="2" class="merged-cell">
+            <button class="btn-action btn-save" onclick="saveEdit(${game.id})">Zapisz</button>
+            <button class="btn-action btn-cancel" onclick="renderTable()">Anuluj</button>
+        </td>
+    `;
+
+    dawidRow.innerHTML = `
+        <td><input type="text" class="edit-input dawid-edit" data-field="Dawid_corporation" value="${game.Dawid_corporation || ''}"></td>
+        <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_wt" value="${game.Dawid_wt}"></td>
+        <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_awards" value="${game.Dawid_awards}"></td>
+        <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_titles" value="${game.Dawid_titles}"></td>
+        <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_board_score" value="${game.Dawid_board_score}"></td>
+        <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_cards_score" value="${game.Dawid_cards_score}"></td>
+        <td><span id="edit-sum-dawid" class="readonly-input">${game.Dawid_total_score}</span></td>
+        <td><input type="checkbox" id="edit-win-dawid" ${game.winner === 'Dawid' ? 'checked' : ''} disabled></td>
+    `;
+
+    const allEditInputs = [...kasiaRow.querySelectorAll('.edit-input'), ...dawidRow.querySelectorAll('.edit-input')];
+    allEditInputs.forEach(input => {
+        input.addEventListener('input', calculateEditTotals);
+    });
+}
+
+function calculateEditTotals() {
+    let kSum = 0;
+    document.querySelectorAll('.kasia-edit').forEach(i => kSum += parseInt(i.value) || 0);
+    let dSum = 0;
+    document.querySelectorAll('.dawid-edit').forEach(i => dSum += parseInt(i.value) || 0);
+
+    document.getElementById('edit-sum-kasia').innerText = kSum;
+    document.getElementById('edit-sum-dawid').innerText = dSum;
+    document.getElementById('edit-win-kasia').checked = kSum > dSum;
+    document.getElementById('edit-win-dawid').checked = dSum > kSum;
+}
+
+async function saveEdit(id) {
+    const kSum = parseInt(document.getElementById('edit-sum-kasia').innerText);
+    const dSum = parseInt(document.getElementById('edit-sum-dawid').innerText);
+
+    let finalWinner = "";
+    if (kSum > dSum) finalWinner = "Kasia";
+    else if (dSum > kSum) finalWinner = "Dawid";
+    else finalWinner = confirm("Remis! OK = Kasia, Anuluj = Dawid") ? "Kasia" : "Dawid";
+
+    let imgUrl = document.getElementById('old-img-url').value;
+    const fileInput = document.getElementById('edit-img-file');
+    let uploadedImageUrl = await addBoardImage(fileInput);
+
+
+    const updatedData = {
+        "Kasia_wt": parseInt(document.querySelector('.kasia-edit[data-field="Kasia_wt"]').value) || 0,
+        "Kasia_awards": parseInt(document.querySelector('.kasia-edit[data-field="Kasia_awards"]').value) || 0,
+        "Kasia_titles": parseInt(document.querySelector('.kasia-edit[data-field="Kasia_titles"]').value) || 0,
+        "Kasia_board_score": parseInt(document.querySelector('.kasia-edit[data-field="Kasia_board_score"]').value) || 0,
+        "Kasia_cards_score": parseInt(document.querySelector('.kasia-edit[data-field="Kasia_cards_score"]').value) || 0,
+        "Kasia_total_score": kSum,
+
+        "Dawid_wt": parseInt(document.querySelector('.dawid-edit[data-field="Dawid_wt"]').value) || 0,
+        "Dawid_awards": parseInt(document.querySelector('.dawid-edit[data-field="Dawid_awards"]').value) || 0,
+        "Dawid_titles": parseInt(document.querySelector('.dawid-edit[data-field="Dawid_titles"]').value) || 0,
+        "Dawid_board_score": parseInt(document.querySelector('.dawid-edit[data-field="Dawid_board_score"]').value) || 0,
+        "Dawid_cards_score": parseInt(document.querySelector('.dawid-edit[data-field="Dawid_cards_score"]').value) || 0,
+        "Dawid_total_score": dSum,
+
+        "winner": finalWinner,
+        "comment": document.getElementById('edit-comment').value,
+        "img_url": imgUrl
+    };
+    const result = await updateGameRecord(id, updatedData);
+
+    if (result) {
+        renderTable(); 
+    }
+    
 }

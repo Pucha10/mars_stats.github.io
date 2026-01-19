@@ -102,3 +102,44 @@ async function addBoardImage(fileInput) {
         }
     }
 }
+
+async function deleteGameRecord(gameId) {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/game_results?id=eq.${gameId}`,
+            {
+                method: "DELETE",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            throw new Error(`Błąd usuwania: ${errorBody.message}`);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Błąd podczas usuwania:", error);
+        alert("Nie udało się usunąć rekordu.");
+        return false;
+    }
+}
+
+async function updateGameRecord(id) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/game_results?id=eq.${id}`, {
+        method: "PATCH",
+        headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updatedData)
+    });
+    return response.ok;
+
+}
