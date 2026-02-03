@@ -26,6 +26,7 @@ async function renderTable() {
             <td data-label="Karty (K)">${game.Kasia_cards_score}</td>
             <td data-label="SUMA (K)">${game.Kasia_total_score}</td>
             <td data-label="Wygrana (K)"><input type="checkbox" ${kasiaWon ? 'checked' : ''} onclick="return false;"></td>
+            <td rowspan="2" class="no-player-cell" data-label="Mapa">${game.map || '-'}</td>
             <td rowspan="2" class="no-player-cell" data-label="Zdj">
                 ${game.img_url ? `<a href="${game.img_url}" target="_blank">🖼️ Zobacz zdjęcie</a>` : '-'}
             </td>
@@ -78,6 +79,17 @@ function showAddRow() {
         <td data-label="Karty (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_cards_score" value="0"></td>
         <td data-label="SUMA (K)"><span id="new-sum-kasia" class="readonly-input">20</span></td>
         <td data-label="Wygrana (K)"><input type="checkbox" id="new-win-kasia" disabled></td>
+        <td rowspan="2" class="merged-cell" data-label="Mapa">
+            <select id="new-map-select" class="map-select">
+                <option value="MARS">Mars</option>
+                <option value="HELLAS">Hellas</option>
+                <option value="ELYSIUM">Elysium</option>
+                <option value="AMAZONIS">Amazonis</option>
+                <option value="VASTITAS">Vastitas</option>
+                <option value="UTOPIA">Utopia</option>
+                <option value="CIMMERIA">Cimmeria</option>
+            </select>
+        </td>
         <td rowspan="2" class="merged-cell" data-label="Zdj">
             <input type="file" id="new-img-file" accept="image/*" style="width: 100%;">
         </td>
@@ -161,7 +173,8 @@ async function saveNewGame() {
         game_number: parseInt(document.getElementById('new_game_number').innerText),
         winner: finalWinner,
         img_url: uploadedImageUrl,
-        comment: document.getElementById('new-comment').value
+        comment: document.getElementById('new-comment').value,
+        map: document.getElementById('new-map-select').value
     };
 
     const result = await addGameResult(gameData);
@@ -215,6 +228,17 @@ async function handleEditGame(id) {
         <td data-label="Karty (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_cards_score" value="${game.Kasia_cards_score}"></td>
         <td data-label="SUMA (K)"><span id="edit-sum-kasia" class="readonly-input">${game.Kasia_total_score}</span></td>
         <td data-label="Wygrana (K)"><input type="checkbox" id="edit-win-kasia" ${game.winner === 'Kasia' ? 'checked' : ''} disabled></td>
+        <td rowspan="2" class="merged-cell" data-label="Mapa">
+            <select id="edit-map-select" class="map-select">
+                <option value="MARS">Mars</option>
+                <option value="HELLAS">Hellas</option>
+                <option value="ELYSIUM">Elysium</option>
+                <option value="AMAZONIS">Amazonis</option>
+                <option value="VASTITAS">Vastitas</option>
+                <option value="UTOPIA">Utopia</option>
+                <option value="CIMMERIA">Cimmeria</option>
+            </select>
+        </td>
         <td rowspan="2" class="merged-cell" data-label="Zdj">
             <input type="file" id="edit-img-file" style="width: 120px;">
             <input type="hidden" id="old-img-url" value="${game.img_url || ''}">
@@ -288,6 +312,7 @@ async function saveEdit(id) {
 
         "winner": finalWinner,
         "comment": document.getElementById('edit-comment').value,
+        "map": document.getElementById('edit-map-select').value,
         "img_url": uploadedImageUrl
     };
     const result = await updateGameRecord(id, updatedData);
