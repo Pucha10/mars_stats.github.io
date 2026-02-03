@@ -5,6 +5,12 @@ body {
     color: #333;
 }
 
+.actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
 .edit-input {
     width: 100%;
     padding: 5px;
@@ -21,6 +27,34 @@ body {
     cursor: pointer;
     font-size: 12px;
     margin: 2px;
+}
+
+.btn-secondary {
+    background-color: #ffffff;
+    color: #444;
+    border: 2px solid #444;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.btn-secondary:hover {
+    background-color: #f0f0f0;
+    border-color: #1a73e8; 
+    color: #1a73e8;
+    transform: translateY(-2px);
+}
+
+.btn-secondary .icon, .btn-primary .icon {
+    font-size: 18px;
 }
 
 .btn-save { background-color: #1e8e3e; color: white; }
@@ -318,6 +352,13 @@ tbody tr:hover {
 
     tbody tr:nth-child(even) td {
         background-color: #fff5f5; 
+    }
+
+    .actions {
+        width: 100%;
+        flex-direction: row;
+        justify-content: center;
+        margin-top: 10px;
     }
 
     .merged-cell, .no-player-cell {
