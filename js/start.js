@@ -2,7 +2,6 @@ renderTable();
 document.getElementById('add-game-btn').addEventListener('click', showAddRow);
 async function renderTable() {
     results = await getGameResults();
-    console.log(results);
     const tableBody = document.getElementById('results_table_body');
     if (!tableBody) return;
     let DawidHowManyWin = 0;
@@ -14,24 +13,25 @@ async function renderTable() {
         const dawidWon = game.winner === "Dawid";
         DawidHowManyWin += dawidWon ? 1 : 0;
         KasiaHowManyWin += kasiaWon ? 1 : 0;
+
         const trKasia = document.createElement('tr');
         trKasia.innerHTML = `
-            <td rowspan="2" class="no-player-cell">${game.game_number}</td>
-            <td>${game.Kasia_corporation || ''}</td>
-            <td>${game.Kasia_wt}</td>
-            <td>${game.Kasia_awards}</td>
-            <td>${game.Kasia_titles}</td>
-            <td>${game.Kasia_board_score}</td>
-            <td>${game.Kasia_cards_score}</td>
-            <td>${game.Kasia_total_score}</td>
-            <td><input type="checkbox" ${kasiaWon ? 'checked' : ''} onclick="return false;"></td>
-            <td rowspan="2" class="no-player-cell">
-                ${game.img_url ? `<a href="${game.img_url}" target="_blank">🖼️</a>` : '-'}
+            <td rowspan="2" class="no-player-cell" data-label="GRA NR">${game.game_number}</td>
+            <td data-label="Korporacja (K)">${game.Kasia_corporation || ''}</td>
+            <td data-label="WT (K)">${game.Kasia_wt}</td>
+            <td data-label="Nagrody (K)">${game.Kasia_awards}</td>
+            <td data-label="Tytuły (K)">${game.Kasia_titles}</td>
+            <td data-label="Plansza (K)">${game.Kasia_board_score}</td>
+            <td data-label="Karty (K)">${game.Kasia_cards_score}</td>
+            <td data-label="SUMA (K)">${game.Kasia_total_score}</td>
+            <td data-label="Wygrana (K)"><input type="checkbox" ${kasiaWon ? 'checked' : ''} onclick="return false;"></td>
+            <td rowspan="2" class="no-player-cell" data-label="Zdj">
+                ${game.img_url ? `<a href="${game.img_url}" target="_blank">🖼️ Zobacz zdjęcie</a>` : '-'}
             </td>
-            <td rowspan="2" class="no-player-cell" style="font-weight: normal; font-size: 12px; max-width: 200px;">
-                ${game.comment || ''}
+            <td rowspan="2" class="no-player-cell" data-label="Komentarz">
+                ${game.comment || '-'}
             </td>
-            <td rowspan="2" class="merged-cell">
+            <td rowspan="2" class="merged-cell" data-label="Akcje">
                 <button class="btn-action btn-edit" onclick="handleEditGame(${game.id})">Edytuj</button>
                 <button class="btn-action btn-delete" onclick="handleDeleteGame(${game.id})">Usuń</button>
             </td>
@@ -39,21 +39,22 @@ async function renderTable() {
 
         const trDawid = document.createElement('tr');
         trDawid.innerHTML = `
-            <td>${game.Dawid_corporation || ''}</td>
-            <td>${game.Dawid_wt}</td>
-            <td>${game.Dawid_awards}</td>
-            <td>${game.Dawid_titles}</td>
-            <td>${game.Dawid_board_score}</td>
-            <td>${game.Dawid_cards_score}</td>
-            <td>${game.Dawid_total_score}</td>
-            <td><input type="checkbox" ${dawidWon ? 'checked' : ''} onclick="return false;"></td>
+            <td data-label="Korporacja (D)">${game.Dawid_corporation || ''}</td>
+            <td data-label="WT (D)">${game.Dawid_wt}</td>
+            <td data-label="Nagrody (D)">${game.Dawid_awards}</td>
+            <td data-label="Tytuły (D)">${game.Dawid_titles}</td>
+            <td data-label="Plansza (D)">${game.Dawid_board_score}</td>
+            <td data-label="Karty (D)">${game.Dawid_cards_score}</td>
+            <td data-label="SUMA (D)">${game.Dawid_total_score}</td>
+            <td data-label="Wygrana (D)"><input type="checkbox" ${dawidWon ? 'checked' : ''} onclick="return false;"></td>
         `;
 
         tableBody.appendChild(trKasia);
         tableBody.appendChild(trDawid);
-        document.getElementById('dawid-wins').textContent = DawidHowManyWin;
-        document.getElementById('kasia-wins').textContent = KasiaHowManyWin;
     });
+
+    document.getElementById('dawid-wins').textContent = DawidHowManyWin;
+    document.getElementById('kasia-wins').textContent = KasiaHowManyWin;
 }
 
 function showAddRow() {

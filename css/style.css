@@ -206,3 +206,100 @@ a {
 tbody tr:hover {
     filter: brightness(0.98);
 }
+
+
+@media (max-width: 900px) {
+    .main-header {
+        flex-direction: column;
+        gap: 20px;
+        padding: 15px;
+    }
+
+    .stats-summary {
+        width: 100%;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .score-card {
+        padding: 8px 15px;
+        min-width: 80px;
+    }
+
+    thead {
+        display: none;
+    }
+
+    table, tbody, tr, td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    tbody tr:nth-child(odd) {
+        margin-top: 25px;
+        border: 2px solid #1a73e8; 
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+    }
+
+    tbody tr:nth-child(even) {
+        border: 2px solid #ff0000; 
+        border-top: 1px dashed #ccc;
+        border-radius: 0 0 12px 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 12px 15px;
+        border: none !important;
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+        min-height: 45px;
+    }
+
+    td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        text-align: left;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: #666;
+        flex: 1;
+    }
+
+    .no-player-cell, .merged-cell {
+        background-color: #f8f9fa !important;
+        justify-content: center;
+        text-align: center;
+        border-bottom: 1px solid #ddd !important;
+    }
+
+    td:first-child.no-player-cell {
+        background-color: #444 !important;
+        color: white !important;
+        font-size: 16px;
+    }
+
+    td[data-label="Komentarz"], td[data-label="Zdj"] {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    td[data-label="Akcje"] {
+        justify-content: center;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .btn-action {
+        flex: 1;
+        padding: 10px;
+        font-size: 14px;
+    }
+}
