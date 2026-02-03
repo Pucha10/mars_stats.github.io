@@ -15,6 +15,7 @@ async function renderTable() {
         KasiaHowManyWin += kasiaWon ? 1 : 0;
 
         const trKasia = document.createElement('tr');
+        trKasia.id = `game-row-${game.id}`; 
         trKasia.innerHTML = `
             <td rowspan="2" class="no-player-cell" data-label="GRA NR">${game.game_number}</td>
             <td data-label="Korporacja (K)">${game.Kasia_corporation || ''}</td>
@@ -194,36 +195,37 @@ async function handleEditGame(id) {
     const data = await response.json();
     const game = data[0];
 
-    const tbody = document.getElementById('results_table_body');
-    const rows = Array.from(tbody.rows);
+    const kasiaRow = document.getElementById(`game-row-${id}`);
     
-    let kasiaRow = rows.find(r => r.cells[0] && r.cells[0].innerText == id);
-    if (!kasiaRow) return;
-    let dawidRow = kasiaRow.nextElementSibling;
+    if (!kasiaRow) {
+        console.error("Nie znaleziono wiersza w tabeli dla ID:", id);
+        return;
+    }
+    const dawidRow = kasiaRow.nextElementSibling;
 
     kasiaRow.innerHTML = `
-        <td rowspan="2" class="merged-cell">${game.id}</td>
-        <td><input type="text" class="edit-input kasia-edit" data-field="Kasia_corporation" value="${game.Kasia_corporation || ''}"></td>
-        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_wt" value="${game.Kasia_wt}"></td>
-        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_awards" value="${game.Kasia_awards}"></td>
-        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_titles" value="${game.Kasia_titles}"></td>
-        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_board_score" value="${game.Kasia_board_score}"></td>
-        <td><input type="number" class="edit-input kasia-edit" data-field="Kasia_cards_score" value="${game.Kasia_cards_score}"></td>
-        <td><span id="edit-sum-kasia" class="readonly-input">${game.Kasia_total_score}</span></td>
-        <td><input type="checkbox" id="edit-win-kasia" ${game.winner === 'Kasia' ? 'checked' : ''} disabled></td>
-        <td rowspan="2" class="merged-cell">
+        <td rowspan="2" class="merged-cell" data-label="GRA NR">${game.game_number}</td>
+        <td data-label="Korporacja (K)"><input type="text" class="edit-input kasia-edit" data-field="Kasia_corporation" value="${game.Kasia_corporation || ''}"></td>
+        <td data-label="WT (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_wt" value="${game.Kasia_wt}"></td>
+        <td data-label="Nagrody (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_awards" value="${game.Kasia_awards}"></td>
+        <td data-label="Tytuły (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_titles" value="${game.Kasia_titles}"></td>
+        <td data-label="Plansza (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_board_score" value="${game.Kasia_board_score}"></td>
+        <td data-label="Karty (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_cards_score" value="${game.Kasia_cards_score}"></td>
+        <td data-label="SUMA (K)"><span id="edit-sum-kasia" class="readonly-input">${game.Kasia_total_score}</span></td>
+        <td data-label="Wygrana (K)"><input type="checkbox" id="edit-win-kasia" ${game.winner === 'Kasia' ? 'checked' : ''} disabled></td>
+        <td rowspan="2" class="merged-cell" data-label="Zdj">
             <input type="file" id="edit-img-file" style="width: 120px;">
             <input type="hidden" id="old-img-url" value="${game.img_url || ''}">
         </td>
-        <td rowspan="2" class="merged-cell">
+        <td rowspan="2" class="merged-cell" data-label="Komentarz">
             <textarea id="edit-comment" class="edit-input" style="height: 60px;">${game.comment || ''}</textarea>
         </td>
-        <td rowspan="2" class="merged-cell">
+        <td rowspan="2" class="merged-cell" data-label="Akcje">
             <button class="btn-action btn-save" onclick="saveEdit(${game.id})">Zapisz</button>
             <button class="btn-action btn-cancel" onclick="renderTable()">Anuluj</button>
         </td>
     `;
-
+    
     dawidRow.innerHTML = `
         <td><input type="text" class="edit-input dawid-edit" data-field="Dawid_corporation" value="${game.Dawid_corporation || ''}"></td>
         <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_wt" value="${game.Dawid_wt}"></td>
@@ -284,7 +286,7 @@ async function saveEdit(id) {
 
         "winner": finalWinner,
         "comment": document.getElementById('edit-comment').value,
-        "img_url": imgUrl
+        "img_url": uploadedImageUrl
     };
     const result = await updateGameRecord(id, updatedData);
 

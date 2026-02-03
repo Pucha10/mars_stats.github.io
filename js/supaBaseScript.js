@@ -130,7 +130,7 @@ async function deleteGameRecord(gameId) {
     }
 }
 
-async function updateGameRecord(id) {
+async function updateGameRecord(id, updatedData) {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/game_results?id=eq.${id}`, {
         method: "PATCH",
         headers: {
