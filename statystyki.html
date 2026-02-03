@@ -1,26 +1,39 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content="Mars Stats" />
-        <title>Mars Stats</title>
-        <link rel="stylesheet" href="css/style.css" />
-    </head>
-    <body>
-        <table>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mars Stats - Ranking Korporacji</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <div class="stats-summary">
+                <h1 style="margin: 0; color: #444;">Ranking Korporacji</h1>
+            </div>
+            <div class="actions">
+                <a href="index.html" class="btn-primary"> Powrót do wyników</a>
+            </div>
+        </header>
+        <div class="table-container">
+             <table id="stats-table">
             <thead>
                 <tr>
                     <th>Korporacja</th>
-                    <th>Ile gier</th>
-                    <th>Ile wygranych</th>
-                    <th>Ile przegranych</th>
-                    <th>Winratio</th>
+                    <th>Rozgrywki</th>
+                    <th>Wygrane</th>
+                    <th>Przegrane</th>
+                    <th>Win Rate (%)</th>
                 </tr>
             </thead>
-            <tbody id="stats-body"></tbody>
+            <tbody id="stats-body">
+            </tbody>
         </table>
-        <script src="js/supaBaseScript.js"></script>
-        <script src="js/stats.js"></script>
-    </body>
+        </div>
+    </div>
+
+    <script src="js/supaBaseScript.js"></script> 
+    <script src="js/stats.js"></script>
+</body>
 </html>
