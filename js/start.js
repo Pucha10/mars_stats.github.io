@@ -1,4 +1,5 @@
 const corporations = ["CELESTIC", "APHRODITE", "KUIPER COOPERATIVE", "REPUBLIKA THARSIS", "HELION", "FACTORUM", "PHOBLOG", "UNITED NATIONS MARS INITIATIVE", "ROBINSON INDUSTRIES", "ASTRODRILL", "PHARMACY UNION", "MANUTECH", "RECYCLON", "SPLICE GENOMIKA TAKTYCZNA", "VIRON", "MOARNING STAR INC", "ARIDOR", "ARKLIGHT", "POLYPHEMOS", "TYCHO MAGNETICS", "POSEIDON", "STORMCRAFT INCORPORATED", "WSPÓLNOTA ARKADYJSKA", "INVENTRIX", "MINING GUILD", "PHILARES", "VALLEY TRUST", "CREDICOR", "MONS INSURANCE", "SATURN SYSTEMS", "ECOLINE", "TERACTOR", "INTERPLANETARY CINEMATICS", "POINT LUNA", "CHEUNG SHING MARS", "THORGATE", "VITOR"];
+const maps = ["MARS", "HELLAS", "ELYSIUM", "AMAZONIS", "VASTITAS", "UTOPIA", "CIMERIA"];
 renderTable();
 document.getElementById('add-game-btn').addEventListener('click', showAddRow);
 async function renderTable() {
@@ -69,6 +70,12 @@ function getCorpOptions(selectedCorp = "") {
         .join('');
 }
 
+function getMapOptions(selectedMap = "") {
+    return maps.map(map => 
+        `<option value="${map}" ${map === selectedMap ? 'selected' : ''}>${map}</option>`
+    ).join('');
+}
+
 function showAddRow() {
     const tbody = document.getElementById('results_table_body');
     const number_of_rows = tbody.getElementsByTagName('tr').length / 2;
@@ -90,15 +97,7 @@ function showAddRow() {
         <td data-label="SUMA (K)"><span id="new-sum-kasia" class="readonly-input">20</span></td>
         <td data-label="Wygrana (K)"><input type="checkbox" id="new-win-kasia" disabled></td>
         <td rowspan="2" class="merged-cell" data-label="Mapa">
-            <select id="new-map-select" class="tm-select">
-                <option value="MARS">Mars</option>
-                <option value="HELLAS">Hellas</option>
-                <option value="ELYSIUM">Elysium</option>
-                <option value="AMAZONIS">Amazonis</option>
-                <option value="VASTITAS">Vastitas</option>
-                <option value="UTOPIA">Utopia</option>
-                <option value="CIMMERIA">Cimmeria</option>
-            </select>
+            <select id="new-map-select" class="tm-select">${getMapOptions()}</select>
         </td>
         <td rowspan="2" class="merged-cell" data-label="Zdj">
             <input type="file" id="new-img-file" accept="image/*" style="width: 100%;">
@@ -239,15 +238,7 @@ async function handleEditGame(id) {
         <td data-label="SUMA (K)"><span id="edit-sum-kasia" class="readonly-input">${game.Kasia_total_score}</span></td>
         <td data-label="Wygrana (K)"><input type="checkbox" id="edit-win-kasia" ${game.winner === 'Kasia' ? 'checked' : ''} disabled></td>
         <td rowspan="2" class="merged-cell" data-label="Mapa">
-            <select id="edit-map-select" class="tm-select">
-                <option value="MARS">Mars</option>
-                <option value="HELLAS">Hellas</option>
-                <option value="ELYSIUM">Elysium</option>
-                <option value="AMAZONIS">Amazonis</option>
-                <option value="VASTITAS">Vastitas</option>
-                <option value="UTOPIA">Utopia</option>
-                <option value="CIMMERIA">Cimmeria</option>
-            </select>
+            <select id="edit-map-select" class="tm-select">${getMapOptions(game.map)}</select>
         </td>
         <td rowspan="2" class="merged-cell" data-label="Zdj">
             <input type="file" id="edit-img-file" style="width: 120px;">

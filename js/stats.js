@@ -3,15 +3,17 @@ const corporations = ["CELESTIC", "APHRODITE", "KUIPER COOPERATIVE", "REPUBLIKA 
 initStatsPage();
 async function initStatsPage() {
     games = await getGameResults();
-    const stats = getCorporationStats(games, corporations);
-     const statsArray = Object.keys(stats).map(name => {
-        const item = stats[name];
+    const corporationsStats = getCorporationStats(games, corporations);
+    const mapsStats = getMapsStats(games, maps);
+     const CorpostatsArray = Object.keys(corporationsStats).map(name => {
+        const item = corporationsStats[name];
         const winRate = item.Games > 0 ? ((item.Wins / item.Games) * 100).toFixed(1) : 0;
         return { name, ...item, winRate: parseFloat(winRate) };
     });
-    statsArray.sort((a, b) => b.winRate - a.winRate || b.Games - a.Games);
+    CorpostatsArray.sort((a, b) => b.winRate - a.winRate || b.Games - a.Games);
 
-    renderStatsTable(statsArray);
+    renderCorpoStatsTable(CorpostatsArray);
+    renderMapsStatsTable(mapsStats);
 }
 function getCorporationStats(games, corporationsList) {
     const stats = {};
@@ -48,7 +50,29 @@ function getCorporationStats(games, corporationsList) {
     return stats;
 }
 
-function renderStatsTable(data) {
+function getMapsStats(games, mapsList) {
+    const stats = {};
+        if (mapsList && Array.isArray(mapsList)) {
+        mapsList.forEach(map => {
+            stats[map] = 0;
+        });
+    }
+
+    games.forEach(game => {
+        const mapName = game.map;
+        if (mapName) {
+            if (!stats[mapName]) {
+                stats[mapName] = 0;
+            }
+            stats[mapName] += 1;
+        }
+    });
+
+    return stats;
+    
+}
+
+function renderCorpoStatsTable(data) {
     const tbody = document.getElementById('stats-body');
     tbody.innerHTML = '';
 
@@ -67,6 +91,31 @@ function renderStatsTable(data) {
             <td>${corp.Loses}</td>
             <td ${colorClass}>${corp.winRate}%</td>
         `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderMapsStatsTable(data) {
+    const tbody = document.getElementById('maps-stats-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    const totalGames = Object.values(data).reduce((acc, count) => acc + count, 0);
+
+    const sortedMaps = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+    sortedMaps.forEach(([mapName, count]) => {
+        const percentage = totalGames > 0 ? ((count / totalGames) * 100).toFixed(1) : 0;
+
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+            <td style="text-align: left; font-weight: bold; padding-left: 20px;">${mapName}</td>
+            <td>${count}</td>
+            <td style="color: #666;">${percentage}%</td>
+        `;
+
         tbody.appendChild(tr);
     });
 }
