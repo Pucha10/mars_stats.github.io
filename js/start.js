@@ -69,34 +69,36 @@ function showAddRow() {
     trDawid.id = 'new-game-row-dawid';
 
     trKasia.innerHTML = `
-        <td rowspan="2" class="merged-cell"id="new_game_number">${number_of_rows + 1}</td>
-        <td><input type="text" class="edit-input kasia-in" data-field="Kasia_corporation"></td>
-        <td><input type="number" class="edit-input kasia-in" data-field="Kasia_wt" value="20"></td>
-        <td><input type="number" class="edit-input kasia-in" data-field="Kasia_awards" value="0"></td>
-        <td><input type="number" class="edit-input kasia-in" data-field="Kasia_titles" value="0"></td>
-        <td><input type="number" class="edit-input kasia-in" data-field="Kasia_board_score" value="0"></td>
-        <td><input type="number" class="edit-input kasia-in" data-field="Kasia_cards_score" value="0"></td>
-        <td><span id="new-sum-kasia" class="readonly-input">20</span></td>
-        <td><input type="checkbox" id="new-win-kasia" disabled></td>
-        <td rowspan="2" class="merged-cell">
-            <input type="file" id="new-img-file" accept="image/*" style="width: 150px;">
+        <td rowspan="2" class="merged-cell" id="new_game_number" data-label="GRA NR">${number_of_rows + 1}</td>
+        <td data-label="Korporacja (K)"><input type="text" class="edit-input kasia-in" data-field="Kasia_corporation"></td>
+        <td data-label="WT (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_wt" value="20"></td>
+        <td data-label="Nagrody (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_awards" value="0"></td>
+        <td data-label="Tytuły (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_titles" value="0"></td>
+        <td data-label="Plansza (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_board_score" value="0"></td>
+        <td data-label="Karty (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_cards_score" value="0"></td>
+        <td data-label="SUMA (K)"><span id="new-sum-kasia" class="readonly-input">20</span></td>
+        <td data-label="Wygrana (K)"><input type="checkbox" id="new-win-kasia" disabled></td>
+        <td rowspan="2" class="merged-cell" data-label="Zdj">
+            <input type="file" id="new-img-file" accept="image/*" style="width: 100%;">
         </td>
-        <td rowspan="2" class="merged-cell"><input type="text" class="edit-input" id="new-comment" placeholder="Komentarz"></td>
-        <td rowspan="2" class="merged-cell">
+        <td rowspan="2" class="merged-cell" data-label="Komentarz">
+            <input type="text" class="edit-input" id="new-comment" placeholder="Komentarz">
+        </td>
+        <td rowspan="2" class="merged-cell" data-label="Akcje">
             <button class="btn-action btn-save" onclick="saveNewGame()">Dodaj</button>
             <button class="btn-action btn-cancel" onclick="cancelAddRow()">Anuluj</button>
         </td>
     `;
 
     trDawid.innerHTML = `
-        <td><input type="text" class="edit-input dawid-in" data-field="Dawid_corporation"></td>
-        <td><input type="number" class="edit-input dawid-in" data-field="Dawid_wt" value="20"></td>
-        <td><input type="number" class="edit-input dawid-in" data-field="Dawid_awards" value="0"></td>
-        <td><input type="number" class="edit-input dawid-in" data-field="Dawid_titles" value="0"></td>
-        <td><input type="number" class="edit-input dawid-in" data-field="Dawid_board_score" value="0"></td>
-        <td><input type="number" class="edit-input dawid-in" data-field="Dawid_cards_score" value="0"></td>
-        <td><span id="new-sum-dawid" class="readonly-input">20</span></td>
-        <td><input type="checkbox" id="new-win-dawid" disabled></td>
+        <td data-label="Korporacja (D)"><input type="text" class="edit-input dawid-in" data-field="Dawid_corporation"></td>
+        <td data-label="WT (D)"><input type="number" class="edit-input dawid-in" data-field="Dawid_wt" value="20"></td>
+        <td data-label="Nagrody (D)"><input type="number" class="edit-input dawid-in" data-field="Dawid_awards" value="0"></td>
+        <td data-label="Tytuły (D)"><input type="number" class="edit-input dawid-in" data-field="Dawid_titles" value="0"></td>
+        <td data-label="Plansza (D)"><input type="number" class="edit-input dawid-in" data-field="Dawid_board_score" value="0"></td>
+        <td data-label="Karty (D)"><input type="number" class="edit-input dawid-in" data-field="Dawid_cards_score" value="0"></td>
+        <td data-label="SUMA (D)"><span id="new-sum-dawid" class="readonly-input">20</span></td>
+        <td data-label="Wygrana (D)"><input type="checkbox" id="new-win-dawid" disabled></td>
     `;
 
     tbody.insertBefore(trDawid, tbody.firstChild);

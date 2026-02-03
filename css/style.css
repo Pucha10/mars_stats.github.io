@@ -211,95 +211,108 @@ tbody tr:hover {
 @media (max-width: 900px) {
     .main-header {
         flex-direction: column;
-        gap: 20px;
         padding: 15px;
-    }
-
-    .stats-summary {
-        width: 100%;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    .score-card {
-        padding: 8px 15px;
-        min-width: 80px;
-    }
-
-    thead {
-        display: none;
+        text-align: center;
     }
 
     table, tbody, tr, td {
         display: block;
         width: 100%;
-        box-sizing: border-box;
     }
 
     tbody tr:nth-child(odd) {
-        margin-top: 25px;
-        border: 2px solid #1a73e8; 
+        margin-top: 30px;
+        background-color: #fff !important;
+        border: 1px solid #ddd;
         border-bottom: none;
         border-radius: 12px 12px 0 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
     tbody tr:nth-child(even) {
-        border: 2px solid #ff0000; 
-        border-top: 1px dashed #ccc;
+        background-color: #fff !important;
+        border: 1px solid #ddd;
+        border-top: 1px dashed #eee;
         border-radius: 0 0 12px 12px;
         margin-bottom: 10px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
     td {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        text-align: right;
-        padding: 12px 15px;
+        padding: 10px 15px;
         border: none !important;
-        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
-        min-height: 45px;
+        border-bottom: 1px solid #f0f0f0 !important;
+        min-height: 40px;
     }
 
     td::before {
         content: attr(data-label);
-        font-weight: bold;
-        text-align: left;
-        text-transform: uppercase;
+        font-weight: 600;
+        color: #777;
         font-size: 11px;
-        color: #666;
-        flex: 1;
+        text-transform: uppercase;
+        flex: 0 0 130px; 
+        text-align: left;
     }
 
-    .no-player-cell, .merged-cell {
-        background-color: #f8f9fa !important;
-        justify-content: center;
-        text-align: center;
-        border-bottom: 1px solid #ddd !important;
+    td {
+        text-align: right;
+        color: #333;
     }
 
-    td:first-child.no-player-cell {
+    td[data-label="GRA NR"] {
         background-color: #444 !important;
-        color: white !important;
+        color: #fff !important;
+        justify-content: center;
         font-size: 16px;
+        border-radius: 10px 10px 0 0;
+    }
+    td[data-label="GRA NR"]::before { color: #aaa; flex: 0 0 80px; }
+
+    tbody tr:nth-child(odd) td:not(.no-player-cell):not(.merged-cell) {
+        background-color: #f0f7ff; 
     }
 
-    td[data-label="Komentarz"], td[data-label="Zdj"] {
+    tbody tr:nth-child(even) td {
+        background-color: #fff5f5; 
+    }
+
+    .merged-cell, .no-player-cell {
+        background-color: #fafafa !important;
         flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .merged-cell::before, .no-player-cell::before {
+        flex: 0 0 auto;
+        margin-bottom: 5px;
+        text-align: center;
     }
 
     td[data-label="Akcje"] {
-        justify-content: center;
-        gap: 15px;
+        flex-direction: row;
+        justify-content: space-around;
         padding: 15px;
+        border-bottom: none !important;
     }
 
     .btn-action {
         flex: 1;
-        padding: 10px;
+        margin: 0 5px;
+        padding: 12px;
         font-size: 14px;
+    }
+
+    .edit-input {
+        width: 100%;
+        max-width: 150px;
+        font-size: 16px;
+    }
+    
+    textarea.edit-input {
+        max-width: 100%;
     }
 }
