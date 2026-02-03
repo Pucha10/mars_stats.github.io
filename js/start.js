@@ -59,6 +59,15 @@ async function renderTable() {
     document.getElementById('kasia-wins').textContent = KasiaHowManyWin;
 }
 
+function getCorpOptions(selectedCorp = "") {
+    return [...corporations]
+        .sort((a, b) => a.localeCompare(b, 'pl'))
+        .map(corp => 
+            `<option value="${corp}" ${corp === selectedCorp ? 'selected' : ''}>${corp}</option>`
+        )
+        .join('');
+}
+
 function showAddRow() {
     const tbody = document.getElementById('results_table_body');
     const number_of_rows = tbody.getElementsByTagName('tr').length / 2;
@@ -71,8 +80,8 @@ function showAddRow() {
 
     trKasia.innerHTML = `
         <td rowspan="2" class="merged-cell" id="new_game_number" data-label="GRA NR">${number_of_rows + 1}</td>
-        <td data-label="Korporacja (K)"><input type="text" class="edit-input kasia-in" data-field="Kasia_corporation"></td>
-        <td data-label="WT (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_wt" value="20"></td>
+        <td data-label="Korporacja (K)"><select class="edit-input kasia-in tm-select" data-field="Kasia_corporation">${getCorpOptions()}</select></td>
+        <td data-label="WT (K)"><input type="number" class="edit-input kasia-in tm-select" data-field="Kasia_wt" value="20"></td>
         <td data-label="Nagrody (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_awards" value="0"></td>
         <td data-label="Tytuły (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_titles" value="0"></td>
         <td data-label="Plansza (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_board_score" value="0"></td>
@@ -80,7 +89,7 @@ function showAddRow() {
         <td data-label="SUMA (K)"><span id="new-sum-kasia" class="readonly-input">20</span></td>
         <td data-label="Wygrana (K)"><input type="checkbox" id="new-win-kasia" disabled></td>
         <td rowspan="2" class="merged-cell" data-label="Mapa">
-            <select id="new-map-select" class="map-select">
+            <select id="new-map-select" class="tm-select">
                 <option value="MARS">Mars</option>
                 <option value="HELLAS">Hellas</option>
                 <option value="ELYSIUM">Elysium</option>
@@ -103,7 +112,7 @@ function showAddRow() {
     `;
 
     trDawid.innerHTML = `
-        <td data-label="Korporacja (D)"><input type="text" class="edit-input dawid-in" data-field="Dawid_corporation"></td>
+        <td data-label="Korporacja (D)"><select class="edit-input dawid-in tm-select" data-field="Dawid_corporation">${getCorpOptions()}</select></td>
         <td data-label="WT (D)"><input type="number" class="edit-input dawid-in" data-field="Dawid_wt" value="20"></td>
         <td data-label="Nagrody (D)"><input type="number" class="edit-input dawid-in" data-field="Dawid_awards" value="0"></td>
         <td data-label="Tytuły (D)"><input type="number" class="edit-input dawid-in" data-field="Dawid_titles" value="0"></td>
@@ -220,7 +229,7 @@ async function handleEditGame(id) {
 
     kasiaRow.innerHTML = `
         <td rowspan="2" class="merged-cell" data-label="GRA NR">${game.game_number}</td>
-        <td data-label="Korporacja (K)"><input type="text" class="edit-input kasia-edit" data-field="Kasia_corporation" value="${game.Kasia_corporation || ''}"></td>
+        <td data-label="Korporacja (K)"><select class="edit-input kasia-edit tm-select" data-field="Kasia_corporation">${getCorpOptions(game.Kasia_corporation)}</select></td>
         <td data-label="WT (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_wt" value="${game.Kasia_wt}"></td>
         <td data-label="Nagrody (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_awards" value="${game.Kasia_awards}"></td>
         <td data-label="Tytuły (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_titles" value="${game.Kasia_titles}"></td>
@@ -229,7 +238,7 @@ async function handleEditGame(id) {
         <td data-label="SUMA (K)"><span id="edit-sum-kasia" class="readonly-input">${game.Kasia_total_score}</span></td>
         <td data-label="Wygrana (K)"><input type="checkbox" id="edit-win-kasia" ${game.winner === 'Kasia' ? 'checked' : ''} disabled></td>
         <td rowspan="2" class="merged-cell" data-label="Mapa">
-            <select id="edit-map-select" class="map-select">
+            <select id="edit-map-select" class="tm-select">
                 <option value="MARS">Mars</option>
                 <option value="HELLAS">Hellas</option>
                 <option value="ELYSIUM">Elysium</option>
@@ -253,7 +262,7 @@ async function handleEditGame(id) {
     `;
     
     dawidRow.innerHTML = `
-        <td><input type="text" class="edit-input dawid-edit" data-field="Dawid_corporation" value="${game.Dawid_corporation || ''}"></td>
+        <td><select class="edit-input dawid-edit tm-select" data-field="Dawid_corporation">${getCorpOptions(game.Dawid_corporation)}</select></td>
         <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_wt" value="${game.Dawid_wt}"></td>
         <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_awards" value="${game.Dawid_awards}"></td>
         <td><input type="number" class="edit-input dawid-edit" data-field="Dawid_titles" value="${game.Dawid_titles}"></td>
