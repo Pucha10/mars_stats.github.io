@@ -4,6 +4,8 @@ renderTable();
 document.getElementById('add-game-btn').addEventListener('click', showAddRow);
 async function renderTable() {
     results = await getGameResults();
+    console.log(results);
+    
     const tableBody = document.getElementById('results_table_body');
     if (!tableBody) return;
     let DawidHowManyWin = 0;
@@ -28,6 +30,7 @@ async function renderTable() {
             <td data-label="Karty (K)">${game.Kasia_cards_score}</td>
             <td data-label="SUMA (K)">${game.Kasia_total_score}</td>
             <td data-label="Wygrana (K)"><input type="checkbox" ${kasiaWon ? 'checked' : ''} onclick="return false;"></td>
+            <td rowspan="2" class="no-player-cell" data-label="L.Pokoleń">${game.generations}</td>
             <td rowspan="2" class="no-player-cell" data-label="Mapa">${game.map || '-'}</td>
             <td rowspan="2" class="no-player-cell" data-label="Zdj">
                 ${game.img_url ? `<a href="${game.img_url}" target="_blank">🖼️ Zobacz zdjęcie</a>` : '-'}
@@ -96,6 +99,7 @@ function showAddRow() {
         <td data-label="Karty (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_cards_score" value="0"></td>
         <td data-label="SUMA (K)"><span id="new-sum-kasia" class="readonly-input">20</span></td>
         <td data-label="Wygrana (K)"><input type="checkbox" id="new-win-kasia" disabled></td>
+        <td rowspan="2" class="no-player-cell" data-label="L.Pokoleń"><input type="number" id="new-generations" class="edit-input" value="0"></td>
         <td rowspan="2" class="merged-cell" data-label="Mapa">
             <select id="new-map-select" class="tm-select">${getMapOptions()}</select>
         </td>
@@ -181,6 +185,7 @@ async function saveNewGame() {
         
         game_number: parseInt(document.getElementById('new_game_number').innerText),
         winner: finalWinner,
+        generations: parseInt(document.getElementById('new-generations').value) || 0,
         img_url: uploadedImageUrl,
         comment: document.getElementById('new-comment').value,
         map: document.getElementById('new-map-select').value
@@ -237,6 +242,7 @@ async function handleEditGame(id) {
         <td data-label="Karty (K)"><input type="number" class="edit-input kasia-edit" data-field="Kasia_cards_score" value="${game.Kasia_cards_score}"></td>
         <td data-label="SUMA (K)"><span id="edit-sum-kasia" class="readonly-input">${game.Kasia_total_score}</span></td>
         <td data-label="Wygrana (K)"><input type="checkbox" id="edit-win-kasia" ${game.winner === 'Kasia' ? 'checked' : ''} disabled></td>
+        <td rowspan="2" class="no-player-cell" data-label="L.Pokoleń"><input type="number" id="edit-generations" class="edit-input" value="${game.generations}"></td>
         <td rowspan="2" class="merged-cell" data-label="Mapa">
             <select id="edit-map-select" class="tm-select">${getMapOptions(game.map)}</select>
         </td>
@@ -312,6 +318,7 @@ async function saveEdit(id) {
         "Dawid_total_score": dSum,
 
         "winner": finalWinner,
+        "generations": parseInt(document.getElementById('edit-generations').value) || 0,
         "comment": document.getElementById('edit-comment').value,
         "map": document.getElementById('edit-map-select').value,
         "img_url": uploadedImageUrl
