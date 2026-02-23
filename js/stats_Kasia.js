@@ -11,6 +11,7 @@ async function initStatsPage() {
     CorpostatsArray.sort((a, b) => b.winRate - a.winRate || b.Games - a.Games);
 
     renderCorpoStatsTable(CorpostatsArray);
+    getPointsStats(games);
 }
 function getCorporationStats(games, corporationsList) {
     const stats = {};
@@ -66,4 +67,71 @@ function renderCorpoStatsTable(data) {
         `;
         tbody.appendChild(tr);
     });
+}
+
+function getPointsStats(games) {
+    let savedGames = 0;
+    const stats = {
+        gamesCount: 0,
+        wins: 0,
+        loses: 0,
+        totalPoints: 0,
+        totalWt: 0,
+        totalAwards: 0,
+        totalTitles: 0,
+        totalBoard: 0,
+        totalCards: 0
+    };
+
+    games.forEach(game => {
+        stats.gamesCount++;
+
+        if (game.winner === 'Kasia') {
+            stats.wins++;
+        } else {
+            stats.loses++;
+        }
+        if (game.comment == "Gra wczytana tylko do wyniku, nie mamy konkretnych statystyk") return;
+        savedGames++;
+        stats.totalPoints += (game.Kasia_total_score || 0);
+        stats.totalWt += (game.Kasia_wt || 0);
+        stats.totalAwards += (game.Kasia_awards || 0);
+        stats.totalTitles += (game.Kasia_titles || 0);
+        stats.totalBoard += (game.Kasia_board_score || 0);
+        stats.totalCards += (game.Kasia_cards_score || 0);
+    });
+
+    const winRate = stats.gamesCount > 0 
+        ? ((stats.wins / stats.gamesCount) * 100).toFixed(1) 
+        : 0;
+    
+    const avgPoints = savedGames > 0 
+        ? (stats.totalPoints / savedGames).toFixed(1) 
+        : 0;
+
+    renderSpecificStats(stats, winRate, avgPoints);
+}
+
+function renderSpecificStats(stats, winRate, avgPoints) {
+    const tbody = document.getElementById('specyfic-stats-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td>${stats.gamesCount}</td>
+        <td style="color: #1e8e3e; font-weight: bold;">${stats.wins}</td>
+        <td style="color: #d93025;">${stats.loses}</td>
+        <td style="font-weight: bold;">${winRate}%</td>
+        <td style="background-color: #f0f7ff;">${stats.totalPoints}</td>
+        <td style="background-color: #f0f7ff; font-weight: bold;">${avgPoints}</td>
+        <td>${stats.totalWt}</td>
+        <td>${stats.totalAwards}</td>
+        <td>${stats.totalTitles}</td>
+        <td>${stats.totalBoard}</td>
+        <td>${stats.totalCards}</td>
+    `;
+
+    tbody.appendChild(tr);
 }

@@ -92,7 +92,7 @@ function showAddRow() {
     trKasia.innerHTML = `
         <td rowspan="2" class="merged-cell" id="new_game_number" data-label="GRA NR">${number_of_rows + 1}</td>
         <td data-label="Korporacja (K)"><select class="edit-input kasia-in tm-select" data-field="Kasia_corporation">${getCorpOptions()}</select></td>
-        <td data-label="WT (K)"><input type="number" class="edit-input kasia-in tm-select" data-field="Kasia_wt" value="20"></td>
+        <td data-label="WT (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_wt" value="20"></td>
         <td data-label="Nagrody (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_awards" value="0"></td>
         <td data-label="Tytuły (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_titles" value="0"></td>
         <td data-label="Plansza (K)"><input type="number" class="edit-input kasia-in" data-field="Kasia_board_score" value="0"></td>
