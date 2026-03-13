@@ -143,3 +143,71 @@ async function updateGameRecord(id, updatedData) {
     return response.ok;
 
 }
+
+async function fetchRemikGames() {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/remik_games?order=created_at.desc`,
+            {
+                method: "GET",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        if (!response.ok) throw new Error("Błąd pobierania list gier");
+        const games = await response.json();
+        
+        return games;
+    } catch (error) {
+        console.error("Błąd:", error);
+    }
+}
+
+async function getRemikGameDetails(gameId) {
+    try {
+        const gameResponse = await fetch(
+            `${SUPABASE_URL}/rest/v1/remik_games?id=eq.${gameId}`,
+            {
+                method: "GET",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        if (!gameResponse.ok) throw new Error("Nie znaleziono gry");
+        const games = await gameResponse.json();
+        const gameInfo = games[0];
+
+        const roundsResponse = await fetch(
+            `${SUPABASE_URL}/rest/v1/remik_rounds?game_id=eq.${gameId}&order=round_number.asc`,
+            {
+                method: "GET",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        if (!roundsResponse.ok) throw new Error("Błąd pobierania rozdań");
+        const rounds = await roundsResponse.json();
+
+        const fullGameData = {
+            ...gameInfo,
+            rounds: rounds
+        };
+
+        return fullGameData;
+
+    } catch (error) {
+        console.error("Błąd podczas pobierania detali gry:", error);
+    }
+}
