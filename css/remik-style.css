@@ -77,5 +77,122 @@ td {
 
 .btn-view { background: #1a73e8; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
 
+.btn-primary {
+    background: #d4af37;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-primary:hover {
+    background: #ffdf7e;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.btn-status-toggle {
+    margin: 30px 0;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+}
+
+.next-shuffler-box {
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    border: 1px dashed #fff;
+}
+
+.bottom-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-status-toggle {
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    transition: 0.3s;
+}
+
+.btn-finish { background-color: #d93025; color: white; }
+.btn-finish:hover { background-color: #a51f16; }
+
+.btn-resume { background-color: #f29900; color: white; }
+.btn-resume:hover { background-color: #c47c00; }
+.btn-save { background-color: #0dec45; color: black; }
+.btn-save:hover { background-color: #09e63d; }
+.btn-cancel { background-color: #fc3904; color: black; }
+.btn-cancel:hover { background-color: #f85002; }
+
+.new-round-row {
+    background-color: #fff9db !important; 
+    border: 2px solid #d4af37;
+}
+
+.input-score {
+    width: 70px;
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input-score:focus {
+    border-color: #d4af37;
+}
+
+.next-shuffler-box {
+    background: #d4af37; 
+    color: #000;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 2px solid #fff;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+
 @media (max-width: 768px) {
+        .table-container {
+        overflow-x: auto; /* Pozwalamy tabeli przesuwać się na boki */
+    }
+    
+    td, th {
+        padding: 8px 5px;
+        font-size: 12px;
+    }
+
+    .input-score {
+        width: 50px;
+    }
 }

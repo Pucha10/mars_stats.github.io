@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szczegóły Gry - Remik</title>
+    <link rel="stylesheet" href="css/remik-style.css">
+    <style>
+        .winner-cell { color: #1e8e3e; font-weight: bold; }
+        .loser-cell { color: #d93025; }
+        .shuffler-tag { font-size: 0.8em; color: #666; font-style: italic; }
+        tfoot tr { background-color: #f8f9fa; font-weight: bold; border-top: 2px solid #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <div class="logo-area">
+                <h1 id="game-title">🎴 Gra #...</h1>
+            </div>
+            <div class="actions">
+                <button id="add-round-btn" class="btn-primary" onclick="showAddRoundForm()">+ Dodaj rozdanie</button>
+                <a href="remik_stats.html" class="btn-secondary">Powrót</a>
+            </div>
+        </header>
+        <div class="next-shuffler-box" id="next-shuffler-info">
+    Następny rozdaje: <strong id="next-shuffler-name">...</strong>
+</div>
+
+<div class="table-container">
+    <!-- Twoja tabela z id="details-table" -->
+</div>
+
+<!-- Dodaj to pod tabelą -->
+<div class="bottom-actions" id="status-button-container">
+    <!-- Przycisk wygeneruje JS -->
+</div>
+        <div class="table-container">
+            <table id="details-table">
+                <thead id="details-thead">
+                    <!-- Nagłówki wygeneruje JS -->
+                </thead>
+                <tbody id="details-tbody">
+                    <!-- Rozdania wygeneruje JS -->
+                </tbody>
+                <tfoot id="details-tfoot">
+                    <!-- Sumę wygeneruje JS -->
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/supaBaseScript.js"></script>
+    <script src="js/remik-rozdanie.js"></script>
+</body>
+</html>

@@ -22,8 +22,6 @@ const SUPABASE_URL = "https://hcefiifazgrlxwvevfmc.supabase.co";
 const SUPABASE_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZWZpaWZhemdybHh3dmV2Zm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3ODkyMDAsImV4cCI6MjA4NDM2NTIwMH0.A9V8NRjhvy7CjpdsLTT3KliNq_P5cIOCPTr1gIedD6k";
 
-
-
 async function getGameResults() {
     try {
         const response = await fetch(
@@ -35,7 +33,7 @@ async function getGameResults() {
                     Authorization: `Bearer ${SUPABASE_KEY}`,
                     "Content-Type": "application/json",
                 },
-            }
+            },
         );
 
         if (!response.ok) throw new Error(`Błąd: ${response.statusText}`);
@@ -74,7 +72,7 @@ async function addGameResult(gameData) {
 async function addBoardImage(fileInput) {
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
-        const fileExt = file.name.split('.').pop();
+        const fileExt = file.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
 
@@ -86,10 +84,10 @@ async function addBoardImage(fileInput) {
                     headers: {
                         apikey: SUPABASE_KEY,
                         Authorization: `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": file.type
+                        "Content-Type": file.type,
                     },
-                    body: file
-                }
+                    body: file,
+                },
             );
             if (uploadResponse.ok) {
                 uploadedImageUrl = `${SUPABASE_URL}/storage/v1/object/public/board_img/${filePath}`;
@@ -114,7 +112,7 @@ async function deleteGameRecord(gameId) {
                     Authorization: `Bearer ${SUPABASE_KEY}`,
                     "Content-Type": "application/json",
                 },
-            }
+            },
         );
 
         if (!response.ok) {
@@ -131,17 +129,19 @@ async function deleteGameRecord(gameId) {
 }
 
 async function updateGameRecord(id, updatedData) {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/game_results?id=eq.${id}`, {
-        method: "PATCH",
-        headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            "Content-Type": "application/json"
+    const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/game_results?id=eq.${id}`,
+        {
+            method: "PATCH",
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedData),
         },
-        body: JSON.stringify(updatedData)
-    });
+    );
     return response.ok;
-
 }
 
 async function fetchRemikGames() {
@@ -153,61 +153,73 @@ async function fetchRemikGames() {
                 headers: {
                     apikey: SUPABASE_KEY,
                     Authorization: `Bearer ${SUPABASE_KEY}`,
-                    "Content-Type": "application/json"
-                }
-            }
+                    "Content-Type": "application/json",
+                },
+            },
         );
 
         if (!response.ok) throw new Error("Błąd pobierania list gier");
         const games = await response.json();
-        
+
         return games;
     } catch (error) {
         console.error("Błąd:", error);
     }
 }
 
-async function getRemikGameDetails(gameId) {
+async function updateGameStatus(newStatus) {
+    const confirmMsg =
+        newStatus === "finished"
+            ? "Czy na pewno chcesz zakończyć grę i ustalić zwycięzcę?"
+            : "Czy chcesz wznowić tę grę?";
+
+    if (!confirm(confirmMsg)) return;
+
     try {
-        const gameResponse = await fetch(
+        const response = await fetch(
             `${SUPABASE_URL}/rest/v1/remik_games?id=eq.${gameId}`,
             {
-                method: "GET",
+                method: "PATCH",
                 headers: {
                     apikey: SUPABASE_KEY,
                     Authorization: `Bearer ${SUPABASE_KEY}`,
-                    "Content-Type": "application/json"
-                }
-            }
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ status: newStatus }),
+            },
         );
 
-        if (!gameResponse.ok) throw new Error("Nie znaleziono gry");
-        const games = await gameResponse.json();
-        const gameInfo = games[0];
-
-        const roundsResponse = await fetch(
-            `${SUPABASE_URL}/rest/v1/remik_rounds?game_id=eq.${gameId}&order=round_number.asc`,
-            {
-                method: "GET",
-                headers: {
-                    apikey: SUPABASE_KEY,
-                    Authorization: `Bearer ${SUPABASE_KEY}`,
-                    "Content-Type": "application/json"
-                }
-            }
-        );
-
-        if (!roundsResponse.ok) throw new Error("Błąd pobierania rozdań");
-        const rounds = await roundsResponse.json();
-
-        const fullGameData = {
-            ...gameInfo,
-            rounds: rounds
-        };
-
-        return fullGameData;
-
-    } catch (error) {
-        console.error("Błąd podczas pobierania detali gry:", error);
+        if (response.ok) {
+            initDetails();
+        }
+    } catch (err) {
+        console.error("Błąd zmiany statusu:", err);
     }
+}
+
+async function getGameHeader(id) {
+    const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/remik_games?id=eq.${id}`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    const data = await resp.json();
+    return data[0];
+}
+
+async function getGameRounds(id) {
+    const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/remik_rounds?game_id=eq.${id}&order=round_number.asc`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    return await resp.json();
 }

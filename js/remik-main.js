@@ -1,22 +1,23 @@
+renderRemikGames();
 async function renderRemikGames() {
-    const tbody = document.getElementById('remik-tbody');
+    const tbody = document.getElementById("remik-tbody");
     const games = await fetchRemikGames();
     console.log(games);
 
-    tbody.innerHTML = '';
+    tbody.innerHTML = "";
 
-    games.forEach(game => {
-        const tr = document.createElement('tr');
-        
-        const playersHtml = game.players.map(p => `<span class="player-tag">${p}</span>`).join('');
-        
- 
+    games.forEach((game) => {
+        const tr = document.createElement("tr");
+
+        const playersHtml = game.players
+            .map((p) => `<span class="player-tag">${p}</span>`)
+            .join("");
 
         tr.innerHTML = `
             <td>${game.game_number}</td>
             <td>${playersHtml}</td>
-            <td style="font-weight: bold;">${game.winner || '---'}</td>
-            <td class="status-${game.status}">${game.status === 'end' ? 'Zakończona' : 'W toku'}</td>
+            <td style="font-weight: bold;">${game.winner || "---"}</td>
+            <td class="status-${game.status}">${game.status === "finished" ? "Zakończona" : "W toku"}</td>
             <td>
                 <button class="btn-view" onclick="viewGameDetails(${game.id})">Szczegóły / Rozdania</button>
             </td>
@@ -26,8 +27,5 @@ async function renderRemikGames() {
 }
 
 function viewGameDetails(id) {
-
-    window.location.href = `remik-detale.html?id=${id}`;
+    window.location.href = `remik_detale.html?id=${id}`;
 }
-
-document.addEventListener('DOMContentLoaded', renderRemikGames);
