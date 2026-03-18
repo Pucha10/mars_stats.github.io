@@ -223,3 +223,117 @@ async function getGameRounds(id) {
     );
     return await resp.json();
 }
+
+async function saveCurrentRound(newRound) {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/remik_rounds`, {
+            method: "POST",
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newRound),
+        });
+
+        if (response.ok) {
+            initDetails();
+        } else {
+            alert("Błąd podczas zapisywania rozdania.");
+        }
+    } catch (err) {
+        console.error("Błąd:", err);
+    }
+}
+
+async function winnerChange(winnerToSave, newStatus, gameId) {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/remik_games?id=eq.${gameId}`,
+            {
+                method: "PATCH",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    status: newStatus,
+                    winner: winnerToSave,
+                }),
+            },
+        );
+        return response;
+    } catch (err) {
+        console.error("Błąd zmiany statusu:", err);
+    }
+}
+
+async function delateOneRound(roundId) {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/remik_rounds?id=eq.${roundId}`,
+            {
+                method: "DELETE",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+            },
+        );
+    } catch (err) {
+        console.error("Błąd sieci:", err);
+    }
+}
+
+async function addNewRemikGame(newGameData) {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/remik_games`, {
+            method: "POST",
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+                Prefer: "return=representation",
+            },
+            body: JSON.stringify(newGameData),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const newId = data[0].id;
+            window.location.href = `remik_detale.html?id=${newId}`;
+        } else {
+            alert("Błąd podczas tworzenia gry.");
+        }
+    } catch (err) {
+        console.error("Błąd:", err);
+    }
+}
+
+async function deleteRemikGame(id) {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/remik_games?id=eq.${id}`,
+            {
+                method: "DELETE",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+            },
+        );
+
+        if (response.ok) {
+        } else {
+            const err = await response.json();
+            console.error("Błąd usuwania:", err);
+            alert("Błąd podczas usuwania gry z bazy.");
+        }
+    } catch (error) {
+        console.error("Błąd sieci:", error);
+        alert("Błąd połączenia z serwerem.");
+    }
+}

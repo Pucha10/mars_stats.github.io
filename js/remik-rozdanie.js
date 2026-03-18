@@ -2,6 +2,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const gameId = urlParams.get("id");
 let currentPlayers = [];
 let currentRoundsCount = 0;
+let totals = {};
 if (!gameId) {
     alert("Nie znaleziono ID gry!");
     window.location.href = "remik_stats.html";
@@ -12,16 +13,31 @@ document.addEventListener("DOMContentLoaded", initDetails);
 async function initDetails() {
     const game = await getGameHeader(gameId);
     const rounds = await getGameRounds(gameId);
-
     if (game) {
+        document.getElementById("game-title").innerText = `🎴 Gra #${game.id}`;
+
         currentPlayers = game.players;
         currentRoundsCount = rounds.length;
-
-        document.getElementById("game-title").innerText = `🎴 Gra #${game.id}`;
         renderTable(game.players, rounds);
 
-        const nextShuffler = calculateNextShuffler(game.players, rounds);
-        document.getElementById("next-shuffler-name").innerText = nextShuffler;
+        const infoBox = document.getElementById("next-shuffler-info");
+        const addBtn = document.getElementById("add-round-btn");
+
+        if (game.status === "finished") {
+            infoBox.innerHTML = `🏆 Grę wygrał: <strong id="next-shuffler-name">${game.winner || "Remis"}</strong>`;
+            infoBox.style.backgroundColor = "#d4af37";
+            infoBox.style.color = "#000";
+
+            addBtn.style.display = "none";
+        } else {
+            const nextShuffler = calculateNextShuffler(game.players, rounds);
+            infoBox.innerHTML = `Następny rozdaje: <strong id="next-shuffler-name">${nextShuffler}</strong>`;
+            infoBox.style.backgroundColor = "";
+            infoBox.style.color = "";
+
+            addBtn.style.display = "inline-block";
+        }
+
         renderStatusButton(game.status);
     }
 }
@@ -90,25 +106,7 @@ async function saveNewRound() {
         shuffler: shuffler,
         cards: cardsData,
     };
-    try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/remik_rounds`, {
-            method: "POST",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newRound),
-        });
-
-        if (response.ok) {
-            initDetails();
-        } else {
-            alert("Błąd podczas zapisywania rozdania.");
-        }
-    } catch (err) {
-        console.error("Błąd:", err);
-    }
+    saveCurrentRound(newRound);
 }
 
 function calculateNextShuffler(players, rounds) {
@@ -148,14 +146,14 @@ function renderTable(players, rounds) {
     const tbody = document.getElementById("details-tbody");
     const tfoot = document.getElementById("details-tfoot");
 
-    let totals = {};
+    totals = {};
     players.forEach((p) => (totals[p] = 0));
 
     let headHtml = `<tr><th>Rozdanie</th><th>Rozdawał</th>`;
     players.forEach((p) => {
         headHtml += `<th>${p}</th>`;
     });
-    headHtml += `<th>Zwycięzca</th></tr>`;
+    headHtml += `<th>Zwycięzca</th><th>Akcja</th></tr>`;
     thead.innerHTML = headHtml;
 
     tbody.innerHTML = "";
@@ -196,7 +194,9 @@ function renderTable(players, rounds) {
             <td><span class="shuffler-tag">${round.shuffler}</span></td>
             ${pointsCells}
             <td class="winner-cell">${roundWinner}</td>
-        `;
+            <td>
+                <button class="btn-action btn-delete btn-small" onclick="handleDeleteRound(${round.id})">Usuń</button>
+            </td>`;
         tbody.appendChild(tr);
     });
 
@@ -206,4 +206,51 @@ function renderTable(players, rounds) {
     });
     footHtml += `<td>-</td></tr>`;
     tfoot.innerHTML = footHtml;
+}
+
+async function updateGameStatus(newStatus) {
+    let winnerToSave = null;
+
+    if (newStatus === "finished") {
+        if (!confirm("Czy na pewno chcesz zakończyć grę i wyłonić zwycięzcę?"))
+            return;
+
+        let maxPoints = -Infinity;
+        let winnerName = "Remis";
+        console.log(totals);
+        for (const [player, points] of Object.entries(totals)) {
+            if (points > maxPoints) {
+                maxPoints = points;
+                winnerName = player;
+            } else if (points === maxPoints) {
+                winnerName = "Remis";
+            }
+        }
+        winnerToSave = winnerName;
+    } else {
+        if (!confirm("Czy chcesz wznowić grę? Zwycięzca zostanie usunięty."))
+            return;
+        winnerToSave = null;
+    }
+    winnerChange(winnerToSave, newStatus, gameId);
+    initDetails();
+}
+
+async function handleDeleteRound(roundId) {
+    const addBtn = document.getElementById("add-round-btn");
+    if (addBtn.style.display === "none") {
+        alert(
+            "Nie można usuwać rozdań w zakończonej grze! Wznów grę, aby edytować.",
+        );
+        return;
+    }
+
+    if (
+        !confirm(
+            "Czy na pewno chcesz usunąć to rozdanie? Wyniki zostaną przeliczone.",
+        )
+    )
+        return;
+    delateOneRound(roundId);
+    initDetails();
 }

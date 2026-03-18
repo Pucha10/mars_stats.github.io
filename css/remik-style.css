@@ -76,6 +76,8 @@ td {
 .status-ongoing { color: #f29900; font-weight: bold; }
 
 .btn-view { background: #1a73e8; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+.btn-delete { background: #f84205; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+
 
 .btn-primary {
     background: #d4af37;
@@ -177,14 +179,60 @@ td {
     font-weight: bold;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     border: 2px solid #fff;
-    text-transform: uppercase;
     font-size: 14px;
 }
 
+.btn-small.btn-delete {
+    background-color: transparent;
+    color: #d93025;
+    border: 1px solid #d93025;
+    padding: 3px 8px;
+    font-size: 11px;
+    opacity: 0.6;
+    transition: 0.3s;
+}
+
+.btn-small.btn-delete:hover {
+    background-color: #d93025;
+    color: white;
+    opacity: 1;
+}
+
+.setup-container {
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 2px solid #d4af37;
+}
+
+.setup-content h3 { margin-top: 0; color: #1a472a; }
+
+.player-input-row {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.setup-input {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    flex: 1;
+}
+
+.setup-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
 
 @media (max-width: 768px) {
         .table-container {
-        overflow-x: auto; /* Pozwalamy tabeli przesuwać się na boki */
+        overflow-x: auto; 
     }
     
     td, th {
