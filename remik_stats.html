@@ -1,56 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remik - Historia Gier</title>
-    <link rel="stylesheet" href="css/remik-style.css">
-
-</head>
-<body>
-    <div class="container">
-        <header class="main-header">
-            <div class="logo-area">
-                <h1>🎴 Remik Stats</h1>
-            </div>
-            <div class="actions">
-                <button id="new-remik-game-btn" class="btn-primary" onclick="toggleNewGameForm(true)">
-                    <span class="icon">+</span> Nowa Gra
-                </button>
-                <a href="index.html" class="btn-secondary">Mars Stats</a>
-            </div>
-        </header>
-        <div id="new-game-setup" class="setup-container" style="display: none;">
-            <div class="setup-content">
-                <h3>Konfiguracja nowej gry</h3>
-                <p>Wpisz imiona graczy:</p>
-                <div id="player-inputs-list">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Remik - Historia Gier</title>
+        <link rel="stylesheet" href="css/remik-style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <header class="main-header">
+                <div class="logo-area">
+                    <h1>🎴 Remik Stats</h1>
                 </div>
-                <div class="setup-buttons">
-                    <button type="button" class="btn-action btn-edit" onclick="addPlayerInputField()">+ Dodaj gracza</button>
-                    <button type="button" class="btn-action btn-save" onclick="startNewGame()">Rozpocznij grę</button>
-                    <button type="button" class="btn-action btn-cancel" onclick="toggleNewGameForm(false)">Anuluj</button>
+                <div class="actions">
+                    <button
+                        id="new-remik-game-btn"
+                        class="btn-primary"
+                        onclick="toggleNewGameForm(true)"
+                    >
+                        <span class="icon">+</span> Nowa Gra
+                    </button>
                 </div>
+            </header>
+            <div
+                id="new-game-setup"
+                class="setup-container"
+                style="display: none"
+            >
+                <div class="setup-content">
+                    <h3>Konfiguracja nowej gry</h3>
+                    <p>Wpisz imiona graczy:</p>
+                    <div id="player-inputs-list"></div>
+                    <div class="setup-buttons">
+                        <button
+                            type="button"
+                            class="btn-action btn-edit"
+                            onclick="addPlayerInputField()"
+                        >
+                            + Dodaj gracza
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-action btn-save"
+                            onclick="startNewGame()"
+                        >
+                            Rozpocznij grę
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-action btn-cancel"
+                            onclick="toggleNewGameForm(false)"
+                        >
+                            Anuluj
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="remik-main-table">
+                    <thead>
+                        <tr>
+                            <th>LP</th>
+                            <th>Gracze</th>
+                            <th>Zwycięzca</th>
+                            <th>Status</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="remik-tbody"></tbody>
+                </table>
             </div>
         </div>
-        <div class="table-container">
-            <table id="remik-main-table">
-                <thead>
-                    <tr>
-                        <th>LP</th>
-                        <th>Gracze</th>
-                        <th>Zwycięzca</th>
-                        <th>Status</th>
-                        <th>Akcje</th>
-                    </tr>
-                </thead>
-                <tbody id="remik-tbody">
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <script src="js/supaBaseScript.js"></script>
-    <script src="js/remik-main.js"></script>
-</body>
+        <script src="js/supaBaseScript.js"></script>
+        <script src="js/remik-main.js"></script>
+    </body>
 </html>
