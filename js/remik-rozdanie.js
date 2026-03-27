@@ -14,8 +14,8 @@ async function initDetails() {
     const game = await getGameHeader(gameId);
     const rounds = await getGameRounds(gameId);
     if (game) {
-        document.getElementById("game-title").innerText = `🎴 Gra #${game.id}`;
-
+        document.getElementById("game-title").innerText =
+            `🎴 Gra #${game.game_number}`;
         currentPlayers = game.players;
         currentRoundsCount = rounds.length;
         renderTable(game.players, rounds);
