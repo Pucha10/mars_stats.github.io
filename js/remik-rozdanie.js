@@ -19,7 +19,7 @@ async function initDetails() {
         currentPlayers = game.players;
         currentRoundsCount = rounds.length;
         renderTable(game.players, rounds);
-
+        renderSummaryTable(game.players, rounds);
         const infoBox = document.getElementById("next-shuffler-info");
         const addBtn = document.getElementById("add-round-btn");
 
@@ -206,6 +206,39 @@ function renderTable(players, rounds) {
     });
     footHtml += `<td>-</td></tr>`;
     tfoot.innerHTML = footHtml;
+}
+
+function renderSummaryTable(players, rounds) {
+    const tbody = document.getElementById("summary-tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    let winCount = {};
+    players.forEach((p) => (winCount[p] = 0));
+
+    rounds.forEach((round) => {
+        for (let player in round.cards) {
+            if (round.cards[player] === 0) {
+                winCount[player]++;
+                break;
+            }
+        }
+    });
+
+    const totalRounds = rounds.length;
+
+    players.forEach((p) => {
+        const wins = winCount[p];
+        const winPercent =
+            totalRounds > 0 ? ((wins / totalRounds) * 100).toFixed(1) : 0;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td style="font-weight: bold; text-align: center; padding-left: 20px;">${p}</td>
+            <td style="font-size: 18px; color: #1e8e3e; font-weight: bold;">${wins}</td>
+            <td style="color: #666;">${winPercent}%</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 async function updateGameStatus(newStatus) {
