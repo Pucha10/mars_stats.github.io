@@ -1,11 +1,11 @@
-const corporations = ["PRISTAR", "LAKEFRONT RESORTS", "TERRALABS RESEARCH", "UTOPIA INVEST", "SEPTEM TRIBUS", "CELESTIC", "APHRODITE", "KUIPER COOPERATIVE", "REPUBLIKA THARSIS", "HELION", "FACTORUM", "PHOBLOG", "UNITED NATIONS MARS INITIATIVE", "ROBINSON INDUSTRIES", "ASTRODRILL", "PHARMACY UNION", "MANUTECH", "RECYCLON", "SPLICE GENOMIKA TAKTYCZNA", "VIRON", "MOARNING STAR INC", "ARIDOR", "ARKLIGHT", "POLYPHEMOS", "TYCHO MAGNETICS", "POSEIDON", "STORMCRAFT INCORPORATED", "WSPÓLNOTA ARKADYJSKA", "INVENTRIX", "MINING GUILD", "PHILARES", "VALLEY TRUST", "CREDICOR", "MONS INSURANCE", "SATURN SYSTEMS", "ECOLINE", "TERACTOR", "INTERPLANETARY CINEMATICS", "POINT LUNA", "CHEUNG SHING MARS", "THORGATE", "VITOR"];
 initStatsPage();
 async function initStatsPage() {
     games = await getGameResults();
     const corporationsStats = getCorporationStats(games, corporations);
-     const CorpostatsArray = Object.keys(corporationsStats).map(name => {
+    const CorpostatsArray = Object.keys(corporationsStats).map((name) => {
         const item = corporationsStats[name];
-        const winRate = item.Games > 0 ? ((item.Wins / item.Games) * 100).toFixed(1) : 0;
+        const winRate =
+            item.Games > 0 ? ((item.Wins / item.Games) * 100).toFixed(1) : 0;
         return { name, ...item, winRate: parseFloat(winRate) };
     });
     CorpostatsArray.sort((a, b) => b.winRate - a.winRate || b.Games - a.Games);
@@ -16,12 +16,12 @@ async function initStatsPage() {
 function getCorporationStats(games, corporationsList) {
     const stats = {};
     if (corporationsList && Array.isArray(corporationsList)) {
-        corporationsList.forEach(corp => {
+        corporationsList.forEach((corp) => {
             stats[corp] = { Games: 0, Wins: 0, Loses: 0 };
         });
     }
 
-    games.forEach(game => {
+    games.forEach((game) => {
         const updateStat = (corpName, didWin) => {
             if (!corpName) return;
 
@@ -30,7 +30,7 @@ function getCorporationStats(games, corporationsList) {
             }
 
             stats[corpName].Games += 1;
-            
+
             if (didWin) {
                 stats[corpName].Wins += 1;
             } else {
@@ -38,7 +38,7 @@ function getCorporationStats(games, corporationsList) {
             }
         };
 
-        const kasiaWon = game.winner === 'Kasia';
+        const kasiaWon = game.winner === "Kasia";
 
         updateStat(game.Kasia_corporation, kasiaWon);
     });
@@ -47,15 +47,15 @@ function getCorporationStats(games, corporationsList) {
 }
 
 function renderCorpoStatsTable(data) {
-    const tbody = document.getElementById('stats-body');
-    tbody.innerHTML = '';
+    const tbody = document.getElementById("stats-body");
+    tbody.innerHTML = "";
 
-    data.forEach(corp => {
+    data.forEach((corp) => {
+        const tr = document.createElement("tr");
 
-        const tr = document.createElement('tr');
-        
-        let colorClass = '';
-        if (corp.winRate >= 60) colorClass = 'style="color: #1e8e3e; font-weight: bold;"';
+        let colorClass = "";
+        if (corp.winRate >= 60)
+            colorClass = 'style="color: #1e8e3e; font-weight: bold;"';
         if (corp.winRate <= 40) colorClass = 'style="color: #d93025;"';
 
         tr.innerHTML = `
@@ -80,45 +80,49 @@ function getPointsStats(games) {
         totalAwards: 0,
         totalTitles: 0,
         totalBoard: 0,
-        totalCards: 0
+        totalCards: 0,
     };
 
-    games.forEach(game => {
+    games.forEach((game) => {
         stats.gamesCount++;
 
-        if (game.winner === 'Kasia') {
+        if (game.winner === "Kasia") {
             stats.wins++;
         } else {
             stats.loses++;
         }
-        if (game.comment == "Gra wczytana tylko do wyniku, nie mamy konkretnych statystyk") return;
+        if (
+            game.comment ==
+            "Gra wczytana tylko do wyniku, nie mamy konkretnych statystyk"
+        )
+            return;
         savedGames++;
-        stats.totalPoints += (game.Kasia_total_score || 0);
-        stats.totalWt += (game.Kasia_wt || 0);
-        stats.totalAwards += (game.Kasia_awards || 0);
-        stats.totalTitles += (game.Kasia_titles || 0);
-        stats.totalBoard += (game.Kasia_board_score || 0);
-        stats.totalCards += (game.Kasia_cards_score || 0);
+        stats.totalPoints += game.Kasia_total_score || 0;
+        stats.totalWt += game.Kasia_wt || 0;
+        stats.totalAwards += game.Kasia_awards || 0;
+        stats.totalTitles += game.Kasia_titles || 0;
+        stats.totalBoard += game.Kasia_board_score || 0;
+        stats.totalCards += game.Kasia_cards_score || 0;
     });
 
-    const winRate = stats.gamesCount > 0 
-        ? ((stats.wins / stats.gamesCount) * 100).toFixed(1) 
-        : 0;
-    
-    const avgPoints = savedGames > 0 
-        ? (stats.totalPoints / savedGames).toFixed(1) 
-        : 0;
+    const winRate =
+        stats.gamesCount > 0
+            ? ((stats.wins / stats.gamesCount) * 100).toFixed(1)
+            : 0;
+
+    const avgPoints =
+        savedGames > 0 ? (stats.totalPoints / savedGames).toFixed(1) : 0;
 
     renderSpecificStats(stats, winRate, avgPoints);
 }
 
 function renderSpecificStats(stats, winRate, avgPoints) {
-    const tbody = document.getElementById('specyfic-stats-body');
+    const tbody = document.getElementById("specyfic-stats-body");
     if (!tbody) return;
 
-    tbody.innerHTML = '';
+    tbody.innerHTML = "";
 
-    const tr = document.createElement('tr');
+    const tr = document.createElement("tr");
     tr.innerHTML = `
         <td>${stats.gamesCount}</td>
         <td style="color: #1e8e3e; font-weight: bold;">${stats.wins}</td>

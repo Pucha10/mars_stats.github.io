@@ -1,31 +1,31 @@
-const maps = ["MARS", "HELLAS", "ELYSIUM", "AMAZONIS", "VASTITAS", "UTOPIA", "CIMERIA"];
-const corporations = ["PRISTAR", "LAKEFRONT RESORTS", "TERRALABS RESEARCH", "UTOPIA INVEST", "SEPTEM TRIBUS", "CELESTIC", "APHRODITE", "KUIPER COOPERATIVE", "REPUBLIKA THARSIS", "HELION", "FACTORUM", "PHOBLOG", "UNITED NATIONS MARS INITIATIVE", "ROBINSON INDUSTRIES", "ASTRODRILL", "PHARMACY UNION", "MANUTECH", "RECYCLON", "SPLICE GENOMIKA TAKTYCZNA", "VIRON", "MOARNING STAR INC", "ARIDOR", "ARKLIGHT", "POLYPHEMOS", "TYCHO MAGNETICS", "POSEIDON", "STORMCRAFT INCORPORATED", "WSPÓLNOTA ARKADYJSKA", "INVENTRIX", "MINING GUILD", "PHILARES", "VALLEY TRUST", "CREDICOR", "MONS INSURANCE", "SATURN SYSTEMS", "ECOLINE", "TERACTOR", "INTERPLANETARY CINEMATICS", "POINT LUNA", "CHEUNG SHING MARS", "THORGATE", "VITOR"];
 initStatsPage();
 async function initStatsPage() {
     games = await getGameResults();
     const corporationsStats = getCorporationStats(games, corporations);
     const mapsStats = getMapsStats(games, maps);
     const generationsStats = getGenerationsStats(games);
-     const CorpostatsArray = Object.keys(corporationsStats).map(name => {
+    const CorpostatsArray = Object.keys(corporationsStats).map((name) => {
         const item = corporationsStats[name];
-        const winRate = item.Games > 0 ? ((item.Wins / item.Games) * 100).toFixed(1) : 0;
+        const winRate =
+            item.Games > 0 ? ((item.Wins / item.Games) * 100).toFixed(1) : 0;
         return { name, ...item, winRate: parseFloat(winRate) };
     });
     CorpostatsArray.sort((a, b) => b.winRate - a.winRate || b.Games - a.Games);
 
     renderCorpoStatsTable(CorpostatsArray);
     renderMapsStatsTable(mapsStats);
-    document.getElementById('average-duration').textContent = generationsStats.toFixed(1);
+    document.getElementById("average-duration").textContent =
+        generationsStats.toFixed(1);
 }
 function getCorporationStats(games, corporationsList) {
     const stats = {};
     if (corporationsList && Array.isArray(corporationsList)) {
-        corporationsList.forEach(corp => {
+        corporationsList.forEach((corp) => {
             stats[corp] = { Games: 0, Wins: 0, Loses: 0 };
         });
     }
 
-    games.forEach(game => {
+    games.forEach((game) => {
         const updateStat = (corpName, didWin) => {
             if (!corpName) return;
 
@@ -34,7 +34,7 @@ function getCorporationStats(games, corporationsList) {
             }
 
             stats[corpName].Games += 1;
-            
+
             if (didWin) {
                 stats[corpName].Wins += 1;
             } else {
@@ -42,8 +42,8 @@ function getCorporationStats(games, corporationsList) {
             }
         };
 
-        const dawidWon = game.winner === 'Dawid';
-        const kasiaWon = game.winner === 'Kasia';
+        const dawidWon = game.winner === "Dawid";
+        const kasiaWon = game.winner === "Kasia";
 
         updateStat(game.Dawid_corporation, dawidWon);
         updateStat(game.Kasia_corporation, kasiaWon);
@@ -54,13 +54,13 @@ function getCorporationStats(games, corporationsList) {
 
 function getMapsStats(games, mapsList) {
     const stats = {};
-        if (mapsList && Array.isArray(mapsList)) {
-        mapsList.forEach(map => {
+    if (mapsList && Array.isArray(mapsList)) {
+        mapsList.forEach((map) => {
             stats[map] = 0;
         });
     }
 
-    games.forEach(game => {
+    games.forEach((game) => {
         const mapName = game.map;
         if (mapName) {
             if (!stats[mapName]) {
@@ -71,27 +71,26 @@ function getMapsStats(games, mapsList) {
     });
 
     return stats;
-    
 }
 
 function getGenerationsStats(games) {
     let generationsSum = 0;
-    games.forEach(game => { 
+    games.forEach((game) => {
         generationsSum += game.generations || 0;
     });
     return generationsSum / games.length || 0;
 }
 
 function renderCorpoStatsTable(data) {
-    const tbody = document.getElementById('stats-body');
-    tbody.innerHTML = '';
+    const tbody = document.getElementById("stats-body");
+    tbody.innerHTML = "";
 
-    data.forEach(corp => {
+    data.forEach((corp) => {
+        const tr = document.createElement("tr");
 
-        const tr = document.createElement('tr');
-        
-        let colorClass = '';
-        if (corp.winRate >= 60) colorClass = 'style="color: #1e8e3e; font-weight: bold;"';
+        let colorClass = "";
+        if (corp.winRate >= 60)
+            colorClass = 'style="color: #1e8e3e; font-weight: bold;"';
         if (corp.winRate <= 40) colorClass = 'style="color: #d93025;"';
 
         tr.innerHTML = `
@@ -106,20 +105,24 @@ function renderCorpoStatsTable(data) {
 }
 
 function renderMapsStatsTable(data) {
-    const tbody = document.getElementById('maps-stats-body');
+    const tbody = document.getElementById("maps-stats-body");
     if (!tbody) return;
 
-    tbody.innerHTML = '';
+    tbody.innerHTML = "";
 
-    const totalGames = Object.values(data).reduce((acc, count) => acc + count, 0);
+    const totalGames = Object.values(data).reduce(
+        (acc, count) => acc + count,
+        0,
+    );
 
     const sortedMaps = Object.entries(data).sort((a, b) => b[1] - a[1]);
 
     sortedMaps.forEach(([mapName, count]) => {
-        const percentage = totalGames > 0 ? ((count / totalGames) * 100).toFixed(1) : 0;
+        const percentage =
+            totalGames > 0 ? ((count / totalGames) * 100).toFixed(1) : 0;
 
-        const tr = document.createElement('tr');
-        
+        const tr = document.createElement("tr");
+
         tr.innerHTML = `
             <td style="text-align: left; font-weight: bold; padding-left: 20px;">${mapName}</td>
             <td>${count}</td>
