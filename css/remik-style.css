@@ -259,7 +259,7 @@ td {
 }
 
 @media (max-width: 768px) {
-        .table-container {
+        .table-container, .summary-container {
         overflow-x: auto; 
     }
     
