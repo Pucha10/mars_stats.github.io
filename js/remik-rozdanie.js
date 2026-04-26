@@ -58,7 +58,7 @@ function showAddRoundForm() {
         playerInputs += `
             <td>
                 <input type="number" class="input-score round-input" 
-                       data-player="${p}" placeholder="Karty" min="0" value="0">
+                       data-player="${p}" placeholder="${p}" min="0" value="">
             </td>`;
     });
 
@@ -212,29 +212,66 @@ function renderSummaryTable(players, rounds) {
     const tbody = document.getElementById("summary-tbody");
     if (!tbody) return;
     tbody.innerHTML = "";
-    let winCount = {};
-    players.forEach((p) => (winCount[p] = 0));
 
-    rounds.forEach((round) => {
-        for (let player in round.cards) {
-            if (round.cards[player] === 0) {
-                winCount[player]++;
-                break;
+    let statsMap = players.map((p) => {
+        let pts = 0;
+        let wins = 0;
+        rounds.forEach((r) => {
+            let rSum = 0;
+            let rWin = "";
+            players.forEach((pl) => {
+                const c = r.cards[pl] || 0;
+                if (c === 0) rWin = pl;
+                else rSum += c;
+            });
+            if (p === rWin) {
+                pts += rSum;
+                wins++;
+            } else {
+                pts -= r.cards[p] || 0;
             }
-        }
+        });
+        return { name: p, points: pts, wins: wins };
+    });
+
+    statsMap.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return b.wins - a.wins;
     });
 
     const totalRounds = rounds.length;
 
-    players.forEach((p) => {
-        const wins = winCount[p];
+    let lastPlace = 1;
+
+    statsMap.forEach((player, index) => {
         const winPercent =
-            totalRounds > 0 ? ((wins / totalRounds) * 100).toFixed(1) : 0;
+            totalRounds > 0
+                ? ((player.wins / totalRounds) * 100).toFixed(1)
+                : 0;
+
+        if (
+            index > 0 &&
+            player.points === statsMap[index - 1].points &&
+            player.wins === statsMap[index - 1].wins
+        ) {
+        } else {
+            lastPlace = index + 1;
+        }
+
+        let placeDisplay;
+        if (lastPlace === 1) placeDisplay = "🥇";
+        else if (lastPlace === 2) placeDisplay = "🥈";
+        else if (lastPlace === 3) placeDisplay = "🥉";
+        else placeDisplay = lastPlace;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td style="font-weight: bold; text-align: center; padding-left: 20px;">${p}</td>
-            <td style="font-size: 18px; color: #1e8e3e; font-weight: bold;">${wins}</td>
+            <td style="font-size: 18px;">${placeDisplay}</td>
+            <td style="font-weight: bold; text-align: center;">${player.name}</td>
+            <td style="font-weight: bold; color: ${player.points >= 0 ? "#1e8e3e" : "#d93025"};">
+                ${player.points} pkt
+            </td>
+            <td style="font-size: 18px; color: #1e8e3e; font-weight: bold;">${player.wins}</td>
             <td style="color: #666;">${winPercent}%</td>
         `;
         tbody.appendChild(tr);
@@ -243,29 +280,58 @@ function renderSummaryTable(players, rounds) {
 
 async function updateGameStatus(newStatus) {
     let winnerToSave = null;
+    const rounds = await getGameRounds(gameId);
 
     if (newStatus === "finished") {
         if (!confirm("Czy na pewno chcesz zakończyć grę i wyłonić zwycięzcę?"))
             return;
 
-        let maxPoints = -Infinity;
-        let winnerName = "Remis";
-        console.log(totals);
-        for (const [player, points] of Object.entries(totals)) {
-            if (points > maxPoints) {
-                maxPoints = points;
-                winnerName = player;
-            } else if (points === maxPoints) {
-                winnerName = "Remis";
-            }
+        const stats = currentPlayers.map((player) => {
+            let pts = 0;
+            let wins = 0;
+
+            rounds.forEach((round) => {
+                let roundSum = 0;
+                let roundWinner = "";
+
+                currentPlayers.forEach((p) => {
+                    const c = round.cards[p] || 0;
+                    if (c === 0) roundWinner = p;
+                    else roundSum += c;
+                });
+
+                if (player === roundWinner) {
+                    pts += roundSum;
+                    wins += 1;
+                } else {
+                    pts -= round.cards[player] || 0;
+                }
+            });
+
+            return { name: player, pts: pts, wins: wins };
+        });
+
+        stats.sort((a, b) => {
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            return b.wins - a.wins;
+        });
+
+        if (
+            stats.length > 1 &&
+            stats[0].pts === stats[1].pts &&
+            stats[0].wins === stats[1].wins
+        ) {
+            winnerToSave = "Remis";
+        } else {
+            winnerToSave = stats[0].name;
         }
-        winnerToSave = winnerName;
     } else {
         if (!confirm("Czy chcesz wznowić grę? Zwycięzca zostanie usunięty."))
             return;
         winnerToSave = null;
     }
-    winnerChange(winnerToSave, newStatus, gameId);
+
+    await winnerChange(winnerToSave, newStatus, gameId);
     initDetails();
 }
 
