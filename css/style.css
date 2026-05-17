@@ -303,12 +303,50 @@ tbody tr:hover {
     border-radius: 8px;
 }
 
+.chart-container {
+    margin-top: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.chart-scroll-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px; 
+}
+
+.chart-scroll-container::-webkit-scrollbar {
+    height: 6px;
+}
+.chart-scroll-container::-webkit-scrollbar-thumb {
+    background: #d4af37;
+    border-radius: 10px;
+}
+
+.canvas-wrapper {
+    position: relative;
+    height: 400px;
+}
+
 
 @media (max-width: 900px) {
     .main-header {
         flex-direction: column;
         padding: 15px;
         text-align: center;
+    }
+    
+    .chart-container {
+        padding: 10px;
+    }
+
+    .canvas-wrapper {
+        height: 350px; 
     }
 
     table, tbody, tr, td {
