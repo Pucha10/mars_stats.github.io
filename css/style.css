@@ -303,34 +303,37 @@ tbody tr:hover {
     border-radius: 8px;
 }
 
-.chart-container {
-    margin-top: 30px;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+#trend-chart-container {
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden; 
 }
 
 .chart-scroll-container {
     width: 100%;
-    overflow-x: auto;
+    overflow-x: auto !important; 
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 10px; 
 }
 
 .chart-scroll-container::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
 }
 .chart-scroll-container::-webkit-scrollbar-thumb {
-    background: #d4af37;
-    border-radius: 10px;
+    background: #d4af37; 
+    border-radius: 4px;
+}
+.chart-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
 }
 
 .canvas-wrapper {
     position: relative;
-    height: 400px;
+    height: 400px; 
+    min-width: 100%; 
 }
 
 
