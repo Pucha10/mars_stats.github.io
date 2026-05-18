@@ -269,7 +269,14 @@ async function winnerChange(winnerToSave, newStatus, gameId) {
     }
 }
 
-async function delateOneRound(roundId) {
+async function delateOneRound(roundId, password) {
+    const gameId = await getGameIdFromRound(roundId);
+    const realPasswordHash = await getGamePassword(gameId);
+    const inputHash = await sha256(password);
+    if (inputHash != realPasswordHash) {
+        alert("Niepoprawne hasło!");
+        return;
+    }
     try {
         const response = await fetch(
             `${SUPABASE_URL}/rest/v1/remik_rounds?id=eq.${roundId}`,
@@ -288,31 +295,73 @@ async function delateOneRound(roundId) {
 }
 
 async function addNewRemikGame(newGameData) {
-    try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/remik_games`, {
-            method: "POST",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json",
-                Prefer: "return=representation",
-            },
-            body: JSON.stringify(newGameData),
-        });
+    const passwordPlain = newGameData.passwordHash;
+    newGameData.passwordHash = await sha256(passwordPlain);
 
-        if (response.ok) {
-            const data = await response.json();
-            const newId = data[0].id;
-            window.location.href = `remik_detale.html?id=${newId}`;
-        } else {
+    let newGameId = null;
+
+    try {
+        const responseGame = await fetch(
+            `${SUPABASE_URL}/rest/v1/remik_games`,
+            {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                    Prefer: "return=representation",
+                },
+                body: JSON.stringify(newGameData),
+            },
+        );
+
+        if (!responseGame.ok) {
             alert("Błąd podczas tworzenia gry.");
+            return;
         }
+
+        const gameDataResponse = await responseGame.json();
+        newGameId = gameDataResponse[0].id;
+
+        const plainTextData = {
+            game_id: newGameId,
+            password_plain: passwordPlain,
+        };
+
+        const responsePlainText = await fetch(
+            `${SUPABASE_URL}/rest/v1/plain_passwords`,
+            {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                    Prefer: "return=representation",
+                },
+                body: JSON.stringify(plainTextData),
+            },
+        );
+
+        if (!responsePlainText.ok) {
+            console.error(
+                "Udało się stworzyć grę, ale nie udało się zapisać czystego hasła.",
+            );
+        }
+
+        window.location.href = `remik_detale.html?id=${newGameId}`;
     } catch (err) {
-        console.error("Błąd:", err);
+        console.error("Błąd krytyczny połączenia:", err);
+        alert("Wystąpił błąd krytyczny przy tworzeniu gry.");
     }
 }
 
-async function deleteRemikGame(id) {
+async function deleteRemikGame(id, password) {
+    const realPasswordHash = await getGamePassword(id);
+    const inputHash = await sha256(password);
+    if (inputHash != realPasswordHash) {
+        alert("Niepoprawne hasło!");
+        return;
+    }
     try {
         const response = await fetch(
             `${SUPABASE_URL}/rest/v1/remik_games?id=eq.${id}`,
@@ -336,4 +385,44 @@ async function deleteRemikGame(id) {
         console.error("Błąd sieci:", error);
         alert("Błąd połączenia z serwerem.");
     }
+}
+
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+    const hashHex = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    console.log(hashHex);
+    return hashHex;
+}
+
+async function getGamePassword(id) {
+    const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/remik_games?id=eq.${id}&select=passwordHash`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    const data = await resp.json();
+    return data[0].passwordHash;
+}
+
+async function getGameIdFromRound(id) {
+    const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/remik_rounds?id=eq.${id}&select=game_id`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    const data = await resp.json();
+    return data[0].game_id;
 }

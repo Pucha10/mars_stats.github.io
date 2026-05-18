@@ -345,107 +345,104 @@ async function handleDeleteRound(roundId) {
         );
         return;
     }
-
-    if (
-        !confirm(
-            "Czy na pewno chcesz usunąć to rozdanie? Wyniki zostaną przeliczone.",
-        )
-    )
-        return;
-    delateOneRound(roundId);
+    const pass = prompt("Podaj hasło gry:");
+    if (pass == null) return;
+    await delateOneRound(roundId, pass);
     initDetails();
 }
 
-
 function createPlayerNode(letter, bgColor) {
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = 24;
     canvas.height = 24;
-    const ctx = canvas.getContext('2d');
-    
+    const ctx = canvas.getContext("2d");
+
     ctx.beginPath();
     ctx.arc(12, 12, 11, 0, 2 * Math.PI);
     ctx.fillStyle = bgColor;
     ctx.fill();
-    ctx.strokeStyle = '#fff';
+    ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
     ctx.stroke();
-    
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(letter.toUpperCase(), 12, 13); 
-    
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(letter.toUpperCase(), 12, 13);
+
     return canvas;
 }
 
-
 function renderTrendChart(players, rounds) {
-    const container = document.getElementById('trend-chart-container');
-    
+    const container = document.getElementById("trend-chart-container");
+
     if (rounds.length === 0) {
-        container.style.display = 'none';
+        container.style.display = "none";
         return;
     }
-    
-    container.style.display = 'block';
-    const dynamicWrapper = document.getElementById('dynamic-canvas-wrapper');
-    const minPixelsPerRound = 45; 
+
+    container.style.display = "block";
+    const dynamicWrapper = document.getElementById("dynamic-canvas-wrapper");
+    const minPixelsPerRound = 45;
     const calculatedWidth = rounds.length * minPixelsPerRound;
     if (calculatedWidth > window.innerWidth) {
         dynamicWrapper.style.width = `${calculatedWidth}px`;
     } else {
-        dynamicWrapper.style.width = '100%';
+        dynamicWrapper.style.width = "100%";
     }
 
     let cumulativePts = {};
     let cumulativeWins = {};
-    let chartHistory = {}; 
-    
-    players.forEach(p => { 
-        cumulativePts[p] = 0; 
-        cumulativeWins[p] = 0; 
-        chartHistory[p] = []; 
+    let chartHistory = {};
+
+    players.forEach((p) => {
+        cumulativePts[p] = 0;
+        cumulativeWins[p] = 0;
+        chartHistory[p] = [];
     });
 
-    const labels =[]; 
+    const labels = [];
 
     rounds.forEach((round) => {
         labels.push(`R${round.round_number}`);
-        
+
         let roundSum = 0;
         let roundWinner = "";
-        
-        players.forEach(p => {
+
+        players.forEach((p) => {
             const c = round.cards[p] || 0;
             if (c === 0) roundWinner = p;
             else roundSum += c;
         });
 
-        players.forEach(p => {
+        players.forEach((p) => {
             if (p === roundWinner) {
                 cumulativePts[p] += roundSum;
                 cumulativeWins[p]++;
             } else {
-                cumulativePts[p] -= (round.cards[p] || 0);
+                cumulativePts[p] -= round.cards[p] || 0;
             }
         });
 
-        let currentStandings = players.map(p => ({
-            name: p, 
-            pts: cumulativePts[p], 
-            wins: cumulativeWins[p]
-        })).sort((a, b) => {
-            if (b.pts !== a.pts) return b.pts - a.pts;
-            return b.wins - a.wins;
-        });
+        let currentStandings = players
+            .map((p) => ({
+                name: p,
+                pts: cumulativePts[p],
+                wins: cumulativeWins[p],
+            }))
+            .sort((a, b) => {
+                if (b.pts !== a.pts) return b.pts - a.pts;
+                return b.wins - a.wins;
+            });
 
         let currentRank = 1;
         currentStandings.forEach((st, index) => {
-            if (index > 0 && 
-                st.pts === currentStandings[index - 1].pts && 
-                st.wins === currentStandings[index - 1].wins) {
+            if (
+                index > 0 &&
+                st.pts === currentStandings[index - 1].pts &&
+                st.wins === currentStandings[index - 1].wins
+            ) {
             } else {
                 currentRank = index + 1;
             }
@@ -453,7 +450,14 @@ function renderTrendChart(players, rounds) {
         });
     });
 
-    const colors =['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0'];
+    const colors = [
+        "#e6194b",
+        "#3cb44b",
+        "#4363d8",
+        "#f58231",
+        "#911eb4",
+        "#46f0f0",
+    ];
     const datasets = players.map((p, index) => {
         const color = colors[index % colors.length];
         return {
@@ -466,54 +470,54 @@ function renderTrendChart(players, rounds) {
             pointRadius: 10,
             pointHoverRadius: 12,
             fill: false,
-            tension: 0.2 
+            tension: 0.2,
         };
     });
 
-    const ctx = document.getElementById('trendChart').getContext('2d');
-    
+    const ctx = document.getElementById("trendChart").getContext("2d");
+
     if (trendChartInstance) {
         trendChartInstance.destroy();
     }
 
     trendChartInstance = new Chart(ctx, {
-        type: 'line',
+        type: "line",
         data: {
             labels: labels,
-            datasets: datasets
+            datasets: datasets,
         },
         options: {
             clip: false,
             responsive: true,
-            maintainAspectRatio: false, 
+            maintainAspectRatio: false,
             scales: {
                 y: {
                     reverse: true,
                     min: 1,
                     max: players.length,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
                     },
                     title: {
                         display: true,
-                        text: 'Miejsce'
-                    }
+                        text: "Miejsce",
+                    },
                 },
                 x: {
                     offset: true,
                     ticks: {
-                        color: '#ccc' 
-                    }
-                }
+                        color: "#ccc",
+                    },
+                },
             },
             plugins: {
                 legend: {
-                    position: 'bottom', 
+                    position: "bottom",
                     labels: {
                         usePointStyle: true,
-                    }
-                }
-            }
-        }
+                    },
+                },
+            },
+        },
     });
 }

@@ -32,7 +32,7 @@ function viewGameDetails(id) {
 function toggleNewGameForm(show) {
     const form = document.getElementById("new-game-setup");
     const list = document.getElementById("player-inputs-list");
-
+    const passwordInput = document.getElementById("new-game-password");
     if (show) {
         form.style.display = "block";
         list.innerHTML = "";
@@ -77,6 +77,13 @@ async function startNewGame() {
         return;
     }
 
+    const gamePassword = document.getElementById("new-game-password").value;
+
+    if (!gamePassword) {
+        alert("Musisz podać hasło do gry!");
+        return;
+    }
+
     const results = await fetchRemikGames();
     const nextGameNumber =
         results.length > 0
@@ -89,18 +96,14 @@ async function startNewGame() {
         status: "ongoing",
         winner: null,
         created_at: new Date().toISOString(),
+        passwordHash: gamePassword,
     };
     addNewRemikGame(newGameData);
 }
 
 async function handleDeleteGame(id) {
-    if (
-        !confirm(
-            `Czy na pewno chcesz usunąć Grę ? Wszystkie zapisane rozdania tej gry zostaną bezpowrotnie skasowane.`,
-        )
-    ) {
-        return;
-    }
-    await deleteRemikGame(id);
+    const pass = prompt("Podaj hasło gry:");
+    if (pass == null) return;
+    await deleteRemikGame(id, pass);
     renderRemikGames();
 }
