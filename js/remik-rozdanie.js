@@ -2,6 +2,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const gameId = urlParams.get("id");
 let currentPlayers = [];
 let trendChartInstance = null;
+let pointsChartInstance = null;
 let currentRoundsCount = 0;
 let totals = {};
 if (!gameId) {
@@ -375,31 +376,28 @@ function createPlayerNode(letter, bgColor) {
 }
 
 function renderTrendChart(players, rounds) {
-    const container = document.getElementById("trend-chart-container");
+    const trendContainer = document.getElementById("trend-chart-container");
+    const pointsContainer = document.getElementById("points-chart-container");
 
     if (rounds.length === 0) {
-        container.style.display = "none";
+        trendContainer.style.display = "none";
+        pointsContainer.style.display = "none";
         return;
     }
 
-    container.style.display = "block";
-    const dynamicWrapper = document.getElementById("dynamic-canvas-wrapper");
-    const minPixelsPerRound = 45;
-    const calculatedWidth = rounds.length * minPixelsPerRound;
-    if (calculatedWidth > window.innerWidth) {
-        dynamicWrapper.style.width = `${calculatedWidth}px`;
-    } else {
-        dynamicWrapper.style.width = "100%";
-    }
+    trendContainer.style.display = "block";
+    pointsContainer.style.display = "block";
 
     let cumulativePts = {};
     let cumulativeWins = {};
-    let chartHistory = {};
+    let chartHistoryRank = {};
+    let chartHistoryPoints = {};
 
     players.forEach((p) => {
         cumulativePts[p] = 0;
         cumulativeWins[p] = 0;
-        chartHistory[p] = [];
+        chartHistoryRank[p] = [];
+        chartHistoryPoints[p] = [];
     });
 
     const labels = [];
@@ -423,6 +421,7 @@ function renderTrendChart(players, rounds) {
             } else {
                 cumulativePts[p] -= round.cards[p] || 0;
             }
+            chartHistoryPoints[p].push(cumulativePts[p]);
         });
 
         let currentStandings = players
@@ -446,9 +445,26 @@ function renderTrendChart(players, rounds) {
             } else {
                 currentRank = index + 1;
             }
-            chartHistory[st.name].push(currentRank);
+            chartHistoryRank[st.name].push(currentRank);
         });
     });
+
+    const dynamicWrapperRank = document.getElementById(
+        "dynamic-canvas-wrapper",
+    );
+    const dynamicWrapperPoints = document.getElementById(
+        "dynamic-points-wrapper",
+    );
+    const minPixelsPerRound = 45;
+    const calculatedWidth = rounds.length * minPixelsPerRound;
+
+    if (calculatedWidth > window.innerWidth) {
+        dynamicWrapperRank.style.width = `${calculatedWidth}px`;
+        dynamicWrapperPoints.style.width = `${calculatedWidth}px`;
+    } else {
+        dynamicWrapperRank.style.width = "100%";
+        dynamicWrapperPoints.style.width = "100%";
+    }
 
     const colors = [
         "#e6194b",
@@ -458,11 +474,12 @@ function renderTrendChart(players, rounds) {
         "#911eb4",
         "#46f0f0",
     ];
-    const datasets = players.map((p, index) => {
+
+    const datasetsRank = players.map((p, index) => {
         const color = colors[index % colors.length];
         return {
             label: p,
-            data: chartHistory[p],
+            data: chartHistoryRank[p],
             borderColor: color,
             backgroundColor: color,
             borderWidth: 3,
@@ -474,48 +491,89 @@ function renderTrendChart(players, rounds) {
         };
     });
 
-    const ctx = document.getElementById("trendChart").getContext("2d");
+    const datasetsPoints = players.map((p, index) => {
+        const color = colors[index % colors.length];
+        return {
+            label: p,
+            data: chartHistoryPoints[p],
+            borderColor: color,
+            backgroundColor: color,
+            borderWidth: 3,
+            pointStyle: createPlayerNode(p.charAt(0), color),
+            pointRadius: 10,
+            pointHoverRadius: 12,
+            fill: false,
+            tension: 0.2,
+        };
+    });
 
-    if (trendChartInstance) {
-        trendChartInstance.destroy();
-    }
+    const ctxRank = document.getElementById("trendChart").getContext("2d");
+    if (trendChartInstance) trendChartInstance.destroy();
 
-    trendChartInstance = new Chart(ctx, {
+    trendChartInstance = new Chart(ctxRank, {
         type: "line",
-        data: {
-            labels: labels,
-            datasets: datasets,
-        },
+        data: { labels: labels, datasets: datasetsRank },
         options: {
-            clip: false,
             responsive: true,
             maintainAspectRatio: false,
+            clip: false,
+            layout: { padding: { top: 20, bottom: 20, left: 15, right: 25 } },
             scales: {
                 y: {
                     reverse: true,
                     min: 1,
                     max: players.length,
-                    ticks: {
-                        stepSize: 1,
-                    },
+                    ticks: { stepSize: 1 },
                     title: {
                         display: true,
                         text: "Miejsce",
+                        color: "#666",
+                        font: { weight: "bold" },
                     },
                 },
-                x: {
-                    offset: true,
-                    ticks: {
-                        color: "#ccc",
-                    },
-                },
+                x: { offset: true },
             },
             plugins: {
                 legend: {
                     position: "bottom",
-                    labels: {
-                        usePointStyle: true,
+                    labels: { usePointStyle: true, padding: 20 },
+                },
+            },
+        },
+    });
+
+    const ctxPoints = document.getElementById("pointsChart").getContext("2d");
+    if (pointsChartInstance) pointsChartInstance.destroy();
+
+    pointsChartInstance = new Chart(ctxPoints, {
+        type: "line",
+        data: { labels: labels, datasets: datasetsPoints },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            clip: false,
+            layout: { padding: { top: 30, bottom: 30, left: 15, right: 25 } },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: "Punkty",
+                        color: "#666",
+                        font: { weight: "bold" },
                     },
+                    grid: {
+                        color: (context) =>
+                            context.tick.value === 0 ? "#333" : "#e0e0e0",
+                        lineWidth: (context) =>
+                            context.tick.value === 0 ? 2 : 1,
+                    },
+                },
+                x: { offset: true },
+            },
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: { usePointStyle: true, padding: 20 },
                 },
             },
         },

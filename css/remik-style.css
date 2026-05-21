@@ -258,9 +258,56 @@ td {
     gap: 10px;
 }
 
+#trend-chart-container {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; 
+}
+
+.chart-scroll-container {
+    width: 100%;
+    overflow-x: auto !important; 
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px; 
+}
+
+.chart-scroll-container::-webkit-scrollbar {
+    height: 8px;
+}
+.chart-scroll-container::-webkit-scrollbar-thumb {
+    background: #d4af37; 
+    border-radius: 4px;
+}
+.chart-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.canvas-wrapper {
+    position: relative;
+    height: 200px; 
+    min-width: 100%; 
+}
+
 @media (max-width: 768px) {
         .table-container, .summary-container {
         overflow-x: auto; 
+    }
+
+        .main-header {
+        flex-direction: column;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    .chart-container {
+        padding: 10px;
+    }
+
+    .canvas-wrapper {
+        height: 200px; 
     }
     
     td, th {
@@ -271,4 +318,9 @@ td {
     .input-score {
         width: 50px;
     }
+    
+    #dynamic-points-wrapper {
+        height: 400px !important; 
+    }
+    
 }
