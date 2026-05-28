@@ -1,5 +1,7 @@
 renderRemikGames();
+let players = [];
 async function renderRemikGames() {
+    players = await getPlayersList();
     const tbody = document.getElementById("remik-tbody");
     results = await fetchRemikGames();
     tbody.innerHTML = "";
@@ -17,8 +19,11 @@ async function renderRemikGames() {
             <td style="font-weight: bold;">${game.winner || "---"}</td>
             <td class="status-${game.status}">${game.status === "finished" ? "Zakończona" : "W toku"}</td>
             <td>
-                <button class="btn-view" onclick="viewGameDetails(${game.id})">Szczegóły</button>
-                <button class="btn-action btn-delete" style="margin-left: 5px;" onclick="handleDeleteGame(${game.id})">Usuń</button>
+                <!-- NOWY KONTENER NA PRZYCISKI -->
+                <div class="actions-cell">
+                    <button class="btn-view" onclick="viewGameDetails(${game.id})">Szczegóły</button>
+                    <button class="btn-action btn-delete" onclick="handleDeleteGame(${game.id}, ${game.game_number})">Usuń</button>
+                </div>
             </td>
         `;
         tbody.appendChild(tr);
@@ -29,7 +34,7 @@ function viewGameDetails(id) {
     window.location.href = `remik_detale.html?id=${id}`;
 }
 
-function toggleNewGameForm(show) {
+async function toggleNewGameForm(show) {
     const form = document.getElementById("new-game-setup");
     const list = document.getElementById("player-inputs-list");
     const passwordInput = document.getElementById("new-game-password");
@@ -54,17 +59,47 @@ function addPlayerInputField() {
         return;
     }
 
+    const optionsHtml = players
+        .map((p) => `<option value="${p.Name}">${p.Name}</option>`)
+        .join("");
+
     const div = document.createElement("div");
     div.className = "player-input-row";
+
+    const uniqueSelectId = `select-player-${Date.now()}-${currentInputs}`;
+
     div.innerHTML = `
-        <input type="text" class="setup-input player-name-val" placeholder="Imię gracza ${currentInputs + 1}">
-        ${currentInputs > 1 ? '<button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer;">❌</button>' : ""}
+        <select id="${uniqueSelectId}" class="setup-input player-name-val">
+            <option value="">-- Wpisz gracza ${currentInputs + 1} --</option>
+            ${optionsHtml}
+        </select>
+        ${currentInputs > 1 ? `<button type="button" onclick="removePlayerField(this)" style="background:none; border:none; cursor:pointer; font-size:16px;">❌</button>` : ""}
     `;
+
     list.appendChild(div);
+
+    new TomSelect(`#${uniqueSelectId}`, {
+        create: false,
+        sortField: {
+            field: "text",
+            direction: "asc",
+        },
+        placeholder: `-- Wybierz gracza ${currentInputs + 1} --`,
+        allowEmptyOption: true,
+    });
+}
+
+function removePlayerField(button) {
+    const row = button.parentElement;
+    const select = row.querySelector("select");
+    if (select && select.tomselect) {
+        select.tomselect.destroy();
+    }
+    row.remove();
 }
 
 async function startNewGame() {
-    const nameInputs = document.querySelectorAll(".player-name-val");
+    const nameInputs = document.querySelectorAll("select.player-name-val");
     const playersArray = [];
 
     nameInputs.forEach((input) => {
@@ -106,4 +141,44 @@ async function handleDeleteGame(id) {
     if (pass == null) return;
     await deleteRemikGame(id, pass);
     renderRemikGames();
+}
+
+function openPlayersModal() {
+    document.getElementById("players-modal").style.display = "flex";
+    loadPlayersIntoModal();
+}
+
+function closePlayersModal() {
+    document.getElementById("players-modal").style.display = "none";
+}
+
+async function loadPlayersIntoModal() {
+    players = await getPlayersList();
+    const tbody = document.getElementById("modal-players-tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    players.forEach((p) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+                <td style="text-align: left; padding-left: 20px; font-weight: bold; color: #1a472a;">${p.Name}</td>
+                <td>
+                    <button class="btn-action btn-view" onclick="showPlayerStats('${p.Name}')">📊 Statystyki</button>
+                </td>
+            `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function addNewPlayerPrompt() {
+    const name = prompt("Wpisz imię nowego gracza:");
+    if (!name || name.trim() === "") return;
+    const trimmedName = name.trim();
+    await addNewPlayer(trimmedName);
+    loadPlayersIntoModal();
+}
+
+function showPlayerStats(playerName) {
+    alert(
+        `Otwieranie statystyk dla gracza: ${playerName} (Kiedyś tu je zrobie)`,
+    );
 }

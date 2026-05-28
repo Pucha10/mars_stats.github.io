@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Remik - Historia Gier</title>
         <link rel="stylesheet" href="css/remik-style.css" />
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/css/tom-select.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/js/tom-select.complete.min.js"></script>
+        <link rel="stylesheet" href="css/remik-style.css">
     </head>
     <body>
         <div class="container">
@@ -13,6 +16,13 @@
                     <h1>🎴 Remik Stats</h1>
                 </div>
                 <div class="actions">
+                    <button
+                        id="view-players-btn"
+                        class="btn-players"
+                        onclick="openPlayersModal()"
+                    >
+                    <span class="icon"></span> Gracze
+                    </button>
                     <button
                         id="new-remik-game-btn"
                         class="btn-primary"
@@ -73,6 +83,31 @@
                     </thead>
                     <tbody id="remik-tbody"></tbody>
                 </table>
+            </div>
+        </div>
+        <div id="players-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h2>👤 Zarządzanie Graczami</h2>
+                    <button onclick="closePlayersModal()" class="btn-close">&times;</button>
+                </header>
+
+                <div class="modal-actions-top" style="margin-bottom: 15px;">
+                    <button onclick="addNewPlayerPrompt()" class="btn-primary">+ Dodaj gracza</button>
+                </div>
+            
+                <div class="table-container" style="max-height: 300px; overflow-y: auto; box-shadow: none; border: 1px solid #eee;">
+                    <table id="modal-players-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; padding-left: 15px;">Imię</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-players-tbody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 

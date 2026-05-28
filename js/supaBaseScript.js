@@ -424,3 +424,52 @@ async function getGameIdFromRound(id) {
     const data = await resp.json();
     return data[0].game_id;
 }
+
+async function getPlayersList() {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/Players?select=Name&order=Name.asc`,
+            {
+                method: "GET",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+            },
+        );
+
+        if (!response.ok) throw new Error(`Błąd: ${response.statusText}`);
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Błąd pobierania danych:", error);
+    }
+}
+
+async function addNewPlayer(name) {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/Players`, {
+            method: "POST",
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ Name: name }),
+        });
+
+        if (response.ok) {
+            alert(`Gracz "${name}" został pomyślnie dodany!`);
+        } else {
+            const err = await response.json();
+            alert(
+                "Błąd zapisu: " +
+                    (err.message || "prawdopodobnie gracz już istnieje"),
+            );
+        }
+    } catch (error) {
+        console.error("Błąd zapisu gracza:", error);
+    }
+}
