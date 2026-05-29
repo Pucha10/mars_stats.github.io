@@ -19,7 +19,6 @@ async function renderRemikGames() {
             <td style="font-weight: bold;">${game.winner || "---"}</td>
             <td class="status-${game.status}">${game.status === "finished" ? "Zakończona" : "W toku"}</td>
             <td>
-                <!-- NOWY KONTENER NA PRZYCISKI -->
                 <div class="actions-cell">
                     <button class="btn-view" onclick="viewGameDetails(${game.id})">Szczegóły</button>
                     <button class="btn-action btn-delete" onclick="handleDeleteGame(${game.id}, ${game.game_number})">Usuń</button>

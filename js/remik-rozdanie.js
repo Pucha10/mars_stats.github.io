@@ -198,7 +198,9 @@ function renderTable(players, rounds) {
             ${pointsCells}
             <td class="winner-cell">${roundWinner}</td>
             <td>
-                <button class="btn-action btn-delete btn-small" onclick="handleDeleteRound(${round.id})">Usuń</button>
+            <div class="actions-cell">
+                <button class="btn-action btn-delete" onclick="handleDeleteRound(${round.id})">Usuń</button>
+            </div>
             </td>`;
         tbody.appendChild(tr);
     });
