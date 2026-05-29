@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Gracza</title>
+    <link rel="stylesheet" href="css/remik-style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <div class="logo-area">
+                <h1 id="player-name-title">👤 Profil Gracza</h1>
+            </div>
+            <div class="actions">
+                <a href="remik_stats.html" class="btn-secondary">Powrót do gier</a>
+            </div>
+        </header>
+
+        <div class="stats-grid" id="stats-grid">
+            <div class="stats-section-card games-card">
+                <h3>🎮 Statystyki Gier</h3>
+                <div class="stats-row">
+                    <span class="label">Rozegrane gry:</span>
+                    <span class="value" id="games-played">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Wygrane gry:</span>
+                    <span class="value val-green" id="games-won">0</span>
+                </div>
+                <div class="stats-row highlight">
+                    <span class="label">Win Rate (Gry):</span>
+                    <span class="value" id="games-winrate">0.0%</span>
+                </div>
+            </div>
+
+            <div class="stats-section-card rounds-card">
+                <h3>🎴 Statystyki Rozdań</h3>
+                <div class="stats-row">
+                    <span class="label">Rozegrane rozdania:</span>
+                    <span class="value" id="rounds-played">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Wygrane rozdania:</span>
+                    <span class="value val-green" id="rounds-won">0</span>
+                </div>
+                <div class="stats-row highlight">
+                    <span class="label">Win Rate (Rozdania):</span>
+                    <span class="value" id="rounds-winrate">0.0%</span>
+                </div>
+            </div>
+
+            <div class="stats-section-card points-card">
+                <h3>💯 Bilans Punktowy</h3>
+                <div class="stats-row">
+                    <span class="label">Punkty zdobyte (+):</span>
+                    <span class="value val-green" id="points-earned">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Punkty stracone (-):</span>
+                    <span class="value val-red" id="points-lost">0</span>
+                </div>
+                <div class="stats-row highlight net-points-row" id="net-points-bg">
+                    <span class="label">Wynik łączny:</span>
+                    <span class="value" id="points-net">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/supaBaseScript.js"></script>
+    <script src="js/statystyki-gracza.js"></script>
+</body>
+</html>

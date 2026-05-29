@@ -177,7 +177,5 @@ async function addNewPlayerPrompt() {
 }
 
 function showPlayerStats(playerName) {
-    alert(
-        `Otwieranie statystyk dla gracza: ${playerName} (Kiedyś tu je zrobie)`,
-    );
+    window.location.href = `statystyki_gracza.html?name=${playerName}`;
 }

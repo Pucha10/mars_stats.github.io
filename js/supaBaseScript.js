@@ -473,3 +473,20 @@ async function addNewPlayer(name) {
         console.error("Błąd zapisu gracza:", error);
     }
 }
+async function getPlayerStats(playerName) {
+    try {
+        const responseGames = await fetch(
+            `${SUPABASE_URL}/rest/v1/remik_games?players=cs.{"${playerName}"}`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        const games = await responseGames.json();
+        return games;
+    } catch (err) {
+        console.error("Błąd ładowania statystyk:", err);
+    }
+}
