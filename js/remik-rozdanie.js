@@ -69,9 +69,11 @@ function showAddRoundForm() {
         <td>${currentRoundsCount + 1}</td>
         <td><strong>${nextShuffler}</strong></td>
         ${playerInputs}
-        <td>
-            <button class="btn-action btn-save btn-small" onclick="saveNewRound()">Zapisz</button>
-            <button class="btn-action btn-cancel btn-small" onclick="initDetails()">X</button>
+        <td class="save-round-cell">
+            <button class="btn-action btn-save btn-add-round-form" onclick="saveNewRound(this)" >Zapisz</button>
+        </td>
+        <td class="cancel-round-cell">
+            <button class="btn-action btn-cancel btn-add-round-form" onclick="initDetails()">X</button>
         </td>
     `;
 
@@ -79,7 +81,13 @@ function showAddRoundForm() {
     tr.scrollIntoView({ behavior: "smooth" });
 }
 
-async function saveNewRound() {
+async function saveNewRound(btn) {
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Zapis...";
+        btn.style.opacity = "0.7";
+        btn.style.cursor = "not-allowed";
+    }
     const inputs = document.querySelectorAll(".round-input");
     const shuffler = document.getElementById("next-shuffler-name").innerText;
 
@@ -91,17 +99,26 @@ async function saveNewRound() {
         if (val === 0) zeroCount++;
     });
 
+    const reEnableButton = () => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "Zapisz";
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
+        }
+    };
+
     if (zeroCount === 0) {
         alert("Ktoś musi mieć 0 kart (zwycięzca rozdania)!");
+        reEnableButton();
         return;
     }
     if (zeroCount > 1) {
-        if (
-            !confirm(
-                "Więcej niż jedna osoba ma 0 kart. Czy to na pewno poprawne?",
-            )
-        )
-            return;
+        alert(
+            "Nie może być więcej niż jeden zwycięzca (więcej niż jedna osoba z 0 kart)!",
+        );
+        reEnableButton();
+        return;
     }
     const newRound = {
         game_id: parseInt(gameId),
