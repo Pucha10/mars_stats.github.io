@@ -10,7 +10,7 @@ const groupsConfig = {
     "H": ["Hiszpania", "Urugwaj", "Arabia Saudyjska", "Republika Zielonego Przylądka"],
     "I": ["Francja", "Senegal", "Norwegia", "Irak"],
     "J": ["Argentyna", "Austria", "Algieria", "Jordania"],
-    "K": ["Portugalia", "Kolumbia", "Uzbekistan", "Demokratyczna Republika Konga"],
+    "K": ["Portugalia", "Kolumbia", "Uzbekistan", "DR Kongo"],
     "L": ["Anglia", "Chorwacja", "Ghana", "Panama"]
   }
 };
