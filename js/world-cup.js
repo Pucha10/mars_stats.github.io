@@ -15,7 +15,7 @@ const groupsConfig = {
   }
 };
 
-// --- Dane techniczne Aneksu C (pule dopuszczalnych rywali dla zwycięzców grup) ---
+// --- Dane techniczne Aneksu C ---
 const annexCPools = {
   "1A": ["C", "E", "F", "H", "I"],
   "1B": ["E", "F", "G", "I", "J"],
@@ -27,7 +27,6 @@ const annexCPools = {
   "1L": ["E", "H", "I", "J", "K"]
 };
 
-// Główne kombinacje z oficjalnego Aneksu C (Wikipedia/FIFA) dla szybkiego dopasowania
 const annexCOverrides = {
   "EFGHIJKL": { "1A": "E", "1B": "J", "1D": "I", "1E": "F", "1G": "H", "1I": "G", "1K": "L", "1L": "K" },
   "DFGHIJKL": { "1A": "H", "1B": "G", "1D": "I", "1E": "D", "1G": "J", "1I": "F", "1K": "L", "1L": "K" },
@@ -36,24 +35,33 @@ const annexCOverrides = {
   "DEFGIJKL": { "1A": "E", "1B": "G", "1D": "I", "1E": "D", "1G": "J", "1I": "F", "1K": "L", "1L": "K" }
 };
 
-// Stan lokalny aplikacji
+// Stan lokalny (aktualne wybory użytkownika)
 let currentUserId = null;
 let currentUsername = "";
-let currentTab = "groups"; // "groups", "bracket", "leaderboard"
-let activeBracketRound = "r32"; // "r32", "r16", "qf", "sf", "final"
+let currentTab = "groups";
+let activeBracketRound = "r32";
 
 let localGroups = JSON.parse(JSON.stringify(groupsConfig.groups));
 let selectedThirds = new Set();
+let bracketMatches = {};
 
-// Struktura meczów drabinki pucharowej
-let bracketMatches = {}; // match_id -> { home: text, away: text, winner: text }
+// Stan bazowy pobrany z bazy danych (do weryfikacji zmian)
+let loadedGroups = null;
+let loadedThirds = new Set();
+let loadedBracketWinners = {};
+
+// Inicjalizacja pustej drabinki pucharowej (mecze 73-104)
+for (let i = 73; i <= 104; i++) {
+  bracketMatches[i] = { home: "", away: "", winner: "" };
+  loadedBracketWinners[i] = "";
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   currentUserId = localStorage.getItem('wc_user_id');
   currentUsername = localStorage.getItem('wc_username');
 
   if (!currentUserId) {
-    window.location.href = './world-cup-login.html';
+    window.location.href = './word-cup-login.html';
     return;
   }
 
@@ -66,14 +74,77 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadKnockoutPredictions();
   await loadLeaderboard();
   
+  // Zapisanie stanu pobranego jako punkt odniesienia (oryginał)
+  saveSnapshotAsLoaded();
+
   renderGroups();
   updateThirdsCounter();
   checkAndBuildBracket();
+  updateSaveButtonState();
 
   document.getElementById('btn-save').addEventListener('click', saveAllPredictions);
 });
 
-// Obsługa zakładek (Tabs)
+// Zapisanie kopii danych wejściowych w celu weryfikacji, czy użytkownik cokolwiek edytował
+function saveSnapshotAsLoaded() {
+  loadedGroups = JSON.parse(JSON.stringify(localGroups));
+  loadedThirds = new Set(selectedThirds);
+  for (let i = 73; i <= 104; i++) {
+    loadedBracketWinners[i] = (bracketMatches[i] && bracketMatches[i].winner) ? bracketMatches[i].winner : "";
+  }
+}
+
+// Sprawdzenie czy aktualny stan różni się od stanu pobranego z bazy danych
+function checkIfChanged() {
+  if (!loadedGroups) return false;
+
+  // 1. Porównanie kolejności grup
+  if (JSON.stringify(localGroups) !== JSON.stringify(loadedGroups)) {
+    return true;
+  }
+
+  // 2. Porównanie wybranych trzecich miejsc
+  if (selectedThirds.size !== loadedThirds.size) return true;
+  for (let item of selectedThirds) {
+    if (!loadedThirds.has(item)) return true;
+  }
+
+  // 3. Porównanie zwycięzców meczów pucharowych
+  for (let i = 73; i <= 104; i++) {
+    const currentWin = (bracketMatches[i] && bracketMatches[i].winner) ? bracketMatches[i].winner : "";
+    const loadedWin = loadedBracketWinners[i] || "";
+    if (currentWin !== loadedWin) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Aktualizacja wyglądu i dostępności przycisku Zapisz
+function updateSaveButtonState() {
+  const btn = document.getElementById('btn-save');
+  const hasChanged = checkIfChanged();
+
+  if (hasChanged) {
+    btn.disabled = false;
+    btn.className = "w-full max-w-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl text-sm tracking-wide transition shadow-lg active:scale-95 cursor-pointer opacity-100";
+  } else {
+    btn.disabled = true;
+    btn.className = "w-full max-w-md bg-slate-700 text-slate-500 font-bold py-3.5 px-6 rounded-xl text-sm tracking-wide transition shadow-lg cursor-not-allowed opacity-50";
+  }
+}
+
+// Czyszczenie typów drabinki pucharowej (wywoływane przy zmianie w grupach)
+function resetKnockoutPredictions() {
+  for (let id = 73; id <= 104; id++) {
+    if (bracketMatches[id]) {
+      bracketMatches[id].winner = "";
+    }
+  }
+}
+
+// Obsługa nawigacji zakładek
 function setupTabs() {
   const tabGroupsBtn = document.getElementById('tab-groups-btn');
   const tabBracketBtn = document.getElementById('tab-bracket-btn');
@@ -110,7 +181,7 @@ function setupTabs() {
     [tabGroupsBtn, tabBracketBtn].forEach(b => b.className = "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center text-slate-400 hover:text-white transition");
     secLeaderboard.classList.remove('hidden');
     [secGroups, secBracket].forEach(s => s.classList.add('hidden'));
-    btnSave.classList.add('hidden'); 
+    btnSave.classList.add('hidden');
   });
 }
 
@@ -118,7 +189,7 @@ function setupLogout() {
   document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('wc_user_id');
     localStorage.removeItem('wc_username');
-    window.location.href = './world-cup-login.html';
+    window.location.href = './word-cup-login.html';
   });
 }
 
@@ -182,9 +253,12 @@ window.moveTeam = function(letter, index, direction) {
     selectedThirds.delete(oldThird);
   }
 
+  resetKnockoutPredictions();
+
   renderGroups();
   updateThirdsCounter();
   checkAndBuildBracket();
+  updateSaveButtonState();
 };
 
 window.toggleThirdPlace = function(team, isChecked) {
@@ -198,8 +272,12 @@ window.toggleThirdPlace = function(team, isChecked) {
   } else {
     selectedThirds.delete(team);
   }
+
+  resetKnockoutPredictions();
+
   updateThirdsCounter();
   checkAndBuildBracket();
+  updateSaveButtonState();
 };
 
 function updateThirdsCounter() {
@@ -207,6 +285,7 @@ function updateThirdsCounter() {
   counter.textContent = `${selectedThirds.size} / 8`;
   counter.className = selectedThirds.size === 8 ? "text-sm font-bold text-emerald-400" : "text-sm font-bold text-amber-400";
 }
+
 
 function solveAnnexC(selectedGroups) {
   const sortedKey = [...selectedGroups].sort().join('');
@@ -234,7 +313,7 @@ function solveAnnexC(selectedGroups) {
   }
 
   if (backtrack(0)) return result;
-  return null; 
+  return null;
 }
 
 function checkAndBuildBracket() {
@@ -265,6 +344,7 @@ function buildRoundOf32() {
   });
 
   const matching = solveAnnexC(thirdPlaceGroups);
+  if (!matching) return;
 
   const getTeam = (letter, rank) => localGroups[letter][rank - 1];
   const getThirdTeamOfGroup = (letter) => localGroups[letter][2];
@@ -309,7 +389,6 @@ function propagateBracket() {
   const setMatch = (id, homeTeam, awayTeam) => {
     if (!bracketMatches[id]) bracketMatches[id] = { home: "", away: "", winner: "" };
     
-    // Jeśli zmieniły się drużyny grające, a dotychczasowy zwycięzca nie gra w tym meczu, resetujemy zwycięzcę
     if (bracketMatches[id].home !== homeTeam || bracketMatches[id].away !== awayTeam) {
       bracketMatches[id].home = homeTeam;
       bracketMatches[id].away = awayTeam;
@@ -336,8 +415,8 @@ function propagateBracket() {
   setMatch(101, getWinner(97), getWinner(98));
   setMatch(102, getWinner(99), getWinner(100));
 
-  setMatch(103, getLoser(101), getLoser(102)); 
-  setMatch(104, getWinner(101), getWinner(102)); 
+  setMatch(103, getLoser(101), getLoser(102));
+  setMatch(104, getWinner(101), getWinner(102));
 }
 
 window.switchBracketRound = function(roundKey) {
@@ -361,14 +440,6 @@ const roundMatchMap = {
   "qf": [97, 98, 99, 100],
   "sf": [101, 102],
   "final": [103, 104]
-};
-
-const roundNames = {
-  "r32": "1/16 Finału",
-  "r16": "1/8 Finału",
-  "qf": "Ćwierćfinał",
-  "sf": "Półfinał",
-  "final": "Finały"
 };
 
 function renderBracket() {
@@ -396,7 +467,6 @@ function renderBracket() {
         <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">${matchLabel}</div>
         
         <div class="space-y-2">
-          <!-- Gospodarz -->
           <button 
             onclick="predictBracketWinner(${id}, '${homeName}')"
             ${!isHomeClickable ? 'disabled' : ''}
@@ -408,7 +478,6 @@ function renderBracket() {
             ${winner === homeName ? '<span class="text-xs text-emerald-400">✔ Awans</span>' : ''}
           </button>
 
-          <!-- Gość -->
           <button 
             onclick="predictBracketWinner(${id}, '${awayName}')"
             ${!isAwayClickable ? 'disabled' : ''}
@@ -432,6 +501,7 @@ window.predictBracketWinner = function(matchId, winnerTeam) {
   
   propagateBracket();
   renderBracket();
+  updateSaveButtonState(); 
 };
 
 

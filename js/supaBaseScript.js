@@ -641,6 +641,27 @@ async function loadLeaderboard() {
 
 async function saveAllPredictions() {
   const btn = document.getElementById('btn-save');
+  
+  
+  if (selectedThirds.size !== 8) {
+    alert("Aby zapisać typy, musisz najpierw wybrać dokładnie 8 drużyn z trzecich miejsc w fazie grupowej!");
+    return;
+  }
+
+  let missingMatch = null;
+  for (let id = 73; id <= 104; id++) {
+    const winner = bracketMatches[id] ? bracketMatches[id].winner : "";
+    if (!winner || winner === "???") {
+      missingMatch = id;
+      break;
+    }
+  }
+
+  if (missingMatch) {
+    alert("Nie możesz zapisać danych. Drabinka pucharowa nie jest kompletna. Wybierz zwycięzców wszystkich meczów (brak wyboru m.in. w Meczu " + missingMatch + ").");
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = "Zapisywanie...";
 
@@ -673,34 +694,33 @@ async function saveAllPredictions() {
     });
     if (!insGroups.ok) throw new Error("Błąd podczas zapisywania fazy grupowej.");
 
-    if (selectedThirds.size === 8) {
-      const knockoutPayload = [];
-      Object.keys(bracketMatches).forEach(matchId => {
-        const winner = bracketMatches[matchId].winner;
-        if (winner && winner !== "???") {
-          knockoutPayload.push({
-            user_id: parseInt(currentUserId),
-            match_id: parseInt(matchId),
-            predicted_winner: winner
-          });
-        }
-      });
-
-      if (knockoutPayload.length > 0) {
-        const delKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`, {
-          method: "DELETE",
-          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    const knockoutPayload = [];
+    Object.keys(bracketMatches).forEach(matchId => {
+      const winner = bracketMatches[matchId].winner;
+      if (winner && winner !== "???") {
+        knockoutPayload.push({
+          user_id: parseInt(currentUserId),
+          match_id: parseInt(matchId),
+          predicted_winner: winner
         });
-        if (!delKnockout.ok) throw new Error("Nie udało się zresetować poprzedniej drabinki.");
-
-        const insKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions`, {
-          method: "POST",
-          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify(knockoutPayload)
-        });
-        if (!insKnockout.ok) throw new Error("Błąd podczas zapisywania drabinki pucharowej.");
       }
-    }
+    });
+
+    const delKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!delKnockout.ok) throw new Error("Nie udało się zresetować poprzedniej drabinki.");
+
+    const insKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(knockoutPayload)
+    });
+    if (!insKnockout.ok) throw new Error("Błąd podczas zapisywania drabinki pucharowej.");
+
+    saveSnapshotAsLoaded();
+    updateSaveButtonState();
 
     alert("Wszystkie Twoje typy zostały pomyślnie zapisane!");
   } catch (err) {
