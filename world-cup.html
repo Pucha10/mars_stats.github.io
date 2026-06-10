@@ -30,6 +30,17 @@
     </div>
   </header>
 
+  <div id="preview-banner" class="hidden bg-amber-950 border-b border-amber-800/50 px-4 py-3 shadow-md sticky top-[57px] z-40">
+    <div class="max-w-6xl mx-auto flex justify-between items-center text-sm">
+      <span class="font-semibold text-amber-300 flex items-center gap-2">
+        Przeglądasz aktualnie typy gracza: <strong id="preview-username-label" class="text-white"></strong>
+      </span>
+      <button onclick="exitPreviewMode()" class="bg-amber-800 hover:bg-amber-700 text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition">
+        Powrót do moich typów
+      </button>
+    </div>
+  </div>
+
   <div class="max-w-6xl mx-auto px-4 mt-6">
     <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 gap-1">
       <button id="tab-groups-btn" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center bg-slate-700 text-white transition">

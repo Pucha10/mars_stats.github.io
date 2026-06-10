@@ -502,7 +502,7 @@ async function loginUser(username, pin) {
                     Authorization: `Bearer ${SUPABASE_KEY}`,
                     "Content-Type": "application/json",
                 },
-            }
+            },
         );
 
         if (!response.ok) {
@@ -513,268 +513,395 @@ async function loginUser(username, pin) {
 
         if (data && data.length > 0) {
             const user = data[0];
-            showAlert('Zalogowano pomyślnie! Przekierowanie...', 'success');
-            
-            localStorage.setItem('wc_user_id', user.id);
-            localStorage.setItem('wc_username', user.username);
-            
+            showAlert("Zalogowano pomyślnie! Przekierowanie...", "success");
+
+            localStorage.setItem("wc_user_id", user.id);
+            localStorage.setItem("wc_username", user.username);
+
             setTimeout(() => {
-                window.location.href = './world-cup.html';
+                window.location.href = "./world-cup.html";
             }, 1200);
             return user;
         } else {
-            showAlert('Błędny login lub PIN. Spróbuj ponownie.', 'error');
+            showAlert("Błędny login lub PIN. Spróbuj ponownie.", "error");
             return null;
         }
     } catch (err) {
         console.error("Błąd logowania:", err);
-        showAlert('Wystąpił błąd podczas logowania: ' + err.message, 'error');
+        showAlert("Wystąpił błąd podczas logowania: " + err.message, "error");
     }
 }
 async function registerUser(username, pin) {
     try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+            method: "POST",
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+                Prefer: "return=representation",
+            },
+            body: JSON.stringify({ username: username, pin: pin }),
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            if (err.code === "23505") {
+                showAlert("Ta nazwa użytkownika jest już zajęta.", "error");
+                return null;
+            } else {
+                throw new Error(err.message || "Błąd zapisu w bazie");
+            }
+        }
+
+        const data = await response.json();
+        showAlert(
+            "Konto zostało utworzone! Możesz się teraz zalogować.",
+            "success",
+        );
+        return data[0];
+    } catch (err) {
+        console.error("Błąd rejestracji:", err);
+        showAlert("Wystąpił błąd podczas rejestracji: " + err.message, "error");
+    }
+}
+
+async function loadUserData() {
+    try {
         const response = await fetch(
-            `${SUPABASE_URL}/rest/v1/users`,
+            `${SUPABASE_URL}/rest/v1/users?id=eq.${currentUserId}`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        if (response.ok) {
+            const users = await response.json();
+            if (users.length > 0) {
+                document.getElementById("user-points").textContent =
+                    `Punkty: ${users[0].points || 0}`;
+            }
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadUserPredictions() {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        if (response.ok) {
+            const predictions = await response.json();
+            if (predictions.length > 0) {
+                const tempGroups = {};
+                predictions.forEach((pred) => {
+                    if (!tempGroups[pred.group_letter])
+                        tempGroups[pred.group_letter] = [];
+                    tempGroups[pred.group_letter].push({
+                        name: pred.team_name,
+                        rank: pred.predicted_rank,
+                        isBestThird: pred.is_best_third,
+                    });
+                });
+                Object.keys(tempGroups).forEach((letter) => {
+                    tempGroups[letter].sort((a, b) => a.rank - b.rank);
+                    localGroups[letter] = tempGroups[letter].map((t) => t.name);
+                    tempGroups[letter].forEach((t) => {
+                        if (t.isBestThird) selectedThirds.add(t.name);
+                    });
+                });
+            }
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadKnockoutPredictions() {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        if (response.ok) {
+            const preds = await response.json();
+            preds.forEach((p) => {
+                if (!bracketMatches[p.match_id])
+                    bracketMatches[p.match_id] = {
+                        home: "",
+                        away: "",
+                        winner: "",
+                    };
+                bracketMatches[p.match_id].winner = p.predicted_winner;
+            });
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadLeaderboard() {
+    const tbody = document.getElementById("leaderboard-tbody");
+    if (!tbody) return;
+    tbody.innerHTML =
+        '<tr><td colspan="3" class="text-center py-4 text-slate-500">Ładowanie rankingu...</td></tr>';
+
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/users?select=id,username,points&order=points.desc`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        if (response.ok) {
+            const players = await response.json();
+            tbody.innerHTML = "";
+
+            players.forEach((player, index) => {
+                const row = document.createElement("tr");
+                row.className = "hover:bg-slate-800/30 transition";
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-center font-bold text-slate-400">${index + 1}</td>
+                    <td class="py-3 px-4 font-semibold text-white">${player.username}</td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-3">
+                            <span class="font-bold text-emerald-400">${player.points || 0} pkt</span>
+                            <button onclick="previewUserPredictions(${player.id}, '${player.username}')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-xs px-2.5 py-1.5 rounded-lg transition font-medium">Zobacz typy</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML =
+            '<tr><td colspan="3" class="text-center py-4 text-rose-400">Błąd ładowania rankingu.</td></tr>';
+    }
+}
+
+async function loadPlayerPredictions() {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/player_predictions?user_id=eq.${currentUserId}`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        if (response.ok) {
+            const data = await response.json();
+            if (data.length > 0) {
+                localPlayers.top_scorer = data[0].top_scorer || "";
+                localPlayers.mvp = data[0].mvp || "";
+                localPlayers.best_goalkeeper = data[0].best_goalkeeper || "";
+
+                document.getElementById("input-scorer").value =
+                    localPlayers.top_scorer;
+                document.getElementById("input-mvp").value = localPlayers.mvp;
+                document.getElementById("input-goalkeeper").value =
+                    localPlayers.best_goalkeeper;
+            }
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function saveAllPredictions() {
+    const btn = document.getElementById("btn-save");
+
+    if (selectedThirds.size !== 8) {
+        alert(
+            "Aby zapisać typy, musisz najpierw wybrać dokładnie 8 drużyn z trzecich miejsc w fazie grupowej!",
+        );
+        return;
+    }
+
+    if (
+        !localPlayers.top_scorer ||
+        !localPlayers.mvp ||
+        !localPlayers.best_goalkeeper
+    ) {
+        alert(
+            "Aby zapisać typy, musisz uzupełnić wszystkie nagrody indywidualne (Król strzelców, MVP, Najlepszy bramkarz)!",
+        );
+        return;
+    }
+
+    let missingMatch = null;
+    for (let id = 73; id <= 104; id++) {
+        const winner = bracketMatches[id] ? bracketMatches[id].winner : "";
+        if (!winner || winner === "???") {
+            missingMatch = id;
+            break;
+        }
+    }
+
+    if (missingMatch) {
+        alert(
+            "Nie możesz zapisać danych. Drabinka pucharowa nie jest kompletna. Wybierz zwycięzców wszystkich meczów (brak wyboru m.in. w Meczu " +
+                missingMatch +
+                ").",
+        );
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Zapisywanie...";
+
+    try {
+        const groupPayload = [];
+        Object.keys(localGroups).forEach((letter) => {
+            localGroups[letter].forEach((team, idx) => {
+                const rank = idx + 1;
+                const isBestThird = rank === 3 && selectedThirds.has(team);
+                groupPayload.push({
+                    user_id: parseInt(currentUserId),
+                    group_letter: letter,
+                    team_name: team,
+                    predicted_rank: rank,
+                    is_best_third: isBestThird,
+                });
+            });
+        });
+
+        const delGroups = await fetch(
+            `${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`,
+            {
+                method: "DELETE",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        if (!delGroups.ok)
+            throw new Error(
+                "Nie udało się zresetować poprzednich typów grupowych.",
+            );
+
+        const insGroups = await fetch(
+            `${SUPABASE_URL}/rest/v1/group_predictions`,
             {
                 method: "POST",
                 headers: {
                     apikey: SUPABASE_KEY,
                     Authorization: `Bearer ${SUPABASE_KEY}`,
                     "Content-Type": "application/json",
-                    Prefer: "return=representation", 
                 },
-                body: JSON.stringify({ username: username, pin: pin }),
-            }
+                body: JSON.stringify(groupPayload),
+            },
         );
+        if (!insGroups.ok)
+            throw new Error("Błąd podczas zapisywania fazy grupowej.");
 
-        if (!response.ok) {
-            const err = await response.json();
-            if (err.code === '23505') { 
-                showAlert('Ta nazwa użytkownika jest już zajęta.', 'error');
-                return null;
-            } else {
-                throw new Error(err.message || 'Błąd zapisu w bazie');
+        const playerPayload = {
+            user_id: parseInt(currentUserId),
+            top_scorer: localPlayers.top_scorer,
+            mvp: localPlayers.mvp,
+            best_goalkeeper: localPlayers.best_goalkeeper,
+        };
+
+        const delPlayers = await fetch(
+            `${SUPABASE_URL}/rest/v1/player_predictions?user_id=eq.${currentUserId}`,
+            {
+                method: "DELETE",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        if (!delPlayers.ok)
+            throw new Error(
+                "Nie udało się zresetować poprzednich typów zawodników.",
+            );
+
+        const insPlayers = await fetch(
+            `${SUPABASE_URL}/rest/v1/player_predictions`,
+            {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(playerPayload),
+            },
+        );
+        if (!insPlayers.ok)
+            throw new Error("Błąd podczas zapisywania nagród indywidualnych.");
+
+        const knockoutPayload = [];
+        Object.keys(bracketMatches).forEach((matchId) => {
+            const winner = bracketMatches[matchId].winner;
+            if (winner && winner !== "???") {
+                knockoutPayload.push({
+                    user_id: parseInt(currentUserId),
+                    match_id: parseInt(matchId),
+                    predicted_winner: winner,
+                });
             }
-        }
+        });
 
-        const data = await response.json();
-        showAlert('Konto zostało utworzone! Możesz się teraz zalogować.', 'success');
-        return data[0];
+        const delKnockout = await fetch(
+            `${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`,
+            {
+                method: "DELETE",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            },
+        );
+        if (!delKnockout.ok)
+            throw new Error("Nie udało się zresetować poprzedniej drabinki.");
+
+        const insKnockout = await fetch(
+            `${SUPABASE_URL}/rest/v1/knockout_predictions`,
+            {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(knockoutPayload),
+            },
+        );
+        if (!insKnockout.ok)
+            throw new Error("Błąd podczas zapisywania drabinki pucharowej.");
+
+        saveSnapshotAsLoaded();
+        updateSaveButtonState();
+
+        alert("Twoje typy zostały pomyślnie zapisane!");
     } catch (err) {
-        console.error("Błąd rejestracji:", err);
-        showAlert('Wystąpił błąd podczas rejestracji: ' + err.message, 'error');
+        console.error(err);
+        alert("Wystąpił błąd podczas zapisu: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Zapisz moje typy";
     }
 }
-
-async function loadUserData() {
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${currentUserId}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const users = await response.json();
-      if (users.length > 0) {
-        document.getElementById('user-points').textContent = `Punkty: ${users[0].points || 0}`;
-      }
-    }
-  } catch (err) { console.error(err); }
-}
-
-async function loadUserPredictions() {
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const predictions = await response.json();
-      if (predictions.length > 0) {
-        const tempGroups = {};
-        predictions.forEach(pred => {
-          if (!tempGroups[pred.group_letter]) tempGroups[pred.group_letter] = [];
-          tempGroups[pred.group_letter].push({ name: pred.team_name, rank: pred.predicted_rank, isBestThird: pred.is_best_third });
-        });
-        Object.keys(tempGroups).forEach(letter => {
-          tempGroups[letter].sort((a, b) => a.rank - b.rank);
-          localGroups[letter] = tempGroups[letter].map(t => t.name);
-          tempGroups[letter].forEach(t => {
-            if (t.isBestThird) selectedThirds.add(t.name);
-          });
-        });
-      }
-    }
-  } catch (err) { console.error(err); }
-}
-
-async function loadKnockoutPredictions() {
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const preds = await response.json();
-      preds.forEach(p => {
-        if (!bracketMatches[p.match_id]) bracketMatches[p.match_id] = { home: "", away: "", winner: "" };
-        bracketMatches[p.match_id].winner = p.predicted_winner;
-      });
-    }
-  } catch (err) { console.error(err); }
-}
-
-async function loadLeaderboard() {
-  const tbody = document.getElementById('leaderboard-tbody');
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/users?select=username,points&order=points.desc`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const players = await response.json();
-      tbody.innerHTML = players.map((player, index) => `
-        <tr class="hover:bg-slate-800/30 transition">
-          <td class="py-3 px-4 text-center font-bold text-slate-400">${index + 1}</td>
-          <td class="py-3 px-4 font-semibold text-white">${player.username}</td>
-          <td class="py-3 px-4 text-right font-bold text-emerald-400">${player.points || 0} pkt</td>
-        </tr>
-      `).join('');
-    }
-  } catch (err) { console.error(err); }
-}
-
-async function loadPlayerPredictions() {
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/player_predictions?user_id=eq.${currentUserId}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.length > 0) {
-        localPlayers.top_scorer = data[0].top_scorer || "";
-        localPlayers.mvp = data[0].mvp || "";
-        localPlayers.best_goalkeeper = data[0].best_goalkeeper || "";
-
-        document.getElementById('input-scorer').value = localPlayers.top_scorer;
-        document.getElementById('input-mvp').value = localPlayers.mvp;
-        document.getElementById('input-goalkeeper').value = localPlayers.best_goalkeeper;
-      }
-    }
-  } catch (err) { console.error(err); }
-}
-
-async function saveAllPredictions() {
-  const btn = document.getElementById('btn-save');
-  
-  
-  if (selectedThirds.size !== 8) {
-    alert("Aby zapisać typy, musisz najpierw wybrać dokładnie 8 drużyn z trzecich miejsc w fazie grupowej!");
-    return;
-  }
-
-  if (!localPlayers.top_scorer || !localPlayers.mvp || !localPlayers.best_goalkeeper) {
-    alert("Aby zapisać typy, musisz uzupełnić wszystkie nagrody indywidualne (Król strzelców, MVP, Najlepszy bramkarz)!");
-    return;
-  }
-
-  let missingMatch = null;
-  for (let id = 73; id <= 104; id++) {
-    const winner = bracketMatches[id] ? bracketMatches[id].winner : "";
-    if (!winner || winner === "???") {
-      missingMatch = id;
-      break;
-    }
-  }
-
-  if (missingMatch) {
-    alert("Nie możesz zapisać danych. Drabinka pucharowa nie jest kompletna. Wybierz zwycięzców wszystkich meczów (brak wyboru m.in. w Meczu " + missingMatch + ").");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = "Zapisywanie...";
-
-  try {
-    const groupPayload = [];
-    Object.keys(localGroups).forEach(letter => {
-      localGroups[letter].forEach((team, idx) => {
-        const rank = idx + 1;
-        const isBestThird = (rank === 3 && selectedThirds.has(team));
-        groupPayload.push({
-          user_id: parseInt(currentUserId),
-          group_letter: letter,
-          team_name: team,
-          predicted_rank: rank,
-          is_best_third: isBestThird
-        });
-      });
-    });
-
-    const delGroups = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
-      method: "DELETE",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (!delGroups.ok) throw new Error("Nie udało się zresetować poprzednich typów grupowych.");
-
-    const insGroups = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(groupPayload)
-    });
-    if (!insGroups.ok) throw new Error("Błąd podczas zapisywania fazy grupowej.");
-
-    const playerPayload = {
-      user_id: parseInt(currentUserId),
-      top_scorer: localPlayers.top_scorer,
-      mvp: localPlayers.mvp,
-      best_goalkeeper: localPlayers.best_goalkeeper
-    };
-
-    const delPlayers = await fetch(`${SUPABASE_URL}/rest/v1/player_predictions?user_id=eq.${currentUserId}`, {
-      method: "DELETE",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (!delPlayers.ok) throw new Error("Nie udało się zresetować poprzednich typów zawodników.");
-
-    const insPlayers = await fetch(`${SUPABASE_URL}/rest/v1/player_predictions`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(playerPayload)
-    });
-    if (!insPlayers.ok) throw new Error("Błąd podczas zapisywania nagród indywidualnych.");
-
-    const knockoutPayload = [];
-    Object.keys(bracketMatches).forEach(matchId => {
-      const winner = bracketMatches[matchId].winner;
-      if (winner && winner !== "???") {
-        knockoutPayload.push({
-          user_id: parseInt(currentUserId),
-          match_id: parseInt(matchId),
-          predicted_winner: winner
-        });
-      }
-    });
-
-    const delKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`, {
-      method: "DELETE",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (!delKnockout.ok) throw new Error("Nie udało się zresetować poprzedniej drabinki.");
-
-    const insKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(knockoutPayload)
-    });
-    if (!insKnockout.ok) throw new Error("Błąd podczas zapisywania drabinki pucharowej.");
-
-    saveSnapshotAsLoaded();
-    updateSaveButtonState();
-
-    alert("Twoje typy zostały pomyślnie zapisane!");
-  } catch (err) {
-    console.error(err);
-    alert("Wystąpił błąd podczas zapisu: " + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Zapisz moje typy";
-  }
-}
-
-
