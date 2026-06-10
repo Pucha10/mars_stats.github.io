@@ -1,17 +1,17 @@
 const groupsConfig = {
   "groups": {
-    "A": ["Mexico", "South Africa", "South Korea", "Czechia"],
-    "B": ["Canada", "Switzerland", "Qatar", "Bosnia and Herzegovina"],
-    "C": ["Brazil", "Morocco", "Scotland", "Haiti"],
-    "D": ["United States", "Paraguay", "Australia", "Türkiye"],
-    "E": ["Germany", "Ecuador", "Ivory Coast", "Curaçao"],
-    "F": ["Netherlands", "Sweden", "Japan", "Tunisia"],
-    "G": ["Belgium", "Egypt", "Iran", "New Zealand"],
-    "H": ["Spain", "Uruguay", "Saudi Arabia", "Cape Verde"],
-    "I": ["France", "Senegal", "Norway", "Iraq"],
-    "J": ["Argentina", "Austria", "Algeria", "Jordan"],
-    "K": ["Portugal", "Colombia", "Uzbekistan", "DR Congo"],
-    "L": ["England", "Croatia", "Ghana", "Panama"]
+    "A": ["Meksyk", "RPA", "Korea Południowa", "Czechy"],
+    "B": ["Kanada", "Szwajcaria", "Katar", "Bośnia i Hercegowina"],
+    "C": ["Brazylia", "Maroko", "Szkocja", "Haiti"],
+    "D": ["USA", "Paragwaj", "Australia", "Turcja"],
+    "E": ["Niemcy", "Ekwador", "WKS", "Curaçao"],
+    "F": ["Holandia", "Szwecja", "Japonia", "Tunezja"],
+    "G": ["Belgia", "Egipt", "Iran", "Nowa Zelandia"],
+    "H": ["Hiszpania", "Urugwaj", "Arabia Saudyjska", "Republika Zielonego Przylądka"],
+    "I": ["Francja", "Senegal", "Norwegia", "Irak"],
+    "J": ["Argentyna", "Austria", "Algieria", "Jordania"],
+    "K": ["Portugalia", "Kolumbia", "Uzbekistan", "Demokratyczna Republika Konga"],
+    "L": ["Anglia", "Chorwacja", "Ghana", "Panama"]
   }
 };
 
@@ -35,7 +35,6 @@ const annexCOverrides = {
   "DEFGIJKL": { "1A": "E", "1B": "G", "1D": "I", "1E": "D", "1G": "J", "1I": "F", "1K": "L", "1L": "K" }
 };
 
-// Stan lokalny (aktualne wybory użytkownika)
 let currentUserId = null;
 let currentUsername = "";
 let currentTab = "groups";
@@ -46,13 +45,11 @@ let selectedThirds = new Set();
 let bracketMatches = {};
 let localPlayers = { top_scorer: "", mvp: "", best_goalkeeper: "" };
 
-// Stan bazowy pobrany z bazy danych
 let loadedGroups = null;
 let loadedThirds = new Set();
 let loadedBracketWinners = {};
 let loadedPlayers = { top_scorer: "", mvp: "", best_goalkeeper: "" };
 
-// Inicjalizacja pustej drabinki pucharowej (mecze 73-104)
 for (let i = 73; i <= 104; i++) {
   bracketMatches[i] = { home: "", away: "", winner: "" };
   loadedBracketWinners[i] = "";
@@ -78,7 +75,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadPlayerPredictions();
   await loadLeaderboard();
   
-  // Zapisanie stanu bazowego
   saveSnapshotAsLoaded();
 
   renderGroups();
@@ -89,7 +85,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById('btn-save').addEventListener('click', saveAllPredictions);
 });
 
-// Zapisanie kopii danych wejściowych
 function saveSnapshotAsLoaded() {
   loadedGroups = JSON.parse(JSON.stringify(localGroups));
   loadedThirds = new Set(selectedThirds);
@@ -99,27 +94,22 @@ function saveSnapshotAsLoaded() {
   loadedPlayers = { ...localPlayers };
 }
 
-// Sprawdzenie czy aktualny stan różni się od stanu pobranego z bazy danych
 function checkIfChanged() {
   if (!loadedGroups) return false;
 
-  // 1. Porównanie kolejności grup
   if (JSON.stringify(localGroups) !== JSON.stringify(loadedGroups)) return true;
 
-  // 2. Porównanie wybranych trzecich miejsc
   if (selectedThirds.size !== loadedThirds.size) return true;
   for (let item of selectedThirds) {
     if (!loadedThirds.has(item)) return true;
   }
 
-  // 3. Porównanie zwycięzców meczów pucharowych
   for (let i = 73; i <= 104; i++) {
     const currentWin = (bracketMatches[i] && bracketMatches[i].winner) ? bracketMatches[i].winner : "";
     const loadedWin = loadedBracketWinners[i] || "";
     if (currentWin !== loadedWin) return true;
   }
 
-  // 4. Porównanie typowanych zawodników
   if (
     localPlayers.top_scorer !== loadedPlayers.top_scorer ||
     localPlayers.mvp !== loadedPlayers.mvp ||
@@ -131,7 +121,6 @@ function checkIfChanged() {
   return false;
 }
 
-// Obsługa nasłuchiwania pól tekstowych zawodników
 function setupPlayerInputListeners() {
   const scorerInput = document.getElementById('input-scorer');
   const mvpInput = document.getElementById('input-mvp');
@@ -153,7 +142,6 @@ function setupPlayerInputListeners() {
   });
 }
 
-// Aktualizacja wyglądu i dostępności przycisku Zapisz
 function updateSaveButtonState() {
   const btn = document.getElementById('btn-save');
   const hasChanged = checkIfChanged();
@@ -167,7 +155,6 @@ function updateSaveButtonState() {
   }
 }
 
-// Czyszczenie typów drabinki pucharowej (przy zmianie w grupach)
 function resetKnockoutPredictions() {
   for (let id = 73; id <= 104; id++) {
     if (bracketMatches[id]) {
@@ -176,7 +163,6 @@ function resetKnockoutPredictions() {
   }
 }
 
-// Obsługa nawigacji zakładek
 function setupTabs() {
   const tabGroupsBtn = document.getElementById('tab-groups-btn');
   const tabBracketBtn = document.getElementById('tab-bracket-btn');

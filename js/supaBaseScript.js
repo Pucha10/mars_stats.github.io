@@ -767,7 +767,7 @@ async function saveAllPredictions() {
     saveSnapshotAsLoaded();
     updateSaveButtonState();
 
-    alert("Wszystkie Twoje typy (grupy, zawodnicy oraz drabinka) zostały pomyślnie zapisane!");
+    alert("Twoje typy zostały pomyślnie zapisane!");
   } catch (err) {
     console.error(err);
     alert("Wystąpił błąd podczas zapisu: " + err.message);

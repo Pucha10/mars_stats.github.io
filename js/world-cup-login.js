@@ -18,7 +18,7 @@ function showAlert(message, type) {
 
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const username = usernameInput.value.trim().toLowerCase();
+  const username = usernameInput.value.trim();
   const pin = pinInput.value.trim();
   if (!username || !pin) {
     showAlert('Wypełnij wszystkie pola', 'error');
@@ -28,7 +28,7 @@ loginForm.addEventListener('submit', async (e) => {
 });
 
 btnRegister.addEventListener('click', async () => {
-  const username = usernameInput.value.trim().toLowerCase();
+  const username = usernameInput.value.trim();
   const pin = pinInput.value.trim();
   if (!username || !pin) {
     showAlert('Wpisz login i PIN w pola formularza, a następnie kliknij "Stwórz nowe konto"', 'error');
