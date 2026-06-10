@@ -210,6 +210,29 @@
     &copy; Dawid Puszka World Cup 2026 Predictor.
   </footer>
 
+   <div id="details-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 rounded-2xl max-w-lg w-full border border-slate-700 shadow-2xl p-6 relative max-h-[85vh] flex flex-col">
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          📊 Karta wyników: <span id="modal-player-name" class="text-emerald-400"></span>
+        </h3>
+        <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white transition text-xl font-bold px-2 focus:outline-none">&times;</button>
+      </div>
+      
+      <!-- Content (Przewijany środek) -->
+      <div id="modal-content" class="space-y-4 overflow-y-auto pr-1 text-xs text-slate-300 no-scrollbar">
+        <!-- Wypełniane dynamicznie przez JS -->
+      </div>
+
+      <!-- Footer -->
+      <div class="border-t border-slate-700 pt-3 mt-4 flex justify-between items-center">
+        <span class="text-sm font-bold text-slate-400">Suma końcowa:</span>
+        <span id="modal-total-score" class="text-xl font-extrabold text-emerald-400">0 pkt</span>
+      </div>
+    </div>
+  </div>
+
   <script>
     function toggleScoringRules() {
       const content = document.getElementById('rules-content');

@@ -779,3 +779,449 @@ window.predictBracketWinner = function (matchId, winnerTeam) {
     renderBracket();
     updateSaveButtonState();
 };
+
+let globalActualData = null;
+
+window.showPlayerScoreDetails = async function (userId, username) {
+    const modal = document.getElementById("details-modal");
+    const modalName = document.getElementById("modal-player-name");
+    const modalContent = document.getElementById("modal-content");
+    const modalTotal = document.getElementById("modal-total-score");
+
+    if (!modal || !modalContent) return;
+
+    modalName.textContent = username;
+    modalContent.innerHTML =
+        '<div class="text-center py-8 text-slate-400">Trwa pobieranie i kalkulacja punktów...</div>';
+    modalTotal.textContent = "--- pkt";
+    modal.classList.remove("hidden");
+
+    try {
+        const headers = {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+        };
+
+        if (!globalActualData) {
+            const resGroups = await fetch(
+                `${SUPABASE_URL}/rest/v1/actual_groups`,
+                { headers },
+            );
+            const resStages = await fetch(
+                `${SUPABASE_URL}/rest/v1/actual_stages`,
+                { headers },
+            );
+            const resAwards = await fetch(
+                `${SUPABASE_URL}/rest/v1/actual_awards?id=eq.1`,
+                { headers },
+            );
+
+            if (resGroups.ok && resStages.ok && resAwards.ok) {
+                const groups = await resGroups.json();
+                const stages = await resStages.json();
+                const awardsArray = await resAwards.json();
+                globalActualData = {
+                    groups,
+                    stages,
+                    awards: awardsArray[0] || {
+                        top_scorer: "",
+                        mvp: "",
+                        best_goalkeeper: "",
+                    },
+                };
+            } else {
+                throw new Error(
+                    "Błąd podczas pobierania oficjalnych wyników rzeczywistych.",
+                );
+            }
+        }
+
+        const userData = await loadUserStandingsAndBracket(userId);
+        const breakdown = computeDetailedScoreForModal(
+            userData,
+            globalActualData,
+        );
+
+        const clean = (str) => (str || "").trim().toLowerCase();
+
+        // Funkcja pomocnicza do formatowania nazw drużyn z wielkiej litery
+        const capitalize = (str) => {
+            if (!str) return "";
+            return str
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(" ");
+        };
+
+        // Formatowanie listy drużyn (Zieleń / Czerwień / Biel gdy brak wyników)
+        const formatList = (predictedSet, actualSet) => {
+            if (!predictedSet || predictedSet.size === 0) {
+                return '<span class="text-slate-500 italic">brak typów</span>';
+            }
+
+            const items = [];
+            predictedSet.forEach((team) => {
+                const teamClean = team.trim().toLowerCase();
+                const displayName = capitalize(team);
+
+                if (actualSet.size === 0) {
+                    // Etap nie został jeszcze rozegrany - neutralny szary
+                    items.push(
+                        `<span class="text-slate-300 font-medium">${displayName}</span>`,
+                    );
+                } else if (actualSet.has(teamClean)) {
+                    // Trafiony - zielony z ptaszkiem
+                    items.push(
+                        `<span class="text-emerald-400 font-bold">${displayName} ✔</span>`,
+                    );
+                } else {
+                    // Nietrafiony - czerwony z przekreśleniem
+                    items.push(
+                        `<span class="text-rose-500 line-through opacity-70">${displayName} ✗</span>`,
+                    );
+                }
+            });
+            return items.join(", ");
+        };
+
+        // Formatowanie pojedynczych rozstrzygnięć (3. miejsce, Mistrz)
+        const formatSingleTeam = (predicted, actualVal, isCorrect, points) => {
+            const predName = capitalize(predicted);
+            if (!predicted)
+                return '<span class="text-slate-500 italic">brak typu</span>';
+            if (!actualVal)
+                return `<span class="text-slate-300 font-medium">${predName}</span>`;
+
+            if (isCorrect) {
+                return `<span class="text-emerald-400 font-bold">${predName} ✔ (+${points} pkt)</span>`;
+            } else {
+                return `<span class="text-rose-500 line-through opacity-70">${predName} ✗</span> <span class="text-[10px] text-slate-400">(Rzeczywiste: ${capitalize(actualVal)})</span>`;
+            }
+        };
+
+        // Formatowanie nagród indywidualnych
+        const formatAward = (predicted, actualVal, isCorrect) => {
+            const predName = predicted ? predicted.trim() : "";
+            if (!predName)
+                return '<span class="text-slate-500 italic">brak typu</span>';
+            if (!actualVal)
+                return `<span class="text-slate-300 font-medium">${predName}</span>`;
+
+            if (isCorrect) {
+                return `<span class="text-emerald-400 font-bold">${predName} ✔ (+5 pkt)</span>`;
+            } else {
+                return `<span class="text-rose-500 line-through opacity-70">${predName} ✗</span> <span class="text-[10px] text-slate-400">(Rzeczywiste: ${actualVal})</span>`;
+            }
+        };
+
+        modalTotal.textContent = `${breakdown.totalPoints} pkt`;
+        modalContent.innerHTML = `
+      <!-- FAZA GRUPOWA -->
+      <div class="bg-slate-750 p-4 rounded-xl border border-slate-700/60 space-y-3">
+        <h4 class="font-bold text-white text-xs flex items-center justify-between border-b border-slate-700 pb-1.5">
+          <span>⚽ FAZA GRUPOWA</span>
+          <span class="text-emerald-400 font-extrabold text-sm">${breakdown.ptsGroupPos + breakdown.ptsGroupBonus + breakdown.ptsGroupQual} pkt</span>
+        </h4>
+        <div class="space-y-2 text-[11px] text-slate-400 leading-relaxed">
+          <div class="flex justify-between">
+            <span>Dokładne pozycje (2 pkt za każdą):</span>
+            <span class="text-slate-200 font-semibold">${breakdown.ptsGroupPos} pkt</span>
+          </div>
+          <div class="flex justify-between items-start gap-4">
+            <span>Bonus za bezbłędne grupy (1 pkt):</span>
+            <span class="text-slate-200 font-semibold text-right">${breakdown.ptsGroupBonus} pkt ${breakdown.correctBonusGroups.length > 0 ? "(Grupy: " + breakdown.correctBonusGroups.join(", ") + ")" : ""}</span>
+          </div>
+          <div class="pt-1.5 border-t border-slate-700/50">
+            <span class="block font-semibold text-slate-300 mb-1">Wytypowane awanse do 1/16 (R32) - (+${breakdown.ptsGroupQual} pkt):</span>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedR32, breakdown.actualR32)}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAZA PUCHAROWA -->
+      <div class="bg-slate-750 p-4 rounded-xl border border-slate-700/60 space-y-3">
+        <h4 class="font-bold text-white text-xs flex items-center justify-between border-b border-slate-700 pb-1.5">
+          <span>🏆 DRABINKA PUCHAROWA</span>
+          <span class="text-emerald-400 font-extrabold text-sm">${breakdown.ptsR16 + breakdown.ptsQF + breakdown.ptsSF + breakdown.ptsThird + breakdown.ptsFinalists + breakdown.ptsChampion} pkt</span>
+        </h4>
+        <div class="space-y-3 text-[11px] text-slate-400 leading-relaxed">
+          <div>
+            <span class="block font-semibold text-slate-300 mb-1">1/8 Finału (R16) - (+${breakdown.ptsR16} pkt):</span>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedR16, breakdown.actualR16)}</div>
+          </div>
+          <div>
+            <span class="block font-semibold text-slate-300 mb-1">Ćwierćfinały (QF) - (+${breakdown.ptsQF} pkt):</span>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedQF, breakdown.actualQF)}</div>
+          </div>
+          <div>
+            <span class="block font-semibold text-slate-300 mb-1">Półfinały (SF - 2 pkt za każdy) - (+${breakdown.ptsSF} pkt):</span>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedSF, breakdown.actualSF)}</div>
+          </div>
+          <div class="flex justify-between items-center pt-1.5 border-t border-slate-700/40">
+            <span class="font-semibold text-slate-300">Zdobywca 3. miejsca (2 pkt):</span>
+            <span>${formatSingleTeam(breakdown.userPredictedThird, breakdown.actualThird, breakdown.ptsThird > 0, 2)}</span>
+          </div>
+          <div class="pt-1.5 border-t border-slate-700/40">
+            <span class="block font-semibold text-slate-300 mb-1">Finaliści (3 pkt za każdego) - (+${breakdown.ptsFinalists} pkt):</span>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedFinalists, breakdown.actualFinalists)}</div>
+          </div>
+          <div class="flex justify-between items-center pt-1.5 border-t border-slate-700/40">
+            <span class="font-semibold text-slate-300">Mistrz Świata (5 pkt):</span>
+            <span>${formatSingleTeam(breakdown.userPredictedChampion, breakdown.actualChampion, breakdown.ptsChampion > 0, 5)}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NAGRODY INDYWIDUALNE -->
+      <div class="bg-slate-750 p-4 rounded-xl border border-slate-700/60 space-y-3">
+        <h4 class="font-bold text-white text-xs flex items-center justify-between border-b border-slate-700 pb-1.5">
+          <span>⭐ NAGRODY INDYWIDUALNE</span>
+          <span class="text-emerald-400 font-extrabold text-sm">${breakdown.ptsAwards} pkt</span>
+        </h4>
+        <div class="space-y-2 text-[11px] text-slate-400">
+          <div class="flex justify-between">
+            <span>Król strzelców:</span>
+            <span>${formatAward(breakdown.userPlayers.top_scorer, breakdown.actualAwards.top_scorer, breakdown.awardsMatches.scorer)}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>MVP turnieju:</span>
+            <span>${formatAward(breakdown.userPlayers.mvp, breakdown.actualAwards.mvp, breakdown.awardsMatches.mvp)}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Najlepszy bramkarz:</span>
+            <span>${formatAward(breakdown.userPlayers.best_goalkeeper, breakdown.actualAwards.best_goalkeeper, breakdown.awardsMatches.goalkeeper)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    } catch (err) {
+        console.error(err);
+        modalContent.innerHTML =
+            '<div class="text-center py-8 text-rose-400">Błąd podczas generowania karty wyników. Upewnij się, że ten gracz wytypował cały turniej.</div>';
+    }
+};
+
+// Pomocnicza funkcja licząca punkty dla konkretnego gracza w locie (Poprawiona)
+function computeDetailedScoreForModal(userPreds, actual) {
+    const clean = (str) => (str || "").trim().toLowerCase();
+
+    const actualAwards =
+        actual && actual.awards
+            ? actual.awards
+            : { top_scorer: "", mvp: "", best_goalkeeper: "" };
+
+    const getActualTeamsForStage = (stageName) => {
+        if (!actual || !actual.stages) return new Set();
+        return new Set(
+            actual.stages
+                .filter((s) => s.stage === stageName)
+                .map((s) => clean(s.team_name)),
+        );
+    };
+
+    const actualR32 = getActualTeamsForStage("r32");
+    const actualR16 = getActualTeamsForStage("r16");
+    const actualQF = getActualTeamsForStage("qf");
+    const actualSF = getActualTeamsForStage("sf");
+    const actualFinalists = getActualTeamsForStage("finalists");
+    const actualThird = [...getActualTeamsForStage("third")][0] || "";
+    const actualChampion = [...getActualTeamsForStage("champion")][0] || "";
+
+    let ptsGroupPos = 0;
+    let ptsGroupBonus = 0;
+    let correctBonusGroups = [];
+    let ptsGroupQual = 0;
+
+    let ptsR16 = 0;
+    let ptsQF = 0;
+    let ptsSF = 0;
+    let ptsThird = 0;
+    let ptsFinalists = 0;
+    let ptsChampion = 0;
+
+    let ptsAwards = 0;
+    const awardsMatches = { scorer: false, mvp: false, goalkeeper: false };
+
+    // 1. Grupy
+    const groupCorrectCounters = {};
+    const userPredictedR32 = new Set();
+
+    if (userPreds && userPreds.groups) {
+        Object.keys(userPreds.groups).forEach((letter) => {
+            const teams = userPreds.groups[letter];
+            teams.forEach((teamName, idx) => {
+                const predictedRank = idx + 1;
+                const teamClean = clean(teamName);
+
+                const actualGroupsList =
+                    actual && actual.groups ? actual.groups : [];
+                const actualGroupItem = actualGroupsList.find(
+                    (g) =>
+                        g.group_letter === letter &&
+                        clean(g.team_name) === teamClean,
+                );
+                if (actualGroupItem) {
+                    if (predictedRank === actualGroupItem.actual_rank) {
+                        ptsGroupPos += 2;
+                        groupCorrectCounters[letter] =
+                            (groupCorrectCounters[letter] || 0) + 1;
+                    }
+                }
+
+                const isBestThird =
+                    userPreds.thirds && userPreds.thirds.has(teamName);
+                if (predictedRank === 1 || predictedRank === 2 || isBestThird) {
+                    userPredictedR32.add(teamClean);
+                }
+            });
+        });
+
+        Object.keys(groupCorrectCounters).forEach((letter) => {
+            if (groupCorrectCounters[letter] === 4) {
+                ptsGroupBonus += 1;
+                correctBonusGroups.push(letter);
+            }
+        });
+
+        userPredictedR32.forEach((predictedTeam) => {
+            if (actualR32.has(predictedTeam)) {
+                ptsGroupQual += 1;
+            }
+        });
+    }
+
+    // 2. Drabinka
+    const userWinnersMap = {};
+    if (userPreds && userPreds.koMatches) {
+        Object.keys(userPreds.koMatches).forEach((matchId) => {
+            userWinnersMap[matchId] = clean(
+                userPreds.koMatches[matchId].winner,
+            );
+        });
+    }
+
+    const userPredictedR16 = new Set();
+    for (let i = 73; i <= 88; i++) {
+        const team = userWinnersMap[i];
+        if (team) {
+            userPredictedR16.add(team);
+            if (actualR16.has(team)) ptsR16 += 1;
+        }
+    }
+
+    const userPredictedQF = new Set();
+    for (let i = 89; i <= 96; i++) {
+        const team = userWinnersMap[i];
+        if (team) {
+            userPredictedQF.add(team);
+            if (actualQF.has(team)) ptsQF += 1;
+        }
+    }
+
+    const userPredictedSF = new Set();
+    for (let i = 97; i <= 100; i++) {
+        const team = userWinnersMap[i];
+        if (team) {
+            userPredictedSF.add(team);
+            if (actualSF.has(team)) ptsSF += 2;
+        }
+    }
+
+    const userPredictedThird = userWinnersMap[103] || "";
+    if (userPredictedThird && userPredictedThird === clean(actualThird)) {
+        ptsThird = 2;
+    }
+
+    const userPredictedFinalists = new Set();
+    if (userWinnersMap[101]) userPredictedFinalists.add(userWinnersMap[101]);
+    if (userWinnersMap[102]) userPredictedFinalists.add(userWinnersMap[102]);
+    userPredictedFinalists.forEach((team) => {
+        if (actualFinalists.has(team)) {
+            ptsFinalists += 3;
+        }
+    });
+
+    const userPredictedChampion = userWinnersMap[104] || "";
+    if (
+        userPredictedChampion &&
+        userPredictedChampion === clean(actualChampion)
+    ) {
+        ptsChampion = 5;
+    }
+
+    // 3. Nagrody
+    if (userPreds && userPreds.players) {
+        if (
+            clean(userPreds.players.top_scorer) &&
+            clean(userPreds.players.top_scorer) ===
+                clean(actualAwards.top_scorer)
+        ) {
+            ptsAwards += 5;
+            awardsMatches.scorer = true;
+        }
+        if (
+            clean(userPreds.players.mvp) &&
+            clean(userPreds.players.mvp) === clean(actualAwards.mvp)
+        ) {
+            ptsAwards += 5;
+            awardsMatches.mvp = true;
+        }
+        if (
+            clean(userPreds.players.best_goalkeeper) &&
+            clean(userPreds.players.best_goalkeeper) ===
+                clean(actualAwards.best_goalkeeper)
+        ) {
+            ptsAwards += 5;
+            awardsMatches.goalkeeper = true;
+        }
+    }
+
+    const totalPoints =
+        ptsGroupPos +
+        ptsGroupBonus +
+        ptsGroupQual +
+        ptsR16 +
+        ptsQF +
+        ptsSF +
+        ptsThird +
+        ptsFinalists +
+        ptsChampion +
+        ptsAwards;
+
+    return {
+        ptsGroupPos,
+        ptsGroupBonus,
+        correctBonusGroups,
+        ptsGroupQual,
+        userPredictedR32,
+        actualR32,
+        ptsR16,
+        userPredictedR16,
+        actualR16,
+        ptsQF,
+        userPredictedQF,
+        actualQF,
+        ptsSF,
+        userPredictedSF,
+        actualSF,
+        ptsThird,
+        userPredictedThird,
+        actualThird,
+        ptsFinalists,
+        userPredictedFinalists,
+        actualFinalists,
+        ptsChampion,
+        userPredictedChampion,
+        actualChampion,
+        ptsAwards,
+        awardsMatches,
+        totalPoints,
+        actualAwards,
+        userPlayers: userPreds.players,
+    };
+}
+
+window.closeDetailsModal = function () {
+    const modal = document.getElementById("details-modal");
+    if (modal) modal.classList.add("hidden");
+};

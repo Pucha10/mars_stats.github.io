@@ -676,15 +676,25 @@ async function loadLeaderboard() {
             tbody.innerHTML = "";
 
             players.forEach((player, index) => {
+                // Przycisk "Zobacz typy"
+                const actionButton = `<button onclick="previewUserPredictions(${player.id}, '${player.username}')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-xs px-2.5 py-1.5 rounded-lg transition font-medium">Zobacz typy</button>`;
+
+                // Klikalne punkty, które otwierają okienko ze szczegółami
+                const clickablePoints = `
+                  <button onclick="showPlayerScoreDetails(${player.id}, '${player.username}')" class="font-bold text-emerald-400 hover:text-emerald-300 hover:underline transition focus:outline-none">
+                    ${player.points || 0} pkt
+                  </button>
+                `;
+
                 const row = document.createElement("tr");
                 row.className = "hover:bg-slate-800/30 transition";
                 row.innerHTML = `
                     <td class="py-3 px-4 text-center font-bold text-slate-400">${index + 1}</td>
                     <td class="py-3 px-4 font-semibold text-white">${player.username}</td>
                     <td class="py-3 px-4 text-right">
-                        <div class="flex items-center justify-end gap-3">
-                            <span class="font-bold text-emerald-400">${player.points || 0} pkt</span>
-                            <button onclick="previewUserPredictions(${player.id}, '${player.username}')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-xs px-2.5 py-1.5 rounded-lg transition font-medium">Zobacz typy</button>
+                        <div class="flex items-center justify-end gap-5">
+                            ${clickablePoints}
+                            ${actionButton}
                         </div>
                     </td>
                 `;
