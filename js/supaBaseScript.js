@@ -569,162 +569,146 @@ async function registerUser(username, pin) {
 async function loadUserData() {
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${currentUserId}`, {
-      method: "GET",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json"
-      }
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
     if (response.ok) {
       const users = await response.json();
       if (users.length > 0) {
-        userPoints = users[0].points || 0;
-        document.getElementById('user-points').textContent = `Punkty: ${userPoints}`;
+        document.getElementById('user-points').textContent = `Punkty: ${users[0].points || 0}`;
       }
     }
-  } catch (err) {
-    console.error("Błąd pobierania punktów:", err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 async function loadUserPredictions() {
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
-      method: "GET",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json"
-      }
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
-
     if (response.ok) {
       const predictions = await response.json();
       if (predictions.length > 0) {
         const tempGroups = {};
         predictions.forEach(pred => {
-          if (!tempGroups[pred.group_letter]) {
-            tempGroups[pred.group_letter] = [];
-          }
-          tempGroups[pred.group_letter].push({
-            name: pred.team_name,
-            rank: pred.predicted_rank,
-            isBestThird: pred.is_best_third
-          });
+          if (!tempGroups[pred.group_letter]) tempGroups[pred.group_letter] = [];
+          tempGroups[pred.group_letter].push({ name: pred.team_name, rank: pred.predicted_rank, isBestThird: pred.is_best_third });
         });
-
-        Object.keys(tempGroups).forEach(groupLetter => {
-          tempGroups[groupLetter].sort((a, b) => a.rank - b.rank);
-          localGroups[groupLetter] = tempGroups[groupLetter].map(t => t.name);
-
-          tempGroups[groupLetter].forEach(t => {
-            if (t.isBestThird) {
-              selectedThirds.add(t.name);
-            }
+        Object.keys(tempGroups).forEach(letter => {
+          tempGroups[letter].sort((a, b) => a.rank - b.rank);
+          localGroups[letter] = tempGroups[letter].map(t => t.name);
+          tempGroups[letter].forEach(t => {
+            if (t.isBestThird) selectedThirds.add(t.name);
           });
         });
       }
     }
-  } catch (err) {
-    console.error("Błąd pobierania typów:", err);
-  }
+  } catch (err) { console.error(err); }
+}
+
+async function loadKnockoutPredictions() {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if (response.ok) {
+      const preds = await response.json();
+      preds.forEach(p => {
+        if (!bracketMatches[p.match_id]) bracketMatches[p.match_id] = { home: "", away: "", winner: "" };
+        bracketMatches[p.match_id].winner = p.predicted_winner;
+      });
+    }
+  } catch (err) { console.error(err); }
 }
 
 async function loadLeaderboard() {
   const tbody = document.getElementById('leaderboard-tbody');
-  tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-500">Ładowanie rankingu...</td></tr>';
-
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/users?select=username,points&order=points.desc`, {
-      method: "GET",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json"
-      }
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
-
     if (response.ok) {
       const players = await response.json();
-      tbody.innerHTML = '';
-      
-      players.forEach((player, index) => {
-        const row = document.createElement('tr');
-        row.className = "hover:bg-slate-800/30 transition";
-        row.innerHTML = `
+      tbody.innerHTML = players.map((player, index) => `
+        <tr class="hover:bg-slate-800/30 transition">
           <td class="py-3 px-4 text-center font-bold text-slate-400">${index + 1}</td>
           <td class="py-3 px-4 font-semibold text-white">${player.username}</td>
           <td class="py-3 px-4 text-right font-bold text-emerald-400">${player.points || 0} pkt</td>
-        `;
-        tbody.appendChild(row);
-      });
+        </tr>
+      `).join('');
     }
-  } catch (err) {
-    console.error("Błąd ładowania rankingu:", err);
-    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-rose-400">Nie udało się załadować rankingu.</td></tr>';
-  }
+  } catch (err) { console.error(err); }
 }
 
-async function savePredictions() {
+async function saveAllPredictions() {
   const btn = document.getElementById('btn-save');
   btn.disabled = true;
   btn.textContent = "Zapisywanie...";
 
-  const payload = [];
-
-  Object.keys(localGroups).forEach(groupLetter => {
-    localGroups[groupLetter].forEach((teamName, index) => {
-      const rank = index + 1;
-      const isBestThird = (rank === 3 && selectedThirds.has(teamName));
-
-      payload.push({
-        user_id: parseInt(currentUserId),
-        group_letter: groupLetter,
-        team_name: teamName,
-        predicted_rank: rank,
-        is_best_third: isBestThird
+  try {
+    const groupPayload = [];
+    Object.keys(localGroups).forEach(letter => {
+      localGroups[letter].forEach((team, idx) => {
+        const rank = idx + 1;
+        const isBestThird = (rank === 3 && selectedThirds.has(team));
+        groupPayload.push({
+          user_id: parseInt(currentUserId),
+          group_letter: letter,
+          team_name: team,
+          predicted_rank: rank,
+          is_best_third: isBestThird
+        });
       });
     });
-  });
 
-  try {
-    const deleteResponse = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
+    const delGroups = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
       method: "DELETE",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json"
-      }
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
+    if (!delGroups.ok) throw new Error("Nie udało się zresetować poprzednich typów grupowych.");
 
-    if (!deleteResponse.ok) {
-      throw new Error("Nie udało się usunąć starych typów.");
-    }
-
-    const insertResponse = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions`, {
+    const insGroups = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions`, {
       method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(groupPayload)
     });
+    if (!insGroups.ok) throw new Error("Błąd podczas zapisywania fazy grupowej.");
 
-    if (insertResponse.ok) {
-      alert("Twoje typy zostały zapisane pomyślnie!");
-    } else {
-      const errData = await insertResponse.json();
-      throw new Error(errData.message || "Błąd zapisu danych");
+    if (selectedThirds.size === 8) {
+      const knockoutPayload = [];
+      Object.keys(bracketMatches).forEach(matchId => {
+        const winner = bracketMatches[matchId].winner;
+        if (winner && winner !== "???") {
+          knockoutPayload.push({
+            user_id: parseInt(currentUserId),
+            match_id: parseInt(matchId),
+            predicted_winner: winner
+          });
+        }
+      });
+
+      if (knockoutPayload.length > 0) {
+        const delKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`, {
+          method: "DELETE",
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+        });
+        if (!delKnockout.ok) throw new Error("Nie udało się zresetować poprzedniej drabinki.");
+
+        const insKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions`, {
+          method: "POST",
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify(knockoutPayload)
+        });
+        if (!insKnockout.ok) throw new Error("Błąd podczas zapisywania drabinki pucharowej.");
+      }
     }
 
+    alert("Wszystkie Twoje typy zostały pomyślnie zapisane!");
   } catch (err) {
-    console.error("Błąd zapisu:", err);
-    alert("Wystąpił błąd podczas zapisywania: " + err.message);
+    console.error(err);
+    alert("Wystąpił błąd podczas zapisu: " + err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = "Zapisz moje typy grupowe";
+    btn.textContent = "Zapisz moje typy";
   }
 }
 

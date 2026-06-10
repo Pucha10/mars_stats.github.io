@@ -122,80 +122,6 @@ function setupLogout() {
   });
 }
 
-async function loadUserData() {
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${currentUserId}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const users = await response.json();
-      if (users.length > 0) {
-        document.getElementById('user-points').textContent = `Punkty: ${users[0].points || 0}`;
-      }
-    }
-  } catch (err) { console.error(err); }
-}
-
-async function loadUserPredictions() {
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const predictions = await response.json();
-      if (predictions.length > 0) {
-        const tempGroups = {};
-        predictions.forEach(pred => {
-          if (!tempGroups[pred.group_letter]) tempGroups[pred.group_letter] = [];
-          tempGroups[pred.group_letter].push({ name: pred.team_name, rank: pred.predicted_rank, isBestThird: pred.is_best_third });
-        });
-        Object.keys(tempGroups).forEach(letter => {
-          tempGroups[letter].sort((a, b) => a.rank - b.rank);
-          localGroups[letter] = tempGroups[letter].map(t => t.name);
-          tempGroups[letter].forEach(t => {
-            if (t.isBestThird) selectedThirds.add(t.name);
-          });
-        });
-      }
-    }
-  } catch (err) { console.error(err); }
-}
-
-async function loadKnockoutPredictions() {
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const preds = await response.json();
-      preds.forEach(p => {
-        if (!bracketMatches[p.match_id]) bracketMatches[p.match_id] = { home: "", away: "", winner: "" };
-        bracketMatches[p.match_id].winner = p.predicted_winner;
-      });
-    }
-  } catch (err) { console.error(err); }
-}
-
-async function loadLeaderboard() {
-  const tbody = document.getElementById('leaderboard-tbody');
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/users?select=username,points&order=points.desc`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-      const players = await response.json();
-      tbody.innerHTML = players.map((player, index) => `
-        <tr class="hover:bg-slate-800/30 transition">
-          <td class="py-3 px-4 text-center font-bold text-slate-400">${index + 1}</td>
-          <td class="py-3 px-4 font-semibold text-white">${player.username}</td>
-          <td class="py-3 px-4 text-right font-bold text-emerald-400">${player.points || 0} pkt</td>
-        </tr>
-      `).join('');
-    }
-  } catch (err) { console.error(err); }
-}
-
-// Renderowanie grup (Widok Faza Grupowa)
 function renderGroups() {
   const container = document.getElementById('groups-container');
   container.innerHTML = Object.keys(localGroups).map(letter => {
@@ -282,14 +208,10 @@ function updateThirdsCounter() {
   counter.className = selectedThirds.size === 8 ? "text-sm font-bold text-emerald-400" : "text-sm font-bold text-amber-400";
 }
 
-// --- LOGIKA DRABINKI PUCHAROWEJ (ANEKS C & POZOSTAŁE RUNDY) ---
-
-// Algorytm dopasowania Aneksu C (Backtracking w przypadku braku gotowego wzorca)
 function solveAnnexC(selectedGroups) {
   const sortedKey = [...selectedGroups].sort().join('');
   if (annexCOverrides[sortedKey]) return annexCOverrides[sortedKey];
 
-  // Backtracking solver
   const slots = Object.keys(annexCPools);
   const result = {};
   const used = new Set();
@@ -312,10 +234,9 @@ function solveAnnexC(selectedGroups) {
   }
 
   if (backtrack(0)) return result;
-  return null; // Zabezpieczenie
+  return null; 
 }
 
-// Inicjalizacja i sprawdzenie drabinki
 function checkAndBuildBracket() {
   const lockMsg = document.getElementById('bracket-lock-msg');
   const bracketContent = document.getElementById('bracket-content');
@@ -334,9 +255,7 @@ function checkAndBuildBracket() {
   renderBracket();
 }
 
-// Budowanie par 1/16 finału na podstawie regulaminu FIFA
 function buildRoundOf32() {
-  // Wyznaczenie grup, z których awansują trzecie miejsca
   const thirdPlaceGroups = [];
   Object.keys(localGroups).forEach(letter => {
     const thirdTeam = localGroups[letter][2];
@@ -350,7 +269,6 @@ function buildRoundOf32() {
   const getTeam = (letter, rank) => localGroups[letter][rank - 1];
   const getThirdTeamOfGroup = (letter) => localGroups[letter][2];
 
-  // Definiowanie 16 par 1/16 finału według oficjalnego rozkładu FIFA (Mecze 73-88)
   const r32Matches = {
     73: { home: getTeam("A", 2), away: getTeam("B", 2) },
     74: { home: getTeam("E", 1), away: getThirdTeamOfGroup(matching["1E"]) },
@@ -370,7 +288,6 @@ function buildRoundOf32() {
     88: { home: getTeam("D", 2), away: getTeam("G", 2) }
   };
 
-  // Łączymy wyliczone pary z typami zapisanymi przez użytkownika w pamięci
   Object.keys(r32Matches).forEach(id => {
     const matchId = parseInt(id);
     if (!bracketMatches[matchId]) {
@@ -381,7 +298,6 @@ function buildRoundOf32() {
   });
 }
 
-// Automatyczne przesyłanie wygranych drużyn w górę drabinki (Mecze 89-104)
 function propagateBracket() {
   const getWinner = (id) => (bracketMatches[id] && bracketMatches[id].winner) ? bracketMatches[id].winner : "";
   const getLoser = (id) => {
@@ -403,7 +319,6 @@ function propagateBracket() {
     }
   };
 
-  // 1/8 Finału (Mecze 89 - 96)
   setMatch(89, getWinner(74), getWinner(77));
   setMatch(90, getWinner(73), getWinner(75));
   setMatch(91, getWinner(76), getWinner(78));
@@ -413,26 +328,21 @@ function propagateBracket() {
   setMatch(95, getWinner(86), getWinner(88));
   setMatch(96, getWinner(85), getWinner(87));
 
-  // Ćwierćfinały (Mecze 97 - 100)
   setMatch(97, getWinner(89), getWinner(90));
   setMatch(98, getWinner(93), getWinner(94));
   setMatch(99, getWinner(91), getWinner(92));
   setMatch(100, getWinner(95), getWinner(96));
 
-  // Półfinały (Mecze 101 - 102)
   setMatch(101, getWinner(97), getWinner(98));
   setMatch(102, getWinner(99), getWinner(100));
 
-  // Finał oraz Mecz o 3. miejsce (Mecze 103 - 104)
-  setMatch(103, getLoser(101), getLoser(102)); // o 3. miejsce
-  setMatch(104, getWinner(101), getWinner(102)); // Finał
+  setMatch(103, getLoser(101), getLoser(102)); 
+  setMatch(104, getWinner(101), getWinner(102)); 
 }
 
-// Przełączanie widoku rund drabinki
 window.switchBracketRound = function(roundKey) {
   activeBracketRound = roundKey;
   
-  // Zmiana styli przycisków rund
   ["r32", "r16", "qf", "sf", "final"].forEach(r => {
     const btn = document.getElementById(`btn-${r}`);
     if (r === roundKey) {
@@ -445,7 +355,6 @@ window.switchBracketRound = function(roundKey) {
   renderBracket();
 };
 
-// Mapowanie rund na numery meczów
 const roundMatchMap = {
   "r32": [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87],
   "r16": [89, 90, 93, 94, 91, 92, 95, 96],
@@ -462,7 +371,6 @@ const roundNames = {
   "final": "Finały"
 };
 
-// Generowanie HTML dla meczów wybranej rundy drabinki
 function renderBracket() {
   const container = document.getElementById('bracket-matches-container');
   const matchIds = roundMatchMap[activeBracketRound];
@@ -517,90 +425,13 @@ function renderBracket() {
   }).join('');
 }
 
-// Zaznaczenie zwycięzcy i natychmiastowa aktualizacja całej drabinki
 window.predictBracketWinner = function(matchId, winnerTeam) {
   if (winnerTeam === "???") return;
 
   bracketMatches[matchId].winner = winnerTeam;
   
-  // Propagacja i odświeżenie widoku
   propagateBracket();
   renderBracket();
 };
 
-// --- OBSŁUGA ZAPISU DO SUPABASE ---
 
-async function saveAllPredictions() {
-  const btn = document.getElementById('btn-save');
-  btn.disabled = true;
-  btn.textContent = "Zapisywanie...";
-
-  try {
-    // 1. ZAPIS FAZY GRUPOWEJ
-    const groupPayload = [];
-    Object.keys(localGroups).forEach(letter => {
-      localGroups[letter].forEach((team, idx) => {
-        const rank = idx + 1;
-        const isBestThird = (rank === 3 && selectedThirds.has(team));
-        groupPayload.push({
-          user_id: parseInt(currentUserId),
-          group_letter: letter,
-          team_name: team,
-          predicted_rank: rank,
-          is_best_third: isBestThird
-        });
-      });
-    });
-
-    const delGroups = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
-      method: "DELETE",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    if (!delGroups.ok) throw new Error("Nie udało się zresetować poprzednich typów grupowych.");
-
-    const insGroups = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(groupPayload)
-    });
-    if (!insGroups.ok) throw new Error("Błąd podczas zapisywania fazy grupowej.");
-
-    // 2. ZAPIS DRABINKI PUCHAROWEJ (tylko gdy jest odblokowana i uzupełniona)
-    if (selectedThirds.size === 8) {
-      const knockoutPayload = [];
-      Object.keys(bracketMatches).forEach(matchId => {
-        const winner = bracketMatches[matchId].winner;
-        if (winner && winner !== "???") {
-          knockoutPayload.push({
-            user_id: parseInt(currentUserId),
-            match_id: parseInt(matchId),
-            predicted_winner: winner
-          });
-        }
-      });
-
-      if (knockoutPayload.length > 0) {
-        const delKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions?user_id=eq.${currentUserId}`, {
-          method: "DELETE",
-          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-        });
-        if (!delKnockout.ok) throw new Error("Nie udało się zresetować poprzedniej drabinki.");
-
-        const insKnockout = await fetch(`${SUPABASE_URL}/rest/v1/knockout_predictions`, {
-          method: "POST",
-          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify(knockoutPayload)
-        });
-        if (!insKnockout.ok) throw new Error("Błąd podczas zapisywania drabinki pucharowej.");
-      }
-    }
-
-    alert("Wszystkie Twoje typy (grupy oraz drabinka) zostały pomyślnie zapisane!");
-  } catch (err) {
-    console.error(err);
-    alert("Wystąpił błąd podczas zapisu: " + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Zapisz moje typy";
-  }
-}
