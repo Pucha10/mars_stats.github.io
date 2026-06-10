@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Typowanie Mistrzostw Świata</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Supabase Script -->
+  <script src="js/supaBaseScript.js"></script>
+  
+  <!-- Logika panelu głównego i drabinki -->
+  <script src="js/world-cup.js" defer></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-28">
+
+  <!-- Górny pasek nawigacji -->
+  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div>
+        <h1 class="text-lg font-bold text-white flex items-center gap-2">⚽ MŚ 2026</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <span id="user-display" class="block text-xs text-slate-400 font-medium">Ładowanie...</span>
+          <span id="user-points" class="block text-xs font-bold text-emerald-400">Punkty: 0</span>
+        </div>
+        <button id="btn-logout" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs px-3 py-1.5 rounded-lg transition">
+          Wyloguj
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Główne Menu Przełączania Zakładek (Mobile-First) -->
+  <div class="max-w-6xl mx-auto px-4 mt-6">
+    <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 gap-1">
+      <button id="tab-groups-btn" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center bg-slate-700 text-white transition">
+        Faza Grupowa
+      </button>
+      <button id="tab-bracket-btn" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center text-slate-400 hover:text-white transition">
+        Drabinka Pucharowa
+      </button>
+      <button id="tab-leaderboard-btn" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center text-slate-400 hover:text-white transition">
+        Ranking
+      </button>
+    </div>
+  </div>
+
+  <!-- Główny Kontener Treści -->
+  <main class="max-w-6xl mx-auto px-4 mt-6">
+
+    <!-- SEKCDA 1: TYPOWANIE GRUP -->
+    <section id="section-groups" class="space-y-6">
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow">
+        <div>
+          <h2 class="font-bold text-white text-base">Faza Grupowa</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Ułóż kolejność w grupach strzałkami. Zaznacz dokładnie 8 drużyn z 3. miejsca.</p>
+        </div>
+        <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 text-center sm:text-right">
+          <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Wybrane 3. miejsca</span>
+          <span id="thirds-counter" class="text-sm font-bold text-amber-400">0 / 8</span>
+        </div>
+      </div>
+
+      <div id="groups-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Grupy generowane dynamicznie -->
+      </div>
+    </section>
+
+
+    <!-- SEKCJA 2: DRABINKA PUCHAROWA -->
+    <section id="section-bracket" class="hidden space-y-6">
+      
+      <!-- Blokada / Informacja -->
+      <div id="bracket-lock-msg" class="bg-amber-900/20 border border-amber-500/30 p-4 rounded-xl text-center text-amber-300 text-sm">
+        Aby typować drabinkę pucharową, musisz najpierw wytypować fazę grupową.
+      </div>
+
+      <!-- Kontener drabinki (widoczny po spełnieniu warunku) -->
+      <div id="bracket-content" class="hidden space-y-6">
+        
+        <!-- Menu nawigacyjne rund pucharowych -->
+        <div class="flex overflow-x-auto bg-slate-800 p-1 rounded-lg border border-slate-700 gap-1 no-scrollbar">
+          <button onclick="switchBracketRound('r32')" id="btn-r32" class="flex-none sm:flex-1 px-4 py-2 text-xs font-bold rounded bg-slate-700 text-white">1/16 Finału</button>
+          <button onclick="switchBracketRound('r16')" id="btn-r16" class="flex-none sm:flex-1 px-4 py-2 text-xs font-bold rounded text-slate-400">1/8 Finału</button>
+          <button onclick="switchBracketRound('qf')" id="btn-qf" class="flex-none sm:flex-1 px-4 py-2 text-xs font-bold rounded text-slate-400">Ćwierćfinały</button>
+          <button onclick="switchBracketRound('sf')" id="btn-sf" class="flex-none sm:flex-1 px-4 py-2 text-xs font-bold rounded text-slate-400">Półfinały</button>
+          <button onclick="switchBracketRound('final')" id="btn-final" class="flex-none sm:flex-1 px-4 py-2 text-xs font-bold rounded text-slate-400">Finały</button>
+        </div>
+
+        <div id="bracket-matches-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        </div>
+      </div>
+    </section>
+
+
+    <section id="section-leaderboard" class="hidden">
+      <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
+        <div class="p-4 border-b border-slate-700">
+          <h2 class="font-bold text-white text-base">Ranking generalny</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900/50 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                <th class="py-3 px-4 w-16 text-center">Pozycja</th>
+                <th class="py-3 px-4">Gracz</th>
+                <th class="py-3 px-4 text-right">Punkty</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-tbody" class="divide-y divide-slate-700/50 text-sm">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-md border-t border-slate-700 p-4 shadow-lg flex justify-center z-40">
+    <button id="btn-save" class="w-full max-w-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl text-sm tracking-wide transition shadow-lg active:scale-95">
+      Zapisz moje typy
+    </button>
+  </div>
+
+</body>
+</html>

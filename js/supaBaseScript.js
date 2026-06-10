@@ -490,3 +490,242 @@ async function getPlayerStats(playerName) {
         console.error("Błąd ładowania statystyk:", err);
     }
 }
+
+async function loginUser(username, pin) {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/users?username=eq.${username}&pin=eq.${pin}`,
+            {
+                method: "GET",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(`Błąd serwera: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const user = data[0];
+            showAlert('Zalogowano pomyślnie! Przekierowanie...', 'success');
+            
+            localStorage.setItem('wc_user_id', user.id);
+            localStorage.setItem('wc_username', user.username);
+            
+            setTimeout(() => {
+                window.location.href = './world-cup.html';
+            }, 1200);
+            return user;
+        } else {
+            showAlert('Błędny login lub PIN. Spróbuj ponownie.', 'error');
+            return null;
+        }
+    } catch (err) {
+        console.error("Błąd logowania:", err);
+        showAlert('Wystąpił błąd podczas logowania: ' + err.message, 'error');
+    }
+}
+async function registerUser(username, pin) {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/users`,
+            {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                    Prefer: "return=representation", 
+                },
+                body: JSON.stringify({ username: username, pin: pin }),
+            }
+        );
+
+        if (!response.ok) {
+            const err = await response.json();
+            if (err.code === '23505') { 
+                showAlert('Ta nazwa użytkownika jest już zajęta.', 'error');
+                return null;
+            } else {
+                throw new Error(err.message || 'Błąd zapisu w bazie');
+            }
+        }
+
+        const data = await response.json();
+        showAlert('Konto zostało utworzone! Możesz się teraz zalogować.', 'success');
+        return data[0];
+    } catch (err) {
+        console.error("Błąd rejestracji:", err);
+        showAlert('Wystąpił błąd podczas rejestracji: ' + err.message, 'error');
+    }
+}
+
+async function loadUserData() {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${currentUserId}`, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      }
+    });
+    if (response.ok) {
+      const users = await response.json();
+      if (users.length > 0) {
+        userPoints = users[0].points || 0;
+        document.getElementById('user-points').textContent = `Punkty: ${userPoints}`;
+      }
+    }
+  } catch (err) {
+    console.error("Błąd pobierania punktów:", err);
+  }
+}
+
+async function loadUserPredictions() {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (response.ok) {
+      const predictions = await response.json();
+      if (predictions.length > 0) {
+        const tempGroups = {};
+        predictions.forEach(pred => {
+          if (!tempGroups[pred.group_letter]) {
+            tempGroups[pred.group_letter] = [];
+          }
+          tempGroups[pred.group_letter].push({
+            name: pred.team_name,
+            rank: pred.predicted_rank,
+            isBestThird: pred.is_best_third
+          });
+        });
+
+        Object.keys(tempGroups).forEach(groupLetter => {
+          tempGroups[groupLetter].sort((a, b) => a.rank - b.rank);
+          localGroups[groupLetter] = tempGroups[groupLetter].map(t => t.name);
+
+          tempGroups[groupLetter].forEach(t => {
+            if (t.isBestThird) {
+              selectedThirds.add(t.name);
+            }
+          });
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Błąd pobierania typów:", err);
+  }
+}
+
+async function loadLeaderboard() {
+  const tbody = document.getElementById('leaderboard-tbody');
+  tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-500">Ładowanie rankingu...</td></tr>';
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/users?select=username,points&order=points.desc`, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (response.ok) {
+      const players = await response.json();
+      tbody.innerHTML = '';
+      
+      players.forEach((player, index) => {
+        const row = document.createElement('tr');
+        row.className = "hover:bg-slate-800/30 transition";
+        row.innerHTML = `
+          <td class="py-3 px-4 text-center font-bold text-slate-400">${index + 1}</td>
+          <td class="py-3 px-4 font-semibold text-white">${player.username}</td>
+          <td class="py-3 px-4 text-right font-bold text-emerald-400">${player.points || 0} pkt</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  } catch (err) {
+    console.error("Błąd ładowania rankingu:", err);
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-rose-400">Nie udało się załadować rankingu.</td></tr>';
+  }
+}
+
+async function savePredictions() {
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = "Zapisywanie...";
+
+  const payload = [];
+
+  Object.keys(localGroups).forEach(groupLetter => {
+    localGroups[groupLetter].forEach((teamName, index) => {
+      const rank = index + 1;
+      const isBestThird = (rank === 3 && selectedThirds.has(teamName));
+
+      payload.push({
+        user_id: parseInt(currentUserId),
+        group_letter: groupLetter,
+        team_name: teamName,
+        predicted_rank: rank,
+        is_best_third: isBestThird
+      });
+    });
+  });
+
+  try {
+    const deleteResponse = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions?user_id=eq.${currentUserId}`, {
+      method: "DELETE",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!deleteResponse.ok) {
+      throw new Error("Nie udało się usunąć starych typów.");
+    }
+
+    const insertResponse = await fetch(`${SUPABASE_URL}/rest/v1/group_predictions`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (insertResponse.ok) {
+      alert("Twoje typy zostały zapisane pomyślnie!");
+    } else {
+      const errData = await insertResponse.json();
+      throw new Error(errData.message || "Błąd zapisu danych");
+    }
+
+  } catch (err) {
+    console.error("Błąd zapisu:", err);
+    alert("Wystąpił błąd podczas zapisywania: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Zapisz moje typy grupowe";
+  }
+}
+
+
