@@ -17,7 +17,6 @@
  * comment: string,
  * date: string }} GameData
  */
-
 const SUPABASE_URL = "https://hcefiifazgrlxwvevfmc.supabase.co";
 const SUPABASE_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZWZpaWZhemdybHh3dmV2Zm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3ODkyMDAsImV4cCI6MjA4NDM2NTIwMH0.A9V8NRjhvy7CjpdsLTT3KliNq_P5cIOCPTr1gIedD6k";
