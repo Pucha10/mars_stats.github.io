@@ -5,18 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Typowanie Mistrzostw Świata</title>
   
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Supabase Script -->
   <script src="js/supaBaseScript.js"></script>
   
-  <!-- Logika panelu głównego i drabinki -->
   <script src="js/world-cup.js" defer></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen pb-28">
 
-  <!-- Górny pasek nawigacji -->
   <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 shadow-md">
     <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
       <div>
@@ -34,7 +30,6 @@
     </div>
   </header>
 
-  <!-- Główne Menu Przełączania Zakładek (Mobile-First) -->
   <div class="max-w-6xl mx-auto px-4 mt-6">
     <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 gap-1">
       <button id="tab-groups-btn" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center bg-slate-700 text-white transition">
@@ -49,11 +44,46 @@
     </div>
   </div>
 
-  <!-- Główny Kontener Treści -->
   <main class="max-w-6xl mx-auto px-4 mt-6">
 
-    <!-- SEKCDA 1: TYPOWANIE GRUP -->
     <section id="section-groups" class="space-y-6">
+      
+      <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow">
+        <button onclick="toggleScoringRules()" class="w-full px-4 py-3.5 flex justify-between items-center text-left text-sm font-bold text-slate-200 hover:bg-slate-750 transition focus:outline-none">
+          <span class="flex items-center gap-2">ℹ️ Zasady punktacji (Rozwiń)</span>
+          <span id="rules-arrow" class="transition-transform duration-200">▼</span>
+        </button>
+        <div id="rules-content" class="hidden p-4 border-t border-slate-700 bg-slate-850 text-xs text-slate-300 space-y-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <h4 class="font-bold text-white mb-1">Faza Grupowa:</h4>
+              <ul class="list-disc pl-4 space-y-1">
+                <li>Trafienie dokładnej pozycji w grupie: <strong class="text-emerald-400">2 pkt</strong></li>
+                <li>Trafienie awansu drużyny: <strong class="text-emerald-400">1 pkt</strong></li>
+                <li>Cała grupa poprawnie: <strong class="text-emerald-400">3 pkt (dodatkowe)</strong></li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-bold text-white mb-1">Faza Pucharowa:</h4>
+              <ul class="list-disc pl-4 space-y-1">
+                <li>Liczymy punkty za każdą poprawną drużynę w etapie</li>
+                <li>Trafienie drużyny w 1/8: <strong class="text-emerald-400">1 pkt</strong></li>
+                <li>Trafienie drużyny w ćwierćfinale: <strong class="text-emerald-400">1 pkt</strong></li>
+                <li>Trafienie drużyny w półfinale: <strong class="text-emerald-400">2 pkt</strong></li>
+                <li>Trafienie drużyny w 3. miejscu: <strong class="text-emerald-400">3 pkt</strong></li>
+                <li>Trafienie drużyny w finale: <strong class="text-emerald-400">3 pkt</strong></li>
+                <li>Trafienie mistrza: <strong class="text-emerald-400">5 pkt</strong></li>
+              </ul>
+            </div>
+          </div>
+          <div class="pt-2 border-t border-slate-700/60">
+            <h4 class="font-bold text-white mb-1">Nagrody Indywidualne:</h4>
+            <p>Prawidłowe wytypowanie laureata danej kategorii: <strong class="text-emerald-400">5 pkt</strong> za każdą trafną nominację.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nagłówek i licznik -->
       <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow">
         <div>
           <h2 class="font-bold text-white text-base">Faza Grupowa</h2>
@@ -65,24 +95,72 @@
         </div>
       </div>
 
+      <!-- Siatka grup -->
       <div id="groups-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Grupy generowane dynamicznie -->
       </div>
-    </section>
 
+      <!-- KAFELEK: Typowanie Nagród Indywidualnych -->
+      <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg p-5 space-y-4">
+        <div class="border-b border-slate-700 pb-2">
+          <h3 class="font-bold text-white text-base flex items-center gap-2">⭐ Nagrody Indywidualne</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Wpisz swoich faworytów do nagród końcowych. (NAZWISKO)</p>
+        </div>
 
-    <!-- SEKCJA 2: DRABINKA PUCHAROWA -->
-    <section id="section-bracket" class="hidden space-y-6">
-      
-      <!-- Blokada / Informacja -->
-      <div id="bracket-lock-msg" class="bg-amber-900/20 border border-amber-500/30 p-4 rounded-xl text-center text-amber-300 text-sm">
-        Aby typować drabinkę pucharową, musisz najpierw wytypować fazę grupową.
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Król Strzelców -->
+          <div>
+            <label for="input-scorer" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              Król strzelców
+            </label>
+            <input 
+              type="text" 
+              id="input-scorer" 
+              required
+              placeholder="Messi" 
+              class="w-full bg-slate-700 text-white placeholder-slate-500 border border-slate-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+            >
+          </div>
+
+          <!-- MVP -->
+          <div>
+            <label for="input-mvp" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              Najlepszy piłkarz (MVP)
+            </label>
+            <input 
+              type="text" 
+              id="input-mvp" 
+              required
+              placeholder="Pedri" 
+              class="w-full bg-slate-700 text-white placeholder-slate-500 border border-slate-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+            >
+          </div>
+
+          <!-- Najlepszy bramkarz -->
+          <div>
+            <label for="input-goalkeeper" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              Najlepszy bramkarz
+            </label>
+            <input 
+              type="text" 
+              id="input-goalkeeper" 
+              required
+              placeholder="Szczęsny" 
+              class="w-full bg-slate-700 text-white placeholder-slate-500 border border-slate-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+            >
+          </div>
+        </div>
       </div>
 
-      <!-- Kontener drabinki (widoczny po spełnieniu warunku) -->
+    </section>
+
+    <!-- SEKCDA 2: DRABINKA PUCHAROWA -->
+    <section id="section-bracket" class="hidden space-y-6">
+      <div id="bracket-lock-msg" class="bg-amber-900/20 border border-amber-500/30 p-4 rounded-xl text-center text-amber-300 text-sm">
+        Aby typować drabinkę pucharową, musisz najpierw wybrać dokładnie 8 drużyn z 3. miejsca w fazie grupowej i zapisać swoje typy.
+      </div>
+
       <div id="bracket-content" class="hidden space-y-6">
-        
-        <!-- Menu nawigacyjne rund pucharowych -->
         <div class="flex overflow-x-auto bg-slate-800 p-1 rounded-lg border border-slate-700 gap-1 no-scrollbar">
           <button onclick="switchBracketRound('r32')" id="btn-r32" class="flex-none sm:flex-1 px-4 py-2 text-xs font-bold rounded bg-slate-700 text-white">1/16 Finału</button>
           <button onclick="switchBracketRound('r16')" id="btn-r16" class="flex-none sm:flex-1 px-4 py-2 text-xs font-bold rounded text-slate-400">1/8 Finału</button>
@@ -92,11 +170,12 @@
         </div>
 
         <div id="bracket-matches-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Mecze rundy generowane dynamicznie -->
         </div>
       </div>
     </section>
 
-
+    <!-- SEKCDA 3: RANKING -->
     <section id="section-leaderboard" class="hidden">
       <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
         <div class="p-4 border-b border-slate-700">
@@ -121,10 +200,24 @@
   </main>
 
   <div class="fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-md border-t border-slate-700 p-4 shadow-lg flex justify-center z-40">
-    <button id="btn-save" class="w-full max-w-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl text-sm tracking-wide transition shadow-lg active:scale-95">
+    <button id="btn-save" class="w-full max-w-md bg-emerald-600 hover:bg-emerald-550 text-white font-bold py-3.5 px-6 rounded-xl text-sm tracking-wide transition shadow-lg active:scale-95">
       Zapisz moje typy
     </button>
   </div>
+
+  <script>
+    function toggleScoringRules() {
+      const content = document.getElementById('rules-content');
+      const arrow = document.getElementById('rules-arrow');
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        arrow.style.transform = 'rotate(180deg)';
+      } else {
+        content.classList.add('hidden');
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+  </script>
 
 </body>
 </html>

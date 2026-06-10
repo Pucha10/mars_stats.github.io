@@ -639,12 +639,37 @@ async function loadLeaderboard() {
   } catch (err) { console.error(err); }
 }
 
+async function loadPlayerPredictions() {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/player_predictions?user_id=eq.${currentUserId}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.length > 0) {
+        localPlayers.top_scorer = data[0].top_scorer || "";
+        localPlayers.mvp = data[0].mvp || "";
+        localPlayers.best_goalkeeper = data[0].best_goalkeeper || "";
+
+        document.getElementById('input-scorer').value = localPlayers.top_scorer;
+        document.getElementById('input-mvp').value = localPlayers.mvp;
+        document.getElementById('input-goalkeeper').value = localPlayers.best_goalkeeper;
+      }
+    }
+  } catch (err) { console.error(err); }
+}
+
 async function saveAllPredictions() {
   const btn = document.getElementById('btn-save');
   
   
   if (selectedThirds.size !== 8) {
     alert("Aby zapisać typy, musisz najpierw wybrać dokładnie 8 drużyn z trzecich miejsc w fazie grupowej!");
+    return;
+  }
+
+  if (!localPlayers.top_scorer || !localPlayers.mvp || !localPlayers.best_goalkeeper) {
+    alert("Aby zapisać typy, musisz uzupełnić wszystkie nagrody indywidualne (Król strzelców, MVP, Najlepszy bramkarz)!");
     return;
   }
 
@@ -694,6 +719,26 @@ async function saveAllPredictions() {
     });
     if (!insGroups.ok) throw new Error("Błąd podczas zapisywania fazy grupowej.");
 
+    const playerPayload = {
+      user_id: parseInt(currentUserId),
+      top_scorer: localPlayers.top_scorer,
+      mvp: localPlayers.mvp,
+      best_goalkeeper: localPlayers.best_goalkeeper
+    };
+
+    const delPlayers = await fetch(`${SUPABASE_URL}/rest/v1/player_predictions?user_id=eq.${currentUserId}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!delPlayers.ok) throw new Error("Nie udało się zresetować poprzednich typów zawodników.");
+
+    const insPlayers = await fetch(`${SUPABASE_URL}/rest/v1/player_predictions`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(playerPayload)
+    });
+    if (!insPlayers.ok) throw new Error("Błąd podczas zapisywania nagród indywidualnych.");
+
     const knockoutPayload = [];
     Object.keys(bracketMatches).forEach(matchId => {
       const winner = bracketMatches[matchId].winner;
@@ -722,7 +767,7 @@ async function saveAllPredictions() {
     saveSnapshotAsLoaded();
     updateSaveButtonState();
 
-    alert("Wszystkie Twoje typy zostały pomyślnie zapisane!");
+    alert("Wszystkie Twoje typy (grupy, zawodnicy oraz drabinka) zostały pomyślnie zapisane!");
   } catch (err) {
     console.error(err);
     alert("Wystąpił błąd podczas zapisu: " + err.message);

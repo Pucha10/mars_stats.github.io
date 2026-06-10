@@ -44,11 +44,13 @@ let activeBracketRound = "r32";
 let localGroups = JSON.parse(JSON.stringify(groupsConfig.groups));
 let selectedThirds = new Set();
 let bracketMatches = {};
+let localPlayers = { top_scorer: "", mvp: "", best_goalkeeper: "" };
 
-// Stan bazowy pobrany z bazy danych (do weryfikacji zmian)
+// Stan bazowy pobrany z bazy danych
 let loadedGroups = null;
 let loadedThirds = new Set();
 let loadedBracketWinners = {};
+let loadedPlayers = { top_scorer: "", mvp: "", best_goalkeeper: "" };
 
 // Inicjalizacja pustej drabinki pucharowej (mecze 73-104)
 for (let i = 73; i <= 104; i++) {
@@ -61,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   currentUsername = localStorage.getItem('wc_username');
 
   if (!currentUserId) {
-    window.location.href = './word-cup-login.html';
+    window.location.href = './world-cup-login.html';
     return;
   }
 
@@ -69,12 +71,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   setupTabs();
   setupLogout();
+  setupPlayerInputListeners();
   await loadUserData();
   await loadUserPredictions();
   await loadKnockoutPredictions();
+  await loadPlayerPredictions();
   await loadLeaderboard();
   
-  // Zapisanie stanu pobranego jako punkt odniesienia (oryginał)
+  // Zapisanie stanu bazowego
   saveSnapshotAsLoaded();
 
   renderGroups();
@@ -85,13 +89,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById('btn-save').addEventListener('click', saveAllPredictions);
 });
 
-// Zapisanie kopii danych wejściowych w celu weryfikacji, czy użytkownik cokolwiek edytował
+// Zapisanie kopii danych wejściowych
 function saveSnapshotAsLoaded() {
   loadedGroups = JSON.parse(JSON.stringify(localGroups));
   loadedThirds = new Set(selectedThirds);
   for (let i = 73; i <= 104; i++) {
     loadedBracketWinners[i] = (bracketMatches[i] && bracketMatches[i].winner) ? bracketMatches[i].winner : "";
   }
+  loadedPlayers = { ...localPlayers };
 }
 
 // Sprawdzenie czy aktualny stan różni się od stanu pobranego z bazy danych
@@ -99,9 +104,7 @@ function checkIfChanged() {
   if (!loadedGroups) return false;
 
   // 1. Porównanie kolejności grup
-  if (JSON.stringify(localGroups) !== JSON.stringify(loadedGroups)) {
-    return true;
-  }
+  if (JSON.stringify(localGroups) !== JSON.stringify(loadedGroups)) return true;
 
   // 2. Porównanie wybranych trzecich miejsc
   if (selectedThirds.size !== loadedThirds.size) return true;
@@ -113,12 +116,41 @@ function checkIfChanged() {
   for (let i = 73; i <= 104; i++) {
     const currentWin = (bracketMatches[i] && bracketMatches[i].winner) ? bracketMatches[i].winner : "";
     const loadedWin = loadedBracketWinners[i] || "";
-    if (currentWin !== loadedWin) {
-      return true;
-    }
+    if (currentWin !== loadedWin) return true;
+  }
+
+  // 4. Porównanie typowanych zawodników
+  if (
+    localPlayers.top_scorer !== loadedPlayers.top_scorer ||
+    localPlayers.mvp !== loadedPlayers.mvp ||
+    localPlayers.best_goalkeeper !== loadedPlayers.best_goalkeeper
+  ) {
+    return true;
   }
 
   return false;
+}
+
+// Obsługa nasłuchiwania pól tekstowych zawodników
+function setupPlayerInputListeners() {
+  const scorerInput = document.getElementById('input-scorer');
+  const mvpInput = document.getElementById('input-mvp');
+  const goalkeeperInput = document.getElementById('input-goalkeeper');
+
+  scorerInput.addEventListener('input', (e) => {
+    localPlayers.top_scorer = e.target.value.trim();
+    updateSaveButtonState();
+  });
+
+  mvpInput.addEventListener('input', (e) => {
+    localPlayers.mvp = e.target.value.trim();
+    updateSaveButtonState();
+  });
+
+  goalkeeperInput.addEventListener('input', (e) => {
+    localPlayers.best_goalkeeper = e.target.value.trim();
+    updateSaveButtonState();
+  });
 }
 
 // Aktualizacja wyglądu i dostępności przycisku Zapisz
@@ -128,14 +160,14 @@ function updateSaveButtonState() {
 
   if (hasChanged) {
     btn.disabled = false;
-    btn.className = "w-full max-w-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl text-sm tracking-wide transition shadow-lg active:scale-95 cursor-pointer opacity-100";
+    btn.className = "w-full max-w-md bg-emerald-600 hover:bg-emerald-550 text-white font-bold py-3.5 px-6 rounded-xl text-sm tracking-wide transition shadow-lg active:scale-95 cursor-pointer opacity-100";
   } else {
     btn.disabled = true;
     btn.className = "w-full max-w-md bg-slate-700 text-slate-500 font-bold py-3.5 px-6 rounded-xl text-sm tracking-wide transition shadow-lg cursor-not-allowed opacity-50";
   }
 }
 
-// Czyszczenie typów drabinki pucharowej (wywoływane przy zmianie w grupach)
+// Czyszczenie typów drabinki pucharowej (przy zmianie w grupach)
 function resetKnockoutPredictions() {
   for (let id = 73; id <= 104; id++) {
     if (bracketMatches[id]) {
@@ -189,7 +221,7 @@ function setupLogout() {
   document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('wc_user_id');
     localStorage.removeItem('wc_username');
-    window.location.href = './word-cup-login.html';
+    window.location.href = './world-cup-login.html';
   });
 }
 
@@ -501,7 +533,6 @@ window.predictBracketWinner = function(matchId, winnerTeam) {
   
   propagateBracket();
   renderBracket();
-  updateSaveButtonState(); 
+  updateSaveButtonState();
 };
-
 
