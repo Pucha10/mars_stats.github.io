@@ -15,7 +15,6 @@ const groupsConfig = {
   }
 };
 
-// --- Dane techniczne Aneksu C ---
 const annexCPools = {
   "1A": ["C", "E", "F", "H", "I"],
   "1B": ["E", "F", "G", "I", "J"],
@@ -307,6 +306,11 @@ function updateThirdsCounter() {
 
 function solveAnnexC(selectedGroups) {
   const sortedKey = [...selectedGroups].sort().join('');
+  
+  if (window.annexCMapping && window.annexCMapping[sortedKey]) {
+    return window.annexCMapping[sortedKey];
+  }
+
   if (annexCOverrides[sortedKey]) return annexCOverrides[sortedKey];
 
   const slots = Object.keys(annexCPools);
@@ -365,7 +369,11 @@ function buildRoundOf32() {
   if (!matching) return;
 
   const getTeam = (letter, rank) => localGroups[letter][rank - 1];
-  const getThirdTeamOfGroup = (letter) => localGroups[letter][2];
+  const getThirdTeamOfGroup = (source) => {
+  if (!source) return "???";
+  const letter = source.replace("3", "").trim();
+  return localGroups[letter] ? localGroups[letter][2] : "???";
+};
 
   const r32Matches = {
     73: { home: getTeam("A", 2), away: getTeam("B", 2) },
