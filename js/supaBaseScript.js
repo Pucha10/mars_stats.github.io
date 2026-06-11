@@ -540,7 +540,11 @@ async function registerUser(username, pin) {
                 "Content-Type": "application/json",
                 Prefer: "return=representation",
             },
-            body: JSON.stringify({ username: username, pin: pin }),
+            body: JSON.stringify({
+                username: username,
+                pin: pin,
+                isViever: true,
+            }),
         });
 
         if (!response.ok) {
@@ -656,9 +660,13 @@ async function loadKnockoutPredictions() {
 
 async function loadLeaderboard() {
     const tbody = document.getElementById("leaderboard-tbody");
+    if (!tbody) return;
+    tbody.innerHTML =
+        '<tr><td colspan="3" class="text-center py-4 text-slate-500">Ładowanie rankingu...</td></tr>';
+
     try {
         const response = await fetch(
-            `${SUPABASE_URL}/rest/v1/users?select=username,points&order=points.desc`,
+            `${SUPABASE_URL}/rest/v1/users?select=id,username,points,name,surname&isViever=eq.false&order=points.desc`,
             {
                 headers: {
                     apikey: SUPABASE_KEY,
@@ -668,20 +676,35 @@ async function loadLeaderboard() {
         );
         if (response.ok) {
             const players = await response.json();
-            tbody.innerHTML = players
-                .map(
-                    (player, index) => `
-        <tr class="hover:bg-slate-800/30 transition">
-          <td class="py-3 px-4 text-center font-bold text-slate-400">${index + 1}</td>
-          <td class="py-3 px-4 font-semibold text-white">${player.username}</td>
-          <td class="py-3 px-4 text-right font-bold text-emerald-400">${player.points || 0} pkt</td>
-        </tr>
-      `,
-                )
-                .join("");
+            tbody.innerHTML = "";
+
+            players.forEach((player, index) => {
+                const actionButton = `<button onclick="previewUserPredictions(${player.id}, '${player.username}')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-xs px-2.5 py-1.5 rounded-lg transition font-medium">Zobacz typy</button>`;
+                const clickablePoints = `
+                  <button onclick="showPlayerScoreDetails(${player.id}, '${player.username}', '${player.name}', '${player.surname}')" class="font-bold text-emerald-400 hover:text-emerald-300 hover:underline transition focus:outline-none">
+                    ${player.points || 0} pkt
+                  </button>
+                `;
+
+                const row = document.createElement("tr");
+                row.className = "hover:bg-slate-800/30 transition";
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-center font-bold text-slate-400">${index + 1}</td>
+                    <td class="py-3 px-4 font-semibold text-white">${player.username}</td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-5">
+                            ${clickablePoints}
+                            ${actionButton}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
         }
     } catch (err) {
         console.error(err);
+        tbody.innerHTML =
+            '<tr><td colspan="3" class="text-center py-4 text-rose-400">Błąd ładowania rankingu.</td></tr>';
     }
 }
 
@@ -890,5 +913,148 @@ async function saveAllPredictions() {
     } finally {
         btn.disabled = false;
         btn.textContent = "Zapisz moje typy";
+    }
+}
+
+// Agregacja i renderowanie statystyk kolektywnych ze wszystkich typów
+async function loadAndRenderStats() {
+    const loaders = [
+        "stats-champions",
+        "stats-finalists",
+        "stats-scorer",
+        "stats-mvp",
+        "stats-goalkeeper",
+    ];
+    loaders.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el)
+            el.innerHTML =
+                '<li class="text-slate-500 py-2">Trwa analiza głosów...</li>';
+    });
+
+    const headers = {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+    };
+
+    try {
+        const resKO = await fetch(
+            `${SUPABASE_URL}/rest/v1/knockout_predictions`,
+            { headers },
+        );
+        const resPlayers = await fetch(
+            `${SUPABASE_URL}/rest/v1/player_predictions`,
+            { headers },
+        );
+
+        if (!resKO.ok || !resPlayers.ok)
+            throw new Error("Błąd pobierania danych statystycznych.");
+
+        const koPreds = await resKO.json();
+        const playerPreds = await resPlayers.json();
+
+        const cleanAndCapitalize = (str) => {
+            if (!str) return "";
+            return str
+                .trim()
+                .split(/\s+/)
+                .map(
+                    (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase(),
+                )
+                .join(" ");
+        };
+
+        // 1. Zliczanie typów na Mistrza Świata (match_id = 104)
+        const championCounts = {};
+        koPreds
+            .filter((p) => p.match_id === 104)
+            .forEach((p) => {
+                const name = cleanAndCapitalize(p.predicted_winner);
+                if (name)
+                    championCounts[name] = (championCounts[name] || 0) + 1;
+            });
+
+        // 2. Zliczanie typów do Finału (match_id = 101 lub 102)
+        const finalistCounts = {};
+        koPreds
+            .filter((p) => p.match_id === 101 || p.match_id === 102)
+            .forEach((p) => {
+                const name = cleanAndCapitalize(p.predicted_winner);
+                if (name)
+                    finalistCounts[name] = (finalistCounts[name] || 0) + 1;
+            });
+
+        // 3. Zliczanie typów na nagrody indywidualne
+        const scorerCounts = {};
+        const mvpCounts = {};
+        const goalkeeperCounts = {};
+
+        playerPreds.forEach((p) => {
+            const scorer = cleanAndCapitalize(p.top_scorer);
+            const mvp = cleanAndCapitalize(p.mvp);
+            const goalkeeper = cleanAndCapitalize(p.best_goalkeeper);
+
+            if (scorer) scorerCounts[scorer] = (scorerCounts[scorer] || 0) + 1;
+            if (mvp) mvpCounts[mvp] = (mvpCounts[mvp] || 0) + 1;
+            if (goalkeeper)
+                goalkeeperCounts[goalkeeper] =
+                    (goalkeeperCounts[goalkeeper] || 0) + 1;
+        });
+
+        // Renderowanie list rankingowych
+        const renderStatsList = (elementId, countsObj) => {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            const sorted = Object.entries(countsObj).sort(
+                (a, b) => b[1] - a[1],
+            );
+
+            if (sorted.length === 0) {
+                el.innerHTML =
+                    '<li class="text-slate-500 py-1.5 italic">Brak oddanych głosów</li>';
+                return;
+            }
+
+            el.innerHTML = sorted
+                .map(([name, count], index) => {
+                    // Określenie poprawnej polskiej końcówki dla liczby głosów
+                    let votesLabel = "głosów";
+                    if (count === 1) votesLabel = "głos";
+                    else if (count >= 2 && count <= 4) votesLabel = "głosy";
+                    else if (
+                        count % 10 >= 2 &&
+                        count % 10 <= 4 &&
+                        (count % 100 < 10 || count % 100 >= 20)
+                    )
+                        votesLabel = "głosy";
+
+                    return `
+          <li class="flex justify-between items-center py-2 text-slate-300">
+            <span class="font-medium"><span class="text-slate-500 mr-1">${index + 1}.</span> ${name}</span>
+            <span class="text-[10px] font-bold bg-slate-900 border border-slate-700/60 px-2 py-0.5 rounded text-amber-400 tracking-wider">
+              ${count} ${votesLabel}
+            </span>
+          </li>
+        `;
+                })
+                .join("");
+        };
+
+        renderStatsList("stats-champions", championCounts);
+        renderStatsList("stats-finalists", finalistCounts);
+        renderStatsList("stats-scorer", scorerCounts);
+        renderStatsList("stats-mvp", mvpCounts);
+        renderStatsList("stats-goalkeeper", goalkeeperCounts);
+    } catch (err) {
+        console.error("Wystąpił błąd podczas analizy statystyk:", err);
+        loaders.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el)
+                el.innerHTML =
+                    '<li class="text-rose-400 py-2">Nie udało się wygenerować statystyk.</li>';
+        });
     }
 }
