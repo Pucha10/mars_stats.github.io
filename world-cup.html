@@ -48,10 +48,14 @@
         Faza Grupowa
       </button>
       <button id="tab-bracket-btn" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center text-slate-400 hover:text-white transition">
-        Drabinka Pucharowa
+        Drabinka
       </button>
       <button id="tab-leaderboard-btn" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center text-slate-400 hover:text-white transition">
         Ranking
+      </button>
+      <!-- Nowy przycisk zakładki statystyk -->
+      <button id="tab-stats-btn" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center text-slate-400 hover:text-white transition">
+        Statystyki
       </button>
     </div>
   </div>
@@ -199,6 +203,54 @@
       </div>
     </section>
 
+    <section id="section-stats" class="hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Statystyki Drużynowe -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 space-y-4 shadow-lg">
+          <h3 class="font-bold text-white text-base border-b border-slate-700 pb-2 flex items-center gap-2">
+            🏆 Statystyki Drużynowe
+          </h3>
+          <div class="space-y-5">
+            <div>
+              <h4 class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Najczęstsze typy na Mistrza Świata:</h4>
+              <ul id="stats-champions" class="space-y-1.5 text-xs text-slate-300 divide-y divide-slate-700/40">
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-700/60">
+              <h4 class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Najczęściej typowani Finaliści:</h4>
+              <ul id="stats-finalists" class="space-y-1.5 text-xs text-slate-300 divide-y divide-slate-700/40">
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800 rounded-xl border border-slate-700 p-5 space-y-4 shadow-lg">
+          <h3 class="font-bold text-white text-base border-b border-slate-700 pb-2 flex items-center gap-2">
+            ⭐ Statystyki Indywidualne
+          </h3>
+          <div class="space-y-5">
+            <div>
+              <h4 class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Król Strzelców:</h4>
+              <ul id="stats-scorer" class="space-y-1.5 text-xs text-slate-300 divide-y divide-slate-700/40">
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-700/60">
+              <h4 class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Najlepszy piłkarz (MVP):</h4>
+              <ul id="stats-mvp" class="space-y-1.5 text-xs text-slate-300 divide-y divide-slate-700/40">
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-700/60">
+              <h4 class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Najlepszy Bramkarz:</h4>
+              <ul id="stats-goalkeeper" class="space-y-1.5 text-xs text-slate-300 divide-y divide-slate-700/40">
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
   <div class="fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-md border-t border-slate-700 p-4 shadow-lg flex justify-center z-40">
@@ -221,12 +273,9 @@
         <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white transition text-xl font-bold px-2 focus:outline-none">&times;</button>
       </div>
       
-      <!-- Content (Przewijany środek) -->
       <div id="modal-content" class="space-y-4 overflow-y-auto pr-1 text-xs text-slate-300 no-scrollbar">
-        <!-- Wypełniane dynamicznie przez JS -->
       </div>
 
-      <!-- Footer -->
       <div class="border-t border-slate-700 pt-3 mt-4 flex justify-between items-center">
         <span class="text-sm font-bold text-slate-400">Suma końcowa:</span>
         <span id="modal-total-score" class="text-xl font-extrabold text-emerald-400">0 pkt</span>

@@ -135,9 +135,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     checkAndBuildBracket();
     updateSaveButtonState();
 
-    document
-        .getElementById("btn-save")
-        .addEventListener("click", saveAllPredictions);
+    // document
+    //     .getElementById("btn-save")
+    //     .addEventListener("click", saveAllPredictions);
 });
 
 function saveSnapshotAsLoaded() {
@@ -208,6 +208,7 @@ function updateSaveButtonState() {
     const btnSave = document.getElementById("btn-save");
     if (btnSave) {
         btnSave.remove();
+        return;
     }
     const hasChanged = checkIfChanged();
 
@@ -782,7 +783,12 @@ window.predictBracketWinner = function (matchId, winnerTeam) {
 
 let globalActualData = null;
 
-window.showPlayerScoreDetails = async function (userId, username) {
+window.showPlayerScoreDetails = async function (
+    userId,
+    username,
+    name,
+    surname,
+) {
     const modal = document.getElementById("details-modal");
     const modalName = document.getElementById("modal-player-name");
     const modalContent = document.getElementById("modal-content");
@@ -790,7 +796,9 @@ window.showPlayerScoreDetails = async function (userId, username) {
 
     if (!modal || !modalContent) return;
 
-    modalName.textContent = username;
+    const displayName =
+        name && surname ? `${username} (${name} ${surname})` : username;
+    modalName.textContent = displayName;
     modalContent.innerHTML =
         '<div class="text-center py-8 text-slate-400">Trwa pobieranie i kalkulacja punktów...</div>';
     modalTotal.textContent = "--- pkt";
@@ -1225,3 +1233,84 @@ window.closeDetailsModal = function () {
     const modal = document.getElementById("details-modal");
     if (modal) modal.classList.add("hidden");
 };
+
+function setupTabs() {
+    const tabGroupsBtn = document.getElementById("tab-groups-btn");
+    const tabBracketBtn = document.getElementById("tab-bracket-btn");
+    const tabLeaderboardBtn = document.getElementById("tab-leaderboard-btn");
+    const tabStatsBtn = document.getElementById("tab-stats-btn"); // Nowy przycisk
+
+    const secGroups = document.getElementById("section-groups");
+    const secBracket = document.getElementById("section-bracket");
+    const secLeaderboard = document.getElementById("section-leaderboard");
+    const secStats = document.getElementById("section-stats"); // Nowa sekcja
+
+    const btnSave = document.getElementById("btn-save");
+
+    const switchActiveTab = (activeBtn) => {
+        [tabGroupsBtn, tabBracketBtn, tabLeaderboardBtn, tabStatsBtn].forEach(
+            (btn) => {
+                if (btn) {
+                    if (btn === activeBtn) {
+                        btn.className =
+                            "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center bg-slate-700 text-white transition";
+                    } else {
+                        btn.className =
+                            "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg text-center text-slate-400 hover:text-white transition";
+                    }
+                }
+            },
+        );
+    };
+
+    if (tabGroupsBtn) {
+        tabGroupsBtn.addEventListener("click", () => {
+            currentTab = "groups";
+            switchActiveTab(tabGroupsBtn);
+            if (secGroups) secGroups.classList.remove("hidden");
+            if (secBracket) secBracket.classList.add("hidden");
+            if (secLeaderboard) secLeaderboard.classList.add("hidden");
+            if (secStats) secStats.classList.add("hidden");
+            if (btnSave) btnSave.classList.remove("hidden");
+        });
+    }
+
+    if (tabBracketBtn) {
+        tabBracketBtn.addEventListener("click", () => {
+            currentTab = "bracket";
+            switchActiveTab(tabBracketBtn);
+            if (secBracket) secBracket.classList.remove("hidden");
+            if (secGroups) secGroups.classList.add("hidden");
+            if (secLeaderboard) secLeaderboard.classList.add("hidden");
+            if (secStats) secStats.classList.add("hidden");
+            if (btnSave) btnSave.classList.remove("hidden");
+            checkAndBuildBracket();
+        });
+    }
+
+    if (tabLeaderboardBtn) {
+        tabLeaderboardBtn.addEventListener("click", () => {
+            currentTab = "leaderboard";
+            switchActiveTab(tabLeaderboardBtn);
+            if (secLeaderboard) secLeaderboard.classList.remove("hidden");
+            if (secGroups) secGroups.classList.add("hidden");
+            if (secBracket) secBracket.classList.add("hidden");
+            if (secStats) secStats.classList.add("hidden");
+            if (btnSave) btnSave.classList.add("hidden");
+        });
+    }
+
+    if (tabStatsBtn) {
+        tabStatsBtn.addEventListener("click", () => {
+            currentTab = "stats";
+            switchActiveTab(tabStatsBtn);
+            if (secStats) secStats.classList.remove("hidden");
+            if (secGroups) secGroups.classList.add("hidden");
+            if (secBracket) secBracket.classList.add("hidden");
+            if (secLeaderboard) secLeaderboard.classList.add("hidden");
+            if (btnSave) btnSave.classList.add("hidden");
+
+            loadAndRenderStats();
+        });
+    }
+}
