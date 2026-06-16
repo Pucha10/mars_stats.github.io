@@ -11,7 +11,10 @@ if (!gameId) {
     window.location.href = "remik_stats.html";
 }
 
-document.addEventListener("DOMContentLoaded", initDetails);
+document.addEventListener("DOMContentLoaded", () => {
+    initDetails();
+    setupRealtimeListener();
+});
 
 async function initDetails() {
     const game = await getGameHeader(gameId);
@@ -28,7 +31,6 @@ async function initDetails() {
 
         const infoBox = document.getElementById("next-shuffler-info");
 
-        // POPRAWKA: Pobieramy oba przyciski dodawania (górny i dolny) po klasie
         const addBtns = document.querySelectorAll(".btn-add-round");
 
         if (game.status === "finished") {
@@ -36,7 +38,6 @@ async function initDetails() {
             infoBox.style.backgroundColor = "#d4af37";
             infoBox.style.color = "#000";
 
-            // Ukrywamy oba przyciski dodawania rozdania
             addBtns.forEach((btn) => (btn.style.display = "none"));
         } else {
             const nextShuffler = calculateNextShuffler(game.players, rounds);
@@ -44,7 +45,6 @@ async function initDetails() {
             infoBox.style.backgroundColor = "";
             infoBox.style.color = "";
 
-            // Pokazujemy oba przyciski dodawania rozdania
             addBtns.forEach((btn) => (btn.style.display = "inline-block"));
         }
 
@@ -54,11 +54,9 @@ async function initDetails() {
 }
 
 function showAddRoundForm() {
-    // POPRAWKA: Zabezpieczenie przed otwarciem formularza, jeśli przyciski są ukryte (gra zakończona)
     const anyAddBtn = document.querySelector(".btn-add-round");
     if (anyAddBtn && anyAddBtn.style.display === "none") return;
 
-    // Zabezpieczenie przed zdublowaniem formularza na ekranie
     if (document.getElementById("new-round-form")) return;
 
     const tbody = document.getElementById("details-tbody");
@@ -613,4 +611,40 @@ function renderTrendChart(players, rounds) {
             },
         },
     });
+}
+
+function setupRealtimeListener() {
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    supabaseClient
+        .channel("game-realtime-channel")
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "remik_rounds",
+                filter: `game_id=eq.${gameId}`,
+            },
+            (payload) => {
+                console.log("Wykryto zmianę w rozdaniach (Realtime):", payload);
+                initDetails();
+            },
+        )
+        .on(
+            "postgres_changes",
+            {
+                event: "UPDATE",
+                schema: "public",
+                table: "remik_games",
+                filter: `id=eq.${gameId}`,
+            },
+            (payload) => {
+                console.log("Wykryto zmianę statusu gry (Realtime):", payload);
+                initDetails();
+            },
+        )
+        .subscribe((status) => {
+            console.log("Status subskrypcji Realtime:", status);
+        });
 }
