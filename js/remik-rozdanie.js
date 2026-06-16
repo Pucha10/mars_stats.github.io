@@ -5,6 +5,7 @@ let trendChartInstance = null;
 let pointsChartInstance = null;
 let currentRoundsCount = 0;
 let totals = {};
+
 if (!gameId) {
     alert("Nie znaleziono ID gry!");
     window.location.href = "remik_stats.html";
@@ -15,29 +16,36 @@ document.addEventListener("DOMContentLoaded", initDetails);
 async function initDetails() {
     const game = await getGameHeader(gameId);
     const rounds = await getGameRounds(gameId);
+
     if (game) {
         document.getElementById("game-title").innerText =
             `🎴 Gra #${game.game_number}`;
         currentPlayers = game.players;
         currentRoundsCount = rounds.length;
+
         renderTable(game.players, rounds);
         renderSummaryTable(game.players, rounds);
+
         const infoBox = document.getElementById("next-shuffler-info");
-        const addBtn = document.getElementById("add-round-btn");
+
+        // POPRAWKA: Pobieramy oba przyciski dodawania (górny i dolny) po klasie
+        const addBtns = document.querySelectorAll(".btn-add-round");
 
         if (game.status === "finished") {
             infoBox.innerHTML = `🏆 Grę wygrał: <strong id="next-shuffler-name">${game.winner || "Remis"}</strong>`;
             infoBox.style.backgroundColor = "#d4af37";
             infoBox.style.color = "#000";
 
-            addBtn.style.display = "none";
+            // Ukrywamy oba przyciski dodawania rozdania
+            addBtns.forEach((btn) => (btn.style.display = "none"));
         } else {
             const nextShuffler = calculateNextShuffler(game.players, rounds);
             infoBox.innerHTML = `Następny rozdaje: <strong id="next-shuffler-name">${nextShuffler}</strong>`;
             infoBox.style.backgroundColor = "";
             infoBox.style.color = "";
 
-            addBtn.style.display = "inline-block";
+            // Pokazujemy oba przyciski dodawania rozdania
+            addBtns.forEach((btn) => (btn.style.display = "inline-block"));
         }
 
         renderStatusButton(game.status);
@@ -46,6 +54,11 @@ async function initDetails() {
 }
 
 function showAddRoundForm() {
+    // POPRAWKA: Zabezpieczenie przed otwarciem formularza, jeśli przyciski są ukryte (gra zakończona)
+    const anyAddBtn = document.querySelector(".btn-add-round");
+    if (anyAddBtn && anyAddBtn.style.display === "none") return;
+
+    // Zabezpieczenie przed zdublowaniem formularza na ekranie
     if (document.getElementById("new-round-form")) return;
 
     const tbody = document.getElementById("details-tbody");
@@ -70,7 +83,7 @@ function showAddRoundForm() {
         <td><strong>${nextShuffler}</strong></td>
         ${playerInputs}
         <td class="save-round-cell">
-            <button class="btn-action btn-save btn-add-round-form" onclick="saveNewRound(this)" >Zapisz</button>
+            <button class="btn-action btn-save btn-add-round-form" onclick="saveNewRound(this)">Zapisz</button>
         </td>
         <td class="cancel-round-cell">
             <button class="btn-action btn-delete btn-add-round-form" onclick="initDetails()">X</button>
@@ -412,14 +425,15 @@ function renderTrendChart(players, rounds) {
     let chartHistoryRank = {};
     let chartHistoryPoints = {};
 
+    // POPRAWKA: Rozpoczynamy od R0 na osi X
+    const labels = ["R0"];
+
     players.forEach((p) => {
         cumulativePts[p] = 0;
         cumulativeWins[p] = 0;
-        chartHistoryRank[p] = [];
-        chartHistoryPoints[p] = [];
+        chartHistoryRank[p] = [1]; // Na start R0 każdy ma 1. miejsce
+        chartHistoryPoints[p] = [0]; // Na start R0 każdy ma 0 punktów
     });
-
-    const labels = [];
 
     rounds.forEach((round) => {
         labels.push(`R${round.round_number}`);
@@ -475,7 +489,9 @@ function renderTrendChart(players, rounds) {
         "dynamic-points-wrapper",
     );
     const minPixelsPerRound = 45;
-    const calculatedWidth = rounds.length * minPixelsPerRound;
+
+    // POPRAWKA: dodajemy 1 do długości, ponieważ R0 to dodatkowy punkt na osi X
+    const calculatedWidth = (rounds.length + 1) * minPixelsPerRound;
 
     if (calculatedWidth > window.innerWidth) {
         dynamicWrapperRank.style.width = `${calculatedWidth}px`;

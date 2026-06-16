@@ -32,9 +32,10 @@
                     <h1 id="game-title">🎴 Gra #...</h1>
                 </div>
                 <div class="actions">
+                    <!-- Dodana klasa btn-add-round -->
                     <button
                         id="add-round-btn"
-                        class="btn-primary"
+                        class="btn-primary btn-add-round"
                         onclick="showAddRoundForm()"
                     >
                         + Dodaj rozdanie
@@ -42,13 +43,17 @@
                     <a href="remik_stats.html" class="btn-secondary">Powrót</a>
                 </div>
             </header>
+            
             <div class="next-shuffler-box" id="next-shuffler-info">
                 Następny rozdaje: <strong id="next-shuffler-name">...</strong>
             </div>
 
             <div class="table-container"></div>
 
+            <!-- Przywrócony przycisk Zakończ grę NAD główną tabelą rozdań -->
             <div class="bottom-actions" id="status-button-container"></div>
+            
+            <!-- Główna tabela rozdań -->
             <div class="table-container">
                 <table id="details-table">
                     <thead id="details-thead"></thead>
@@ -57,6 +62,18 @@
                 </table>
             </div>
 
+            <!-- NOWY przycisk "Dodaj rozdanie" bezpośrednio POD główną tabelą rozdań -->
+            <div class="bottom-actions" style="margin-top: 15px; margin-bottom: 25px;">
+                <button
+                    id="add-round-btn-bottom"
+                    class="btn-primary btn-add-round"
+                    onclick="showAddRoundForm()"
+                >
+                    + Dodaj rozdanie
+                </button>
+            </div>
+
+            <!-- Podsumowanie rozdań -->
             <div class="summary-container">
                 <h3>📊 Podsumowanie rozdań</h3>
                 <table id="rounds-summary-table">
@@ -73,32 +90,21 @@
                 </table>
             </div>
             <br />
-            <div
-                class="summary-container"
-                id="trend-chart-container"
-                style="display: none"
-            >
-                <h3
-                    style="
-                        margin-top: 0;
-                        color: #1a472a;
-                        border-bottom: 2px solid #eee;
-                        padding-bottom: 10px;
-                        text-align: center;
-                    "
-                >
+            
+            <!-- Wykresy (zostają na dole) -->
+            <div class="summary-container" id="trend-chart-container" style="display: none">
+                <h3 style="margin-top: 0; color: #1a472a; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;">
                     📈 Trend w trakcie gry
                 </h3>
-
                 <div class="chart-scroll-container">
                     <div class="canvas-wrapper" id="dynamic-canvas-wrapper">
                         <canvas id="trendChart"></canvas>
                     </div>
                 </div>
             </div>
+            
             <div class="summary-container" id="points-chart-container" style="display: none; margin-top: 20px;">
                 <h3 style="margin-top: 0; color: #1a472a; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;">📊 Przewaga punktowa</h3>
-                
                 <div class="chart-scroll-container">
                     <div class="canvas-wrapper" id="dynamic-points-wrapper" style="height: 500px;">
                         <canvas id="pointsChart"></canvas>
