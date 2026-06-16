@@ -73,7 +73,7 @@ function showAddRoundForm() {
             <button class="btn-action btn-save btn-add-round-form" onclick="saveNewRound(this)" >Zapisz</button>
         </td>
         <td class="cancel-round-cell">
-            <button class="btn-action btn-cancel btn-add-round-form" onclick="initDetails()">X</button>
+            <button class="btn-action btn-delete btn-add-round-form" onclick="initDetails()">X</button>
         </td>
     `;
 

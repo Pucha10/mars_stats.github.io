@@ -201,7 +201,7 @@ td {
 
 .btn-resume { background-color: #f29900; color: white; }
 .btn-resume:hover { background-color: #c47c00; }
-.btn-save { background-color: #0dec45; color: black; }
+.btn-save { background-color: #1e8e3e; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;}
 .btn-save:hover { background-color: #09e63d; }
 .btn-cancel { background-color: #fc3904; color: black; }
 .btn-cancel:hover { background-color: #f85002; }

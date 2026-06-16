@@ -2,7 +2,6 @@ renderTable();
 document.getElementById("add-game-btn").addEventListener("click", showAddRow);
 async function renderTable() {
     results = await getGameResults();
-    console.log(results);
 
     const tableBody = document.getElementById("results_table_body");
     if (!tableBody) return;

@@ -336,6 +336,42 @@ tbody tr:hover {
     min-width: 100%; 
 }
 
+.header-actions {
+    display: flex;
+    gap: 15px; /* Odstęp między kolumną 1 i kolumną 2 */
+}
+
+/* Indywidualna kolumna przycisków */
+.action-column {
+    display: flex;
+    flex-direction: column; /* Układ pionowy wewnątrz kolumny */
+    gap: 10px; /* Odstęp między przyciskami w pionie */
+    min-width: 150px; /* Minimalna szerokość, by przyciski były równe */
+}
+
+/* Ujednolicenie wymiarów przycisków wewnątrz kolumn */
+.action-column .btn-primary,
+.action-column .btn-secondary {
+    width: 100% !important; /* Rozciągnięcie do szerokości kolumny */
+    height: 42px; /* Stała, spójna wysokość */
+    margin: 0 !important; /* Wyczyszczenie starych marginesów */
+    padding: 0 15px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+/* Wyrównanie ikon w przyciskach */
+.action-column .icon {
+    font-size: 16px;
+    margin-right: 6px;
+}
+
 
 @media (max-width: 900px) {
     .main-header {
@@ -511,4 +547,37 @@ tbody tr:hover {
     #stats-table tbody tr:nth-child(odd) {
         background-color: #ffffff !important;
     }
+
+    @media (max-width: 768px) {
+    .main-header {
+        flex-direction: column;
+        gap: 20px;
+        padding: 15px;
+        align-items: center;
+    }
+
+    .stats-summary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+        max-width: 300px; 
+        gap: 15px;
+    }
+
+    .action-column {
+        width: 100%;
+        min-width: unset;
+        gap: 8px;
+    }
+
+    .action-column .btn-primary,
+    .action-column .btn-secondary {
+        height: 44px;
+        font-size: 14px;
+    }
+}
 }
