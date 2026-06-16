@@ -16,6 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setupRealtimeListener();
 });
 
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        console.log("Użytkownik wrócił do aplikacji. Odświeżam dane...");
+        initDetails();
+    }
+});
+
 async function initDetails() {
     const game = await getGameHeader(gameId);
     const rounds = await getGameRounds(gameId);
