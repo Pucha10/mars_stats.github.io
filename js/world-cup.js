@@ -857,35 +857,46 @@ window.showPlayerScoreDetails = async function (
             if (!str) return "";
             return str
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .map(
+                    (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase(),
+                )
                 .join(" ");
         };
 
-        // Formatowanie listy drużyn (Zieleń / Czerwień / Biel gdy brak wyników)
-        const formatList = (predictedSet, actualSet) => {
+        // Inteligentny format list (skreślanie na czerwono dopiero po zakończeniu całej rundy)
+        const formatList = (predictedSet, actualSet, requiredSize) => {
             if (!predictedSet || predictedSet.size === 0) {
                 return '<span class="text-slate-500 italic">brak typów</span>';
             }
 
+            const isStageFinished = actualSet.size >= requiredSize;
             const items = [];
+
             predictedSet.forEach((team) => {
                 const teamClean = team.trim().toLowerCase();
                 const displayName = capitalize(team);
 
                 if (actualSet.size === 0) {
-                    // Etap nie został jeszcze rozegrany - neutralny szary
+                    // Etap się jeszcze nie zaczął - neutralny szary
                     items.push(
                         `<span class="text-slate-300 font-medium">${displayName}</span>`,
                     );
                 } else if (actualSet.has(teamClean)) {
-                    // Trafiony - zielony z ptaszkiem
+                    // Trafiony - zawsze zielony z ptaszkiem
                     items.push(
                         `<span class="text-emerald-400 font-bold">${displayName} ✔</span>`,
                     );
-                } else {
-                    // Nietrafiony - czerwony z przekreśleniem
+                } else if (isStageFinished) {
+                    // Cała faza się skończyła i nietrafiony - czerwony z przekreśleniem
                     items.push(
                         `<span class="text-rose-500 line-through opacity-70">${displayName} ✗</span>`,
+                    );
+                } else {
+                    // Faza w toku (niepełna) i jeszcze nieznany wynik tego zespołu - neutralny biały/szary
+                    items.push(
+                        `<span class="text-slate-300 font-medium">${displayName}</span>`,
                     );
                 }
             });
@@ -922,6 +933,27 @@ window.showPlayerScoreDetails = async function (
             }
         };
 
+        // Pomocniczy generator HTML dla precyzyjnie trafionych pozycji w grupach
+        const generateCorrectPositionsHtml = (correctPosObj) => {
+            const keys = Object.keys(correctPosObj).sort();
+            if (keys.length === 0) {
+                return '<span class="text-slate-500 italic block pl-2 py-0.5">brak trafionych pozycji</span>';
+            }
+            return keys
+                .map((letter) => {
+                    const items = correctPosObj[letter].map((t) =>
+                        capitalize(t),
+                    );
+                    return `
+                    <div class="pl-2 py-0.5">
+                        <strong class="text-slate-400">Grupa ${letter}:</strong> 
+                        <span class="text-emerald-400 font-medium">${items.join(", ")}</span>
+                    </div>
+                `;
+                })
+                .join("");
+        };
+
         modalTotal.textContent = `${breakdown.totalPoints} pkt`;
         modalContent.innerHTML = `
       <!-- FAZA GRUPOWA -->
@@ -931,17 +963,37 @@ window.showPlayerScoreDetails = async function (
           <span class="text-emerald-400 font-extrabold text-sm">${breakdown.ptsGroupPos + breakdown.ptsGroupBonus + breakdown.ptsGroupQual} pkt</span>
         </h4>
         <div class="space-y-2 text-[11px] text-slate-400 leading-relaxed">
-          <div class="flex justify-between">
-            <span>Dokładne pozycje (2 pkt za każdą):</span>
-            <span class="text-slate-200 font-semibold">${breakdown.ptsGroupPos} pkt</span>
+          <div class="flex flex-col gap-1">
+            <div class="flex justify-between">
+              <span>Dokładne pozycje (2 pkt za każdą):</span>
+              <span class="text-slate-200 font-semibold">${breakdown.ptsGroupPos} pkt</span>
+            </div>
+            <!-- #TUTAJ: Precyzyjnie wyrenderowane trafione pozycje -->
+            <div class="bg-slate-800/40 p-2 rounded-lg text-[10px] border border-slate-700/30 space-y-0.5">
+              ${generateCorrectPositionsHtml(breakdown.correctPositions)}
+            </div>
           </div>
-          <div class="flex justify-between items-start gap-4">
-            <span>Bonus za bezbłędne grupy (1 pkt):</span>
-            <span class="text-slate-200 font-semibold text-right">${breakdown.ptsGroupBonus} pkt ${breakdown.correctBonusGroups.length > 0 ? "(Grupy: " + breakdown.correctBonusGroups.join(", ") + ")" : ""}</span>
+          
+          <div class="flex flex-col gap-1 pt-1 border-t border-slate-700/30">
+            <div class="flex justify-between items-start gap-4">
+              <span>Bonus za bezbłędne grupy (1 pkt):</span>
+              <span class="text-slate-200 font-semibold text-right">${breakdown.ptsGroupBonus} pkt</span>
+            </div>
+            <!-- #TUTAAJ: Wyeksponowanie bezbłędnych grup -->
+            ${
+                breakdown.correctBonusGroups.length > 0
+                    ? `
+              <div class="text-[10px] text-emerald-400 font-bold bg-emerald-950/20 border border-emerald-800/30 px-2 py-1 rounded mt-0.5">
+                🏆 Bezbłędne: ${breakdown.correctBonusGroups.map((g) => "Grupa " + g).join(", ")}
+              </div>
+            `
+                    : ""
+            }
           </div>
+
           <div class="pt-1.5 border-t border-slate-700/50">
             <span class="block font-semibold text-slate-300 mb-1">Wytypowane awanse do 1/16 (R32) - (+${breakdown.ptsGroupQual} pkt):</span>
-            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedR32, breakdown.actualR32)}</div>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedR32, breakdown.actualR32, 32)}</div>
           </div>
         </div>
       </div>
@@ -955,15 +1007,15 @@ window.showPlayerScoreDetails = async function (
         <div class="space-y-3 text-[11px] text-slate-400 leading-relaxed">
           <div>
             <span class="block font-semibold text-slate-300 mb-1">1/8 Finału (R16) - (+${breakdown.ptsR16} pkt):</span>
-            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedR16, breakdown.actualR16)}</div>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedR16, breakdown.actualR16, 16)}</div>
           </div>
           <div>
             <span class="block font-semibold text-slate-300 mb-1">Ćwierćfinały (QF) - (+${breakdown.ptsQF} pkt):</span>
-            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedQF, breakdown.actualQF)}</div>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedQF, breakdown.actualQF, 8)}</div>
           </div>
           <div>
             <span class="block font-semibold text-slate-300 mb-1">Półfinały (SF - 2 pkt za każdy) - (+${breakdown.ptsSF} pkt):</span>
-            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedSF, breakdown.actualSF)}</div>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedSF, breakdown.actualSF, 4)}</div>
           </div>
           <div class="flex justify-between items-center pt-1.5 border-t border-slate-700/40">
             <span class="font-semibold text-slate-300">Zdobywca 3. miejsca (2 pkt):</span>
@@ -971,7 +1023,7 @@ window.showPlayerScoreDetails = async function (
           </div>
           <div class="pt-1.5 border-t border-slate-700/40">
             <span class="block font-semibold text-slate-300 mb-1">Finaliści (3 pkt za każdego) - (+${breakdown.ptsFinalists} pkt):</span>
-            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedFinalists, breakdown.actualFinalists)}</div>
+            <div class="text-[10px] leading-relaxed">${formatList(breakdown.userPredictedFinalists, breakdown.actualFinalists, 2)}</div>
           </div>
           <div class="flex justify-between items-center pt-1.5 border-t border-slate-700/40">
             <span class="font-semibold text-slate-300">Mistrz Świata (5 pkt):</span>
@@ -1031,7 +1083,7 @@ function computeDetailedScoreForModal(userPreds, actual) {
     const actualR16 = getActualTeamsForStage("r16");
     const actualQF = getActualTeamsForStage("qf");
     const actualSF = getActualTeamsForStage("sf");
-    const actualFinalists = getActualTeamsForStage("finalists");
+    const actualFinalists = getActualTeamsForStage("finalist");
     const actualThird = [...getActualTeamsForStage("third")][0] || "";
     const actualChampion = [...getActualTeamsForStage("champion")][0] || "";
 
@@ -1039,6 +1091,7 @@ function computeDetailedScoreForModal(userPreds, actual) {
     let ptsGroupBonus = 0;
     let correctBonusGroups = [];
     let ptsGroupQual = 0;
+    let correctPositions = {}; // Słownik do gromadzenia trafionych pozycji (np. 'A' -> ['Meksyk (1.)'])
 
     let ptsR16 = 0;
     let ptsQF = 0;
@@ -1073,6 +1126,14 @@ function computeDetailedScoreForModal(userPreds, actual) {
                         ptsGroupPos += 2;
                         groupCorrectCounters[letter] =
                             (groupCorrectCounters[letter] || 0) + 1;
+
+                        // Rejestracja dokładnie trafionego miejsca w grupie
+                        if (!correctPositions[letter]) {
+                            correctPositions[letter] = [];
+                        }
+                        correctPositions[letter].push(
+                            `${teamName} (${predictedRank}.)`,
+                        );
                     }
                 }
 
@@ -1203,6 +1264,7 @@ function computeDetailedScoreForModal(userPreds, actual) {
         ptsGroupQual,
         userPredictedR32,
         actualR32,
+        correctPositions, // Zwracamy słownik z dokładnymi pozycjami
         ptsR16,
         userPredictedR16,
         actualR16,
