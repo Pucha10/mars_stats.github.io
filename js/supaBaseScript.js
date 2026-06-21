@@ -666,7 +666,7 @@ async function loadLeaderboard() {
 
     try {
         const response = await fetch(
-            `${SUPABASE_URL}/rest/v1/users?select=id,username,points,name,surname&isViever=eq.false&order=points.desc`,
+            `${SUPABASE_URL}/rest/v1/users?select=id,username,points,name,surname&isViever=eq.false&order=points.desc,username.asc`,
             {
                 headers: {
                     apikey: SUPABASE_KEY,
