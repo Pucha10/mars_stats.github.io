@@ -49,7 +49,7 @@ window.calculateUserScores = async function () {
         const actualR16 = getActualTeamsForStage("r16");
         const actualQF = getActualTeamsForStage("qf");
         const actualSF = getActualTeamsForStage("sf");
-        const actualFinalists = getActualTeamsForStage("finalists");
+        const actualFinalists = getActualTeamsForStage("finalist");
         const actualThird = [...getActualTeamsForStage("third")][0] || "";
         const actualChampion = [...getActualTeamsForStage("champion")][0] || "";
 
