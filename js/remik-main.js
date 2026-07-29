@@ -168,14 +168,6 @@ async function loadPlayersIntoModal() {
     });
 }
 
-async function addNewPlayerPrompt() {
-    const name = prompt("Wpisz imię nowego gracza:");
-    if (!name || name.trim() === "") return;
-    const trimmedName = name.trim();
-    await addNewPlayer(trimmedName);
-    loadPlayersIntoModal();
-}
-
 function showPlayerStats(playerName) {
     window.location.href = `statystyki_gracza.html?name=${playerName}`;
 }

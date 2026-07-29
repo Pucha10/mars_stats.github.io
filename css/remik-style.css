@@ -605,6 +605,97 @@ td {
     justify-content: center;
 }
 
+/* --- STYLOWANIE FORMULARZA NOWEJ RUNDY W TYSIĄCU --- */
+
+/* 1. Stylowanie Selecta Licytacji (Wybór Grającego) */
+#new-round-form select#new-bid-winner {
+    width: 110px;
+    padding: 6px 20px 6px 8px !important;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
+    background-size: 10px !important;
+    transition: all 0.2s ease;
+}
+
+#new-round-form select#new-bid-winner:hover {
+    border-color: #d4af37;
+    background-color: #fffdf5;
+}
+
+#new-round-form select#new-bid-winner:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+#new-round-form td:nth-child(3) {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+}
+
+#new-round-form label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    color: #555;
+    background: #f5f5f5;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    transition: all 0.2s ease;
+    user-select: none;
+    margin-top: 5px;
+}
+
+#new-round-form label:hover {
+    background: #ffebeb;
+    border-color: #d93025;
+    color: #d93025;
+}
+
+#new-round-form .bomb-checkbox {
+    width: 13px;
+    height: 13px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.action-buttons-inline {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.action-buttons-inline .btn-add-round-form {
+    width: 75px !important;
+    height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
+    font-weight: bold;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
 @media (max-width: 768px) {
     .table-container, .summary-container {
         overflow-x: auto; 

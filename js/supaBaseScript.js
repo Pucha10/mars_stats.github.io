@@ -447,31 +447,6 @@ async function getPlayersList() {
     }
 }
 
-async function addNewPlayer(name) {
-    try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/Players`, {
-            method: "POST",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ Name: name }),
-        });
-
-        if (response.ok) {
-            alert(`Gracz "${name}" został pomyślnie dodany!`);
-        } else {
-            const err = await response.json();
-            alert(
-                "Błąd zapisu: " +
-                    (err.message || "prawdopodobnie gracz już istnieje"),
-            );
-        }
-    } catch (error) {
-        console.error("Błąd zapisu gracza:", error);
-    }
-}
 async function getPlayerStats(playerName) {
     try {
         const responseGames = await fetch(
@@ -1057,4 +1032,38 @@ async function loadAndRenderStats() {
                     '<li class="text-rose-400 py-2">Nie udało się wygenerować statystyk.</li>';
         });
     }
+}
+
+async function addNewPlayer(name) {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/Players`, {
+            method: "POST",
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ Name: name }),
+        });
+
+        if (response.ok) {
+            alert(`Gracz "${name}" został pomyślnie dodany!`);
+        } else {
+            const err = await response.json();
+            alert(
+                "Błąd zapisu: " +
+                    (err.message || "prawdopodobnie gracz już istnieje"),
+            );
+        }
+    } catch (error) {
+        console.error("Błąd zapisu gracza:", error);
+    }
+}
+
+async function addNewPlayerPrompt() {
+    const name = prompt("Wpisz imię nowego gracza:");
+    if (!name || name.trim() === "") return;
+    const trimmedName = name.trim();
+    await addNewPlayer(trimmedName);
+    loadPlayersIntoModal();
 }

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tysiąc Stats - Profil Gracza</title>
+    <link rel="stylesheet" href="css/remik-style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <div class="logo-area">
+                <h1 id="player-name-title">👤 Profil Gracza - Tysiąc</h1>
+            </div>
+            <div class="actions">
+                <a href="tysiac.html" class="btn-secondary">Powrót do gier</a>
+            </div>
+        </header>
+
+        <div class="stats-grid" id="stats-grid">
+            <div class="stats-section-card games-card">
+                <h3>🎮 Statystyki Gier</h3>
+                <div class="stats-row">
+                    <span class="label">Rozegrane gry:</span>
+                    <span class="value" id="games-played">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Wygrane gry:</span>
+                    <span class="value val-green" id="games-won">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Przegrane gry:</span>
+                    <span class="value val-red" id="games-lost">0</span>
+                </div>
+                <div class="stats-row highlight">
+                    <span class="label">Win Rate (Gry):</span>
+                    <span class="value" id="games-winrate">0.0%</span>
+                </div>
+            </div>
+
+            <div class="stats-section-card bidding-card" style="border-top-color: #d4af37;">
+                <h3>📢 Statystyki Licytacji</h3>
+                <div class="stats-row">
+                    <span class="label">Wygrane licytacje (suma):</span>
+                    <span class="value" id="bids-total">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Udane (ugrane punkty):</span>
+                    <span class="value val-green" id="bids-success">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Spalone (wpadki na minus):</span>
+                    <span class="value val-red" id="bids-fail">0</span>
+                </div>
+                <div class="stats-row highlight">
+                    <span class="label">Skuteczność licytacji:</span>
+                    <span class="value" id="bids-winrate">0.0%</span>
+                </div>
+            </div>
+
+            <div class="stats-section-card rounds-card">
+                <h3>💣 Rozdania i Bomby</h3>
+                <div class="stats-row">
+                    <span class="label">Rozegrane rozdania:</span>
+                    <span class="value" id="rounds-played">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Użyte bomby 💣:</span>
+                    <span class="value val-red" id="bombs-used" style="font-weight: bold;">0</span>
+                </div>
+                <div class="stats-row highlight">
+                    <span class="label">Średnia pkt / gra:</span>
+                    <span class="value" id="avg-points-game">0.0</span>
+                </div>
+            </div>
+
+            <div class="stats-section-card points-card">
+                <h3>💯 Bilans Punktowy</h3>
+                <div class="stats-row">
+                    <span class="label">Punkty na plus (+):</span>
+                    <span class="value val-green" id="points-earned">0</span>
+                </div>
+                <div class="stats-row">
+                    <span class="label">Punkty na minus (-):</span>
+                    <span class="value val-red" id="points-lost">0</span>
+                </div>
+                <div class="stats-row highlight net-points-row" id="net-points-bg">
+                    <span class="label">Bilans ogólny:</span>
+                    <span class="value" id="points-net">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/supaBaseScript.js"></script>
+    <script src="js/statystyki-gracza-tysiac.js"></script>
+</body>
+</html>
