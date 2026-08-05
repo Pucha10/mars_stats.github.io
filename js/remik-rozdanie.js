@@ -430,7 +430,6 @@ function renderTrendChart(players, rounds) {
     let chartHistoryRank = {};
     let chartHistoryPoints = {};
 
-    // POPRAWKA: Rozpoczynamy od R0 na osi X
     const labels = ["R0"];
 
     players.forEach((p) => {
@@ -495,7 +494,6 @@ function renderTrendChart(players, rounds) {
     );
     const minPixelsPerRound = 45;
 
-    // POPRAWKA: dodajemy 1 do długości, ponieważ R0 to dodatkowy punkt na osi X
     const calculatedWidth = (rounds.length + 1) * minPixelsPerRound;
 
     if (calculatedWidth > window.innerWidth) {

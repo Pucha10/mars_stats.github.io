@@ -5,13 +5,17 @@ let currentRoundsCount = 0;
 let totals = {};
 let gamePassword = "";
 let bombsUsedInGame = {};
+let pointsChartInstance = null; 
 
 if (!gameId) {
     alert("Nie znaleziono ID gry!");
     window.location.href = "tysiac.html";
 }
 
-document.addEventListener("DOMContentLoaded", initDetails);
+document.addEventListener("DOMContentLoaded", () => {
+    initDetails();
+    setupRealtimeListener();
+});
 
 async function initDetails() {
     const game = await getGameHeader(gameId);
@@ -33,6 +37,7 @@ async function initDetails() {
         });
 
         renderTable(game.players, rounds);
+        renderSummaryTable(game.players, rounds);
 
         if (game.status === "ongoing") {
             let automaticWinner = null;
@@ -71,6 +76,7 @@ async function initDetails() {
         }
 
         renderStatusButton(game.status);
+        renderPointsChart(game.players, rounds); 
     }
 }
 
@@ -371,25 +377,125 @@ function renderStatusButton(status) {
     container.appendChild(btn);
 }
 
+function renderSummaryTable(players, rounds) {
+    const tbody = document.getElementById("summary-tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    let statsMap = players.map((p) => {
+        let pts = 0;
+        let wins = 0;
+        rounds.forEach((r) => {
+            let rWin = "";
+            
+            players.forEach((pl) => {
+                const c = r.scores[pl];
+                if (c === "BOMBA") return;
+                
+                const numVal = parseInt(c) || 0;
+                pts += numVal;
+                
+                if (pl === r.bid_winner && numVal >= 0) {
+                    rWin = pl;
+                }
+            });
+            
+            if (p === rWin) {
+                wins++;
+            }
+        });
+        
+        return { name: p, points: totals[p] || 0, wins: wins };
+    });
+
+    statsMap.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return b.wins - a.wins;
+    });
+
+    const totalRounds = rounds.length;
+
+    let lastPlace = 1;
+
+    statsMap.forEach((player, index) => {
+        const winPercent =
+            totalRounds > 0
+                ? ((player.wins / totalRounds) * 100).toFixed(1)
+                : 0;
+
+        if (
+            index > 0 &&
+            player.points === statsMap[index - 1].points &&
+            player.wins === statsMap[index - 1].wins
+        ) {
+        } else {
+            lastPlace = index + 1;
+        }
+
+        let placeDisplay;
+        if (lastPlace === 1) placeDisplay = "🥇";
+        else if (lastPlace === 2) placeDisplay = "🥈";
+        else if (lastPlace === 3) placeDisplay = "🥉";
+        else placeDisplay = lastPlace;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td style="font-size: 18px;">${placeDisplay}</td>
+            <td style="font-weight: bold; text-align: center;">${player.name}</td>
+            <td style="font-weight: bold; color: ${player.points >= 0 ? "#1e8e3e" : "#d93025"};">
+                ${player.points} pkt
+            </td>
+            <td style="font-size: 18px; color: #1e8e3e; font-weight: bold;">${player.wins}</td>
+            <td style="color: #666;">${winPercent}%</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
 async function updateGameStatus(newStatus) {
     let winnerToSave = null;
+    const rounds = await getGameRounds(gameId);
 
     if (newStatus === "finished") {
         if (!confirm("Czy na pewno chcesz zakończyć grę i wyłonić zwycięzcę?"))
             return;
 
-        let maxPoints = -Infinity;
-        let winnerName = "Remis";
+        const stats = currentPlayers.map((player) => {
+            let pts = 0;
+            let wins = 0;
 
-        for (const [player, points] of Object.entries(totals)) {
-            if (points > maxPoints) {
-                maxPoints = points;
-                winnerName = player;
-            } else if (points === maxPoints) {
-                winnerName = "Remis";
-            }
+            rounds.forEach((round) => {
+                const val = round.scores[player];
+                let numVal = 0;
+                
+                if (val !== "BOMBA") {
+                    numVal = parseInt(val) || 0;
+                }
+                
+                pts += numVal;
+
+                if (player === round.bid_winner && numVal >= 0) {
+                    wins += 1;
+                }
+            });
+
+            return { name: player, pts: pts, wins: wins };
+        });
+
+        stats.sort((a, b) => {
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            return b.wins - a.wins;
+        });
+
+        if (
+            stats.length > 1 &&
+            stats[0].pts === stats[1].pts &&
+            stats[0].wins === stats[1].wins
+        ) {
+            winnerToSave = "Remis";
+        } else {
+            winnerToSave = stats[0].name;
         }
-        winnerToSave = winnerName;
     } else {
         if (!confirm("Czy chcesz wznowić grę? Zwycięzca zostanie usunięty."))
             return;
@@ -508,3 +614,209 @@ async function autoFinishGame(winnerName) {
         console.error("Błąd automatycznego kończenia gry:", err);
     }
 }
+
+function createPlayerNode(letter, bgColor) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 24;
+    canvas.height = 24;
+    const ctx = canvas.getContext("2d");
+
+    ctx.beginPath();
+    ctx.arc(12, 12, 11, 0, 2 * Math.PI);
+    ctx.fillStyle = bgColor;
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(letter.toUpperCase(), 12, 13);
+
+    return canvas;
+}
+
+
+function renderPointsChart(players, rounds) {
+    const pointsContainer = document.getElementById("points-chart-container");
+
+    if (rounds.length === 0) {
+        pointsContainer.style.display = "none";
+        return;
+    }
+
+    pointsContainer.style.display = "block";
+
+    let cumulativePts = {};
+    let chartHistoryPoints = {};
+
+    const labels = ["R0"];
+
+    players.forEach((p) => {
+        cumulativePts[p] = 0;
+        chartHistoryPoints[p] = [0]; 
+    });
+
+    rounds.forEach((round) => {
+        labels.push(`R${round.round_number}`);
+
+        players.forEach((p) => {
+            const val = round.scores[p];
+            let numVal = 0;
+
+            if (val === "BOMBA") {
+                numVal = 0; 
+            } else {
+                numVal = parseInt(val) || 0;
+            }
+
+            cumulativePts[p] += numVal;
+            chartHistoryPoints[p].push(cumulativePts[p]);
+        });
+    });
+
+    const dynamicWrapperPoints = document.getElementById("dynamic-points-wrapper");
+    const minPixelsPerRound = 45;
+
+    const calculatedWidth = (rounds.length + 1) * minPixelsPerRound;
+
+    if (calculatedWidth > window.innerWidth) {
+        dynamicWrapperPoints.style.width = `${calculatedWidth}px`;
+    } else {
+        dynamicWrapperPoints.style.width = "100%";
+    }
+
+    const colors = [
+        "#e6194b",
+        "#3cb44b",
+        "#4363d8",
+        "#f58231",
+        "#911eb4",
+        "#46f0f0",
+    ];
+
+    const datasetsPoints = players.map((p, index) => {
+        const color = colors[index % colors.length];
+        return {
+            label: p,
+            data: chartHistoryPoints[p],
+            borderColor: color,
+            backgroundColor: color,
+            borderWidth: 3,
+            pointStyle: createPlayerNode(p.charAt(0), color),
+            pointRadius: 10,
+            pointHoverRadius: 12,
+            fill: false,
+            tension: 0.2,
+        };
+    });
+
+    const drawLimitLinePlugin = {
+        id: 'limitLine',
+        beforeDraw: (chart) => {
+            const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+            const yValue = y.getPixelForValue(1000); 
+
+            if (yValue >= chart.chartArea.top && yValue <= chart.chartArea.bottom) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(left, yValue);
+                ctx.lineTo(right, yValue);
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#d93025'; 
+                ctx.setLineDash([6, 6]);   
+                ctx.stroke();
+
+                ctx.fillStyle = '#d93025';
+                ctx.font = 'bold 12px "Segoe UI", Arial, sans-serif';
+                ctx.fillText('🏆 1000 pkt', left + 10, yValue - 8);
+                ctx.restore();
+            }
+        }
+    };
+
+    const ctxPoints = document.getElementById("pointsChart").getContext("2d");
+    if (pointsChartInstance) pointsChartInstance.destroy();
+
+    pointsChartInstance = new Chart(ctxPoints, {
+        type: "line",
+        data: { labels: labels, datasets: datasetsPoints },
+        plugins: [drawLimitLinePlugin], 
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            clip: false,
+            layout: { padding: { top: 30, bottom: 30, left: 15, right: 25 } },
+            scales: {
+                y: {
+                    suggestedMax: 1000, 
+                    title: {
+                        display: true,
+                        text: "Punkty",
+                        color: "#666",
+                        font: { weight: "bold" },
+                    },
+                    grid: {
+                        color: (context) =>
+                            context.tick.value === 0 ? "#333" : "#e0e0e0",
+                        lineWidth: (context) =>
+                            context.tick.value === 0 ? 2 : 1,
+                    },
+                },
+                x: { 
+                    offset: true,
+                    ticks: {
+                        color: '#ccc'
+                    }
+                },
+            },
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: { usePointStyle: true, padding: 20 },
+                },
+            },
+        },
+    });
+}
+
+function setupRealtimeListener() {
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    supabaseClient
+        .channel("game-realtime-channel")
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "tysiac_rounds",
+                filter: `game_id=eq.${gameId}`,
+            },
+            (payload) => {
+                initDetails();
+            },
+        )
+        .on(
+            "postgres_changes",
+            {
+                event: "UPDATE",
+                schema: "public",
+                table: "tysiac_games",
+                filter: `id=eq.${gameId}`,
+            },
+            (payload) => {
+                initDetails();
+            },
+        )
+        .subscribe((status) => {
+        });
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        initDetails();
+    }
+});

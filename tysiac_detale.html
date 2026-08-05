@@ -13,6 +13,20 @@
         .musik-tag { background: #ffebeb; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #d93025; font-weight: bold; }
         tfoot tr { background-color: #333; color: white; font-weight: bold; border-top: 2px solid #111; }
         .bomb-badge { background: #d93025; color: white; padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; }
+        
+        .chart-scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+        }
+        .canvas-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        @media (max-width: 768px) {
+            .canvas-wrapper { height: 350px; }
+        }
     </style>
 </head>
 <body>
@@ -33,7 +47,7 @@
         </div>
 
         <div class="bottom-actions" id="status-button-container"></div>
-
+        
         <div class="table-container" style="overflow-x: auto;">
             <table id="details-table">
                 <thead id="details-thead"></thead>
@@ -45,9 +59,20 @@
         <div class="bottom-actions" style="margin-top: 15px; margin-bottom: 25px;">
             <button id="add-round-btn-bottom" class="btn-primary btn-add-round" onclick="showAddRoundForm()">+ Dodaj rozdanie</button>
         </div>
+        <br />
+        <div class="summary-container" id="points-chart-container" style="display: none; margin-top: 20px;">
+            <h3 style="margin-top: 0; color: #1a472a; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;">📊 Przewaga punktowa</h3>
+            <div class="chart-scroll-container">
+                <div class="canvas-wrapper" id="dynamic-points-wrapper" style="height: 500px;">
+                    <canvas id="pointsChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/supaBaseScript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/tysiac-rozdanie.js"></script>
 </body>
 </html>
