@@ -571,6 +571,10 @@ function renderGamePlay() {
             const rawPoints = activeState.tricks_points[p] || 0;
             let finalPoints = customRound(rawPoints);
 
+            // ZASADA 800 PKT: Sprawdzamy stan punktów PRZED tym rozdaniem
+            const previousTotal = totals[p] || 0;
+            const isBlockedBy800 = previousTotal >= 800 && p !== bidWinner;
+
             if (p === bidWinner) {
                 // Jeśli ugrał mniej niż deklarował (porównujemy surowe punkty przed zaokrągleniem!)
                 if (rawPoints < bidAmount) {
@@ -578,13 +582,21 @@ function renderGamePlay() {
                 } else {
                     finalPoints = bidAmount;
                 }
+            } else if (isBlockedBy800) {
+                // Jeśli obrońca ma >= 800 punktów, nie może zdobyć punktów na cudzym rozdaniu
+                if (finalPoints > 0) {
+                    finalPoints = 0; 
+                }
             }
 
             finalScores[p] = finalPoints;
 
+            // Tworzymy jasną etykietę informującą o blokadzie 800 pkt
+            const blockLabel = isBlockedBy800 && rawPoints > 0 ? ', blokada 800' : '';
+
             summaryHtml += `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-                    <span><strong>${p}</strong> (ugrane: ${rawPoints}):</span>
+                    <span><strong>${p}</strong> (ugrane: ${rawPoints}${blockLabel}):</span>
                     <span style="font-weight: bold; color: ${finalPoints >= 0 ? '#1e8e3e' : '#d93025'}">
                         ${finalPoints >= 0 ? '+' : ''}${finalPoints} pkt
                     </span>
@@ -592,15 +604,25 @@ function renderGamePlay() {
             `;
         });
 
+        // SPRAWDZAMY CZY ZALOGOWANY GRACZ TO ZWYCIĘZCA LICYTACJI
+        const isBidWinner = viewerName === bidWinner;
+
         tableArea.innerHTML = `
             <div class="board-status-message" style="width: 100%; max-width: 340px;">
                 <h3 style="margin-top: 0; color: #1a472a;">Koniec Rozdania #${currentRoundsCount + 1}!</h3>
                 <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left;">
                     ${summaryHtml}
                 </div>
-                <button class="btn-primary" onclick="submitRoundEndToDatabase()" style="width: 100%; height: 48px; font-size: 16px;">
-                    💾 Zapisz i przejdź dalej
-                </button>
+                <!-- Przycisk zapisu widzi tylko zwycięzca licytacji, rywal widzi komunikat oczekiwania -->
+                ${isBidWinner ? `
+                    <button class="btn-primary" onclick="submitRoundEndToDatabase()" style="width: 100%; height: 48px; font-size: 16px;">
+                        💾 Zapisz i przejdź dalej
+                    </button>
+                ` : `
+                    <p style="font-size: 13px; color: #666; font-style: italic; text-align: center; margin-top: 15px;">
+                        Czekanie na zapis rozdania przez gracza <strong>${bidWinner}</strong>...
+                    </p>
+                `}
             </div>
         `;
     }
@@ -1095,8 +1117,13 @@ window.submitRoundEndToDatabase = submitRoundEndToDatabase; // Wystawienie do on
  * Zapisuje oficjalnie zakończone rozdanie do tabeli szczegółów i czyści wirtualną planszę
  */
 async function submitRoundEndToDatabase() {
+    // ZABEZPIECZENIE: Tylko zwycięzca licytacji może wysłać ten formularz do bazy
+    if (viewerName !== activeState.bid_winner) {
+        alert("Tylko zwycięzca licytacji może zapisać to rozdanie!");
+        return;
+    }
+
     const bidWinner = activeState.bid_winner;
-    
     const bidAmount = activeState.current_bid || 0; 
     
     let finalScores = {};
@@ -1104,11 +1131,18 @@ async function submitRoundEndToDatabase() {
         const rawPoints = activeState.tricks_points[p] || 0;
         let finalPoints = customRound(rawPoints);
 
+        const previousTotal = totals[p] || 0;
+        const isBlockedBy800 = previousTotal >= 800 && p !== bidWinner;
+
         if (p === bidWinner) {
             if (rawPoints < bidAmount) {
                 finalPoints = -bidAmount;
             } else {
                 finalPoints = bidAmount;
+            }
+        } else if (isBlockedBy800) {
+            if (finalPoints > 0) {
+                finalPoints = 0; // Blokada 800
             }
         }
         finalScores[p] = finalPoints;
@@ -1135,6 +1169,7 @@ async function submitRoundEndToDatabase() {
         });
 
         if (responseRound.ok) {
+            // Czyścimy planszę (usuwamy aktywny stan z tysiac_active_state)
             await fetch(`${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${gameId}`, {
                 method: "DELETE",
                 headers: {
