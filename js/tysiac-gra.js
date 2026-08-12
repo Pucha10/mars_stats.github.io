@@ -493,38 +493,22 @@ function renderGamePlay() {
             const trickResult = evaluateTrick(tableCards, activeState.trump_suit);
             const isMeWinner = viewerName === trickResult.winner;
 
+            tableContentHtml = `
+                <div class="board-status-message" style="border-color: #d4af37;">
+                    <h3 style="color: #d4af37; margin: 0 0 5px 0;">Lewę zgarnia: <strong>${trickResult.winner}</strong> (+${trickResult.pts} pkt)</h3>
+                    <p style="font-size: 11px; color: #666; margin: 0;">Rozliczanie lewy...</p>
+                </div>
+            `;
+
+            // --- REAKTYWNY TIMER (Wyzwala się tylko na telefonie zwycięzcy) ---
             if (isMeWinner) {
-                tableContentHtml = `
-                    <div class="board-status-message" style="border-color: #1e8e3e;">
-                        <h3 style="color: #1e8e3e; margin: 0 0 5px 0;">Wygrałeś lewę (+${trickResult.pts} pkt)!</h3>
-                        <button class="btn-primary" onclick="collectTrick()" style="width: 100%; height: 44px; margin-top: 10px;">
-                            📥 Zabierz lewę
-                        </button>
-                    </div>
-                `;
-            } else {
-                tableContentHtml = `
-                    <div class="board-status-message" style="border-color: #d93025;">
-                        <h3 style="color: #d93025; margin: 0 0 5px 0;">Rywal (${trickResult.winner}) wygrał lewę!</h3>
-                        <p style="font-size: 12px; color: #666;">Czekaj, aż rywal zabierze karty ze stołu...</p>
-                    </div>
-                `;
-            }
-        } else {
-            if (isMyTurn) {
-                tableContentHtml = `
-                    <div class="board-status-message">
-                        <h3>Twój ruch!</h3>
-                        <p>Kliknij w kartę na dole, aby rzucić ją na stół.</p>
-                    </div>
-                `;
-            } else {
-                tableContentHtml = `
-                    <div class="board-status-message">
-                        <h3>Ruch rywala</h3>
-                        <p>Gracz <strong>${activeState.turn_player}</strong> wybiera teraz kartę...</p>
-                    </div>
-                `;
+                // Blokada, aby zapobiec wielokrotnemu uruchomieniu timera przy odświeżaniu
+                if (!window.autoCollectTimeout) {
+                    window.autoCollectTimeout = setTimeout(async () => {
+                        window.autoCollectTimeout = null;
+                        await autoCollectTrick(); // Zwycięzca sprząta stół w bazie dla obu graczy
+                    }, 700); // 0.7 sekundy oczekiwania na przeczytanie kart
+                }
             }
         }
 
@@ -914,7 +898,7 @@ document.addEventListener('visibilitychange', () => {
 // --- NOWE FUNKCJE POMOCNICZE SILNIKA GRY ---
 
 /**
- * Obsługuje rzucenie karty na stół z automatycznym zgłaszaniem meldunku (kozery)
+ * Obsługuje rzucenie karty na stół (natychmiastowy zapis do bazy)
  */
 async function playCard(cardCode) {
     if (activeState.phase !== 'playing') return;
@@ -926,7 +910,7 @@ async function playCard(cardCode) {
     // 1. Walidacja Tysiąca (dokładanie do koloru/kozera)
     const isPlayable = isCardPlayable(cardCode, myHand, tableCards, activeState.trump_suit);
     if (!isPlayable) {
-        alert("Niedozwolony ruch!");
+        alert("Niedozwolony ruch! Musisz dokładać do koloru, a jeśli nie masz - do kozera!");
         return;
     }
 
@@ -943,31 +927,25 @@ async function playCard(cardCode) {
     let currentTricksPoints = activeState.tricks_points || {};
     if (!currentTricksPoints[viewerName]) currentTricksPoints[viewerName] = 0;
 
-    // Meldujemy tylko wtedy, gdy wychodzimy jako pierwsi do lewy!
     if (tableCards.length === 0) {
         const [val, suit] = cardCode.split('_');
-        
-        // Sprawdzamy czy rzucono Króla (K) lub Damę (Q)
         if (val === 'K' || val === 'Q') {
             const partnerVal = val === 'K' ? 'Q' : 'K';
             const partnerCard = `${partnerVal}_${suit}`;
-
-            // Jeśli drugi element pary jest nadal w naszej ręce (nowej ręce bez rzuconej karty)
             if (newHand.includes(partnerCard)) {
                 const MELD_VALUES = { 'H': 100, 'D': 80, 'C': 60, 'S': 40 };
                 const meldPoints = MELD_VALUES[suit] || 0;
                 
-                newTrumpSuit = suit; // Nowy kozioł zostaje ustalony!
-                currentTricksPoints[viewerName] += meldPoints; // Punkty dopisujemy od razu na żywo!
-                
-                console.log(`Zgłoszono meldunek w kolorze ${suit}! Dodano +${meldPoints} pkt.`);
+                newTrumpSuit = suit;
+                currentTricksPoints[viewerName] += meldPoints;
             }
         }
     }
 
+    // Zapisujemy stan bezpośrednio do bazy, aby oba urządzenia go zobaczyły
     const updatedState = {
         table_cards: newTableCards,
-        turn_player: isTrickComplete ? "" : opponentName,
+        turn_player: isTrickComplete ? "" : opponentName, // Blokujemy ruchy, jeśli są 2 karty
         hands: {
             ...activeState.hands,
             [viewerName]: newHand
@@ -1218,6 +1196,60 @@ window.selectFinalBid = selectFinalBid; // Wystawienie do kliknięcia na siatce
 function selectFinalBid(val) {
     chosenFinalBid = val;
     renderGamePlay(); // Re-render, aby podświetlić wybrany przycisk na złoto
+}
+
+function renderLocalTrickComplete(newTableCards) {
+    if (!activeState) return;
+    activeState.table_cards = newTableCards;
+    activeState.turn_player = ""; // Blokada kliknięć w karty
+    renderGamePlay();
+}
+
+/**
+ * Automatycznie zabiera lewę, dolicza punkty (oraz ew. 4 karty z musika) i sprząta stół w bazie danych
+ */
+async function autoCollectTrick() {
+    const tableCards = activeState.table_cards || [];
+    if (tableCards.length !== 2) return;
+
+    const trickResult = evaluateTrick(tableCards, activeState.trump_suit);
+    const winner = trickResult.winner;
+
+    let currentTricksPoints = activeState.tricks_points || {};
+    if (!currentTricksPoints[winner]) currentTricksPoints[winner] = 0;
+
+    // Sprawdzamy czy to była ostatnia lewa (gracze nie mają już kart w rękach)
+    const opponentName = currentPlayers.find(p => p !== winner);
+    const myHandCount = (activeState.hands[winner] || []).length;
+    const oppHandCount = (activeState.hands[opponentName] || []).length;
+
+    const isRoundOver = myHandCount === 0 && oppHandCount === 0;
+
+    // Zgarnia 4 dodatkowe karty jeśli to ostatnia lewa
+    let extraPoints = 0;
+    if (isRoundOver) {
+        const discarded = activeState.discarded_cards || [];
+        const unchosenMusik = (activeState.musiks && activeState.musiks[0]) ? activeState.musiks[0] : [];
+        const allExtraCards = [...discarded, ...unchosenMusik];
+        
+        const VALUES = { 'A': 11, '10': 10, 'K': 4, 'Q': 3, 'J': 2, '9': 0 };
+        allExtraCards.forEach(c => {
+            const val = c.split('_')[0];
+            extraPoints += (VALUES[val] || 0);
+        });
+    }
+
+    // Dodanie punktów
+    currentTricksPoints[winner] += trickResult.pts + extraPoints;
+
+    const updatedState = {
+        table_cards: [],                       // Czyścimy stół w bazie
+        turn_player: winner,                   // Zwycięzca zaczyna kolejną lewę
+        tricks_points: currentTricksPoints,    // Zapisujemy punkty
+        phase: isRoundOver ? 'round_end' : 'playing' // Przechodzimy do podsumowania na koniec
+    };
+
+    await patchActiveState(updatedState);
 }
 
 window.logoutProfile = logoutProfile; // Wystawienie do onclick
