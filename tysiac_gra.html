@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tysiąc - Pokój Gry</title>
+    <link rel="stylesheet" href="css/remik-style.css">
+    <style>
+        body {
+            background-color: #1a472a;
+            background-image: radial-gradient(circle, #2d5a3f 0%, #1a472a 100%);
+        }
+        /* --- STYLIZACJA WIRTUALNYCH KART --- */
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: calc(100vh - 120px);
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Karty przeciwnika (góra ekranu) */
+        .opponent-area {
+            text-align: center;
+            padding: 10px;
+        }
+        .card-back-count {
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Obszar gry / Stół (środek ekranu) */
+        .table-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        /* Twoje karty (dół ekranu) */
+        .player-area {
+            width: 100%;
+            padding-bottom: 10px;
+        }
+        .player-hand {
+            display: flex;
+            justify-content: center;
+            gap: -15px; /* Delikatne nakładanie się kart na siebie */
+            padding: 10px;
+            overflow-x: auto;
+            width: 100%;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        /* Pojedyncza karta do gry */
+        .playing-card {
+            width: 65px;
+            height: 95px;
+            background: white;
+            border: 1.5px solid #ccc;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 6px;
+            box-sizing: border-box;
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+            margin-right: -20px; /* Wachlarzowy układ */
+        }
+        .playing-card:hover {
+            transform: translateY(-15px);
+            z-index: 100 !important;
+        }
+
+        .card-red { color: #d93025; }
+        .card-black { color: #222; }
+
+        .card-corner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .card-corner.top-left { align-self: flex-start; }
+        .card-corner.bottom-right { align-self: flex-end; transform: rotate(180deg); }
+
+        .card-center {
+            font-size: 26px;
+            align-self: center;
+        }
+
+        /* Informacja o statusie/akcji na stole */
+        .board-status-message {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            max-width: 90%;
+        }
+
+        /* --- SIATKA LICYTACJI (4 KOLUMNY) --- */
+.bidding-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Dokładnie 4 równe kolumny */
+    gap: 1px; 
+    background-color: #ddd; 
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 320px;
+    margin: 15px auto 0 auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+}
+
+.bidding-btn {
+    background-color: #ffffff;
+    border: none;
+    padding: 10px 2px; 
+    font-size: 15px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bidding-btn:hover:not(:disabled) {
+    background-color: #f5ece1;
+    color: #1a472a;
+}
+
+.bidding-btn:disabled {
+    background-color: #f5f5f5;
+    color: #ccc;
+    cursor: not-allowed;
+    font-weight: normal;
+}
+
+.bidding-btn.btn-pas {
+    grid-column: span 2;
+    background-color: #ffffff;
+    color: #1a472a;
+    font-size: 16px;
+}
+
+.bidding-btn.btn-bomba {
+    grid-column: span 2; 
+    color: #d93025;
+}
+.bidding-btn.btn-bomba:disabled {
+    color: #ccc;
+}
+
+/* --- STYLIZACJA KART NA STOLE (MUSIKI) --- */
+.table-musiks-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.card-back {
+    width: 65px;
+    height: 95px;
+    background-color: #7d1212; 
+    background-image: radial-gradient(#9a1a1a 20%, transparent 20%),
+                      radial-gradient(#9a1a1a 20%, transparent 20%);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+    border: 2px solid white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.card-back:hover:not(.disabled) {
+    transform: scale(1.05) translateY(-5px);
+}
+
+.playing-card.selected-for-discard {
+    transform: translateY(-25px) !important;
+    border: 2px solid #d93025 !important;
+    box-shadow: 0 8px 15px rgba(217, 48, 37, 0.4);
+    z-index: 100 !important;
+}
+
+/* --- WIRTUALNY STÓŁ ROZGRYWKI (RZUCONE KARTY) --- */
+.played-cards-table {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    min-height: 110px;
+    margin: 15px 0;
+}
+
+/* Wskazówka u kogo leży rzucona karta */
+.played-card-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+.player-tag-micro {
+    font-size: 10px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.bidding-btn.selected-final-bid {
+    background-color: #d4af37 !important; /* Złote tło */
+    color: #000 !important;
+    font-weight: bold;
+    border: 2px solid #fff !important;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 600px) {
+    /* Wygodny układ kart w ręce na telefonie - karty zawijają się w rzędy */
+    .player-hand {
+        flex-wrap: wrap; /* Karty przejdą do drugiego rzędu, gdy zabraknie miejsca */
+        justify-content: center;
+        gap: 15px 8px; /* Odstęp pionowy 15px, poziomy 8px między kartami */
+        padding: 5px;
+    }
+
+    /* Zmniejszamy karty, by idealnie pasowały do ekranu smartfona */
+    .playing-card {
+        width: 64px !important;
+        height: 80px !important;
+        margin-right: -10px !important; /* Mniejszy zakład, by się nie gniotły */
+        padding: 4px !important;
+    }
+
+    .playing-card:hover {
+        transform: translateY(-8px) !important; /* Mniejsze uniesienie na dotyk */
+    }
+
+    .card-center {
+        font-size: 18px !important; /* Mniejszy symbol na środku */
+    }
+
+    .card-corner {
+        font-size: 11px !important; /* Mniejsze litery w rogach */
+    }
+}
+        
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 600px; padding: 10px;">
+        <header class="main-header" style="padding: 10px; margin-bottom: 10px;">
+            <div class="logo-area">
+                <h1 style="font-size: 18px;" id="game-title">🃏 Tysiąc - Gra na żywo</h1>
+            </div>
+            <div class="actions">
+                <a href="#" id="back-to-details-link" class="btn-secondary">Tabela</a>
+            </div>
+        </header>
+
+        <!-- PLANSZA GRY -->
+        <div class="game-board">
+            
+            <!-- OBSZAR PRZECIWNIKA (Góra) -->
+            <div class="opponent-area">
+                <span class="card-back-count" id="opponent-card-count">Oczekiwanie na rywala...</span>
+            </div>
+
+            <!-- STÓŁ / ŚRODEK (Wizualizacja licytacji, rzuconych kart i musików) -->
+            <div class="table-area" id="table-area-content">
+                <div class="board-status-message" id="setup-message-box">
+                    <h3>Ładowanie gry...</h3>
+                </div>
+            </div>
+
+            <!-- TWOJA RĘKA (Dół) -->
+            <div class="player-area">
+                <div style="text-align: center; font-size: 12px; margin-bottom: 5px; color: #aaa;" id="my-profile-label">
+                    Twoje karty: ...
+                </div>
+                <div class="player-hand" id="my-hand-container">
+                    <!-- Karty wyrenderuje JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Biblioteki i Skrypty -->
+    <script src="js/supaBaseScript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/tysiac-gra.js"></script>
+</body>
+</html>

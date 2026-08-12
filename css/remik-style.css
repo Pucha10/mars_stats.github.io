@@ -696,6 +696,37 @@ td {
     box-sizing: border-box;
 }
 
+.header-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.action-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 150px;
+}
+
+.action-column .btn-primary,
+.action-column .btn-secondary,
+.action-column #play-game-btn {
+    width: 100% !important;
+    height: 40px;
+    margin: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 8px;
+    box-sizing: border-box;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
 @media (max-width: 768px) {
     .table-container, .summary-container {
         overflow-x: auto; 

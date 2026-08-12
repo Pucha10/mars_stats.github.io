@@ -29,16 +29,25 @@
         }
     </style>
 </head>
+
+
 <body>
     <div class="container">
         <header class="main-header">
             <div class="logo-area">
                 <h1 id="game-title">🃏 Tysiąc - Gra #...</h1>
             </div>
-            <div class="actions">
-                <button id="add-round-btn" class="btn-primary btn-add-round" onclick="showAddRoundForm()">+ Dodaj rozdanie</button>
-                <a href="tysiac.html" class="btn-secondary">Powrót</a>
-            </div>
+            <div class="header-actions">
+                <div class="action-column">
+                    <button id="play-game-btn" class="btn-primary" onclick="goToLiveGame()" style="background-color: #1e8e3e;">
+                        🎮 Rozegraj partię
+                     </button>
+                </div>
+                <div class="action-column">
+                    <button id="add-round-btn" class="btn-primary btn-add-round" onclick="showAddRoundForm()">+ Dodaj rozdanie</button>
+                     <a href="tysiac.html" class="btn-secondary">Powrót</a>
+                    </div>
+                </div>
         </header>
 
         <div class="next-shuffler-box" id="next-shuffler-info">

@@ -26,45 +26,26 @@ async function initDetails() {
             `🃏 Tysiąc - Gra #${game.game_number}`;
         currentPlayers = game.players;
         currentRoundsCount = rounds.length;
-        gamePassword = game.password_plain;
-
-        bombsUsedInGame = {};
-        currentPlayers.forEach((p) => (bombsUsedInGame[p] = false));
-        rounds.forEach((r) => {
-            currentPlayers.forEach((p) => {
-                if (r.scores[p] === "BOMBA") bombsUsedInGame[p] = true;
-            });
-        });
 
         renderTable(game.players, rounds);
         renderSummaryTable(game.players, rounds);
 
-        if (game.status === "ongoing") {
-            let automaticWinner = null;
-            let maxScore = 999;
-
-            for (const [player, score] of Object.entries(totals)) {
-                if (score >= 1000 && score > maxScore) {
-                    maxScore = score;
-                    automaticWinner = player;
-                }
-            }
-
-            if (automaticWinner) {
-                await autoFinishGame(automaticWinner);
-                return;
-            }
-        }
-
         const infoBox = document.getElementById("next-shuffler-info");
         const addBtns = document.querySelectorAll(".btn-add-round");
+        
+        // POBIERAMY PRZYCISK INTERAKTYWNEJ GRY
+        const playGameBtn = document.getElementById("play-game-btn");
 
         if (game.status === "finished") {
             infoBox.innerHTML = `🏆 Grę wygrał: <strong id="next-shuffler-name">${game.winner || "Remis"}</strong>`;
             infoBox.style.backgroundColor = "#d4af37";
             infoBox.style.color = "#000";
 
+            // Ukrywamy oba przyciski dodawania rozdania
             addBtns.forEach((btn) => (btn.style.display = "none"));
+            
+            // UKRYWAMY PRZYCISK INTERAKTYWNEJ GRY
+            if (playGameBtn) playGameBtn.style.display = "none";
         } else {
             const nextShuffler = calculateNextShuffler(game.players, rounds);
             const nextMusik = calculateNextMusik(game.players, rounds);
@@ -73,10 +54,12 @@ async function initDetails() {
             infoBox.style.color = "";
 
             addBtns.forEach((btn) => (btn.style.display = "inline-block"));
+            
+            if (playGameBtn) playGameBtn.style.display = "inline-block";
         }
 
         renderStatusButton(game.status);
-        renderPointsChart(game.players, rounds); 
+        renderPointsChart(game.players, rounds);
     }
 }
 
@@ -820,3 +803,7 @@ document.addEventListener('visibilitychange', () => {
         initDetails();
     }
 });
+
+function goToLiveGame() {
+    window.location.href = `tysiac_gra.html?id=${gameId}`;
+}
