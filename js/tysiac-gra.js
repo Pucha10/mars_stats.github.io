@@ -13,7 +13,7 @@ let chosenFinalBid = 100;
 let nextShuffler = "";
 let nextMusik = "";
 let bombsUsedInGame = {};
-let selectedDiscards = []; // <--- POPRAWKA: Zmienna zadeklarowana globalnie!
+let selectedDiscards = []; // Zmienna zadeklarowana globalnie
 
 if (!gameId) {
     alert("Nie znaleziono ID gry!");
@@ -176,11 +176,11 @@ async function renderSetupOrWaitingScreen(game) {
     const isDealer = viewerName === dealer;
 
     opponentLabel.innerText = "Karty nie zostały jeszcze rozdane";
-document.getElementById('my-profile-label').innerHTML = `
-    Zalogowany jako: <strong>${viewerName}</strong>
-    <a href="#" onclick="logoutProfile()" style="margin-left: 12px; font-size: 11px; color: inherit; text-decoration: none;">
-        Zmień profil 👤
-    </a>`;
+    document.getElementById('my-profile-label').innerHTML = `
+        Zalogowany jako: <strong>${viewerName}</strong>
+        <a href="#" onclick="logoutProfile()" style="margin-left: 12px; font-size: 11px; color: inherit; text-decoration: none;">
+            Zmień profil 👤
+        </a>`;
     handContainer.innerHTML = '<span style="color: #aaa;">Czekanie na karty...</span>';
 
     if (isDealer) {
@@ -285,7 +285,6 @@ function renderGamePlay() {
     const opponentName = currentPlayers.find(p => p !== viewerName);
     const oppHand = activeState.hands[opponentName] || [];
 
-    // --- POPRAWKA: Przenosimy pobranie Twoich kart na samą górę, by uniknąć błędu przed inicjalizacją! ---
     const myHandRaw = activeState.hands[viewerName] || [];
 
     // --- AKTUALIZACJA PUNKTACJI W ROZDANIU I GRZE NA ŻYWO (GÓRA I DÓŁ EKRANU) ---
@@ -295,7 +294,12 @@ function renderGamePlay() {
     const myTotalPoints = totals[viewerName] || 0;
 
     opponentLabel.innerText = `${opponentName}: ${oppHand.length} kart | Wynik: ${oppTotalPoints} pkt (+${oppRoundPoints} w rozdaniu)`;
-    document.getElementById('my-profile-label').innerText = `Ty (${viewerName}) | Wynik: ${myTotalPoints} pkt (+${myRoundPoints} w rozdaniu)`;
+    
+    // Zmieniono na innerHTML, aby obsłużyć link do wylogowania
+    document.getElementById('my-profile-label').innerHTML = `
+        Ty (<strong>${viewerName}</strong>) | Wynik: <strong>${myTotalPoints}</strong> pkt (+${myRoundPoints} w rozdaniu)
+        <a href="#" onclick="logoutProfile()" style="color: #ff9999; margin-left: 12px; text-decoration: underline; font-size: 11px; font-weight: bold;">Zmień profil 👤</a>
+    `;
 
     const isMyTurn = viewerName === activeState.turn_player;
 
@@ -316,7 +320,7 @@ function renderGamePlay() {
     // --- FAZA A: LICYTACJA (Bidding) ---
     if (activeState.phase === 'bidding') {
         if (isMyTurn) {
-            const maxAllowedBid = calculateMaxAllowedBid(myHandRaw); // Tutaj myHandRaw jest już w pełni bezpieczne i zadeklarowane!
+            const maxAllowedBid = calculateMaxAllowedBid(myHandRaw); 
             const currentBid = activeState.current_bid;
 
             const bidValues = [
@@ -502,12 +506,11 @@ function renderGamePlay() {
 
             // --- REAKTYWNY TIMER (Wyzwala się tylko na telefonie zwycięzcy) ---
             if (isMeWinner) {
-                // Blokada, aby zapobiec wielokrotnemu uruchomieniu timera przy odświeżaniu
                 if (!window.autoCollectTimeout) {
                     window.autoCollectTimeout = setTimeout(async () => {
                         window.autoCollectTimeout = null;
-                        await autoCollectTrick(); // Zwycięzca sprząta stół w bazie dla obu graczy
-                    }, 700); // 0.7 sekundy oczekiwania na przeczytanie kart
+                        await autoCollectTrick(); 
+                    }, 700); 
                 }
             }
         }
@@ -611,9 +614,46 @@ function renderGamePlay() {
         `;
     }
 
-    // Rysowanie kart w Twojej ręce (Dół ekranu)
-    const myHandSorted = sortHand(myHandRaw); 
+    // Rysowanie kart 
+    const myHandSorted = sortHand(myHandRaw);
 
+    // --- REKONSILIACJA DOM (ZAPOBIEGA MIGANIU I GUBIENIU ZDARZEŃ ONCLICK!) ---
+    if (activeState.phase === 'playing') {
+        const currentCardElems = Array.from(handContainer.querySelectorAll('.playing-card'));
+        
+        if (currentCardElems.length > 0) {
+            // 1. Najpierw usuwamy tylko te karty, które zostały rzucone na stół
+            currentCardElems.forEach(el => {
+                const cardCode = el.dataset.card;
+                if (!myHandSorted.includes(cardCode)) {
+                    el.style.transition = 'all 0.2s ease-out';
+                    el.style.opacity = '0';
+                    el.style.width = '0px';
+                    el.style.marginRight = '-25px';
+                    el.style.transform = 'translateY(-40px)';
+                    setTimeout(() => el.remove(), 200); 
+                }
+            });
+
+            // 2. BARDZO WAŻNE: Aktualizujemy atrybuty onclick na pozostałych kartach!
+            // Jeśli pominęliśmy to wcześniej, kliknięcie po usunięciu karty przestawało działać!
+            myHandSorted.forEach(cardCode => {
+                const el = handContainer.querySelector(`.playing-card[data-card="${cardCode}"]`);
+                if (el) {
+                    if (isMyTurn && !isTrickComplete) {
+                        el.setAttribute('onclick', `playCard('${cardCode}')`);
+                        el.style.cursor = 'pointer';
+                    } else {
+                        el.removeAttribute('onclick');
+                        el.style.cursor = 'default';
+                    }
+                }
+            });
+            return; // Bezpiecznie kończymy, bez czyszczenia całego kontenera!
+        }
+    }
+
+    // Dla pozostałych faz robimy tradycyjny, czysty render
     handContainer.innerHTML = '';
     myHandSorted.forEach(cardCode => {
         let isClickable = false;
@@ -910,8 +950,17 @@ async function playCard(cardCode) {
     // 1. Walidacja Tysiąca (dokładanie do koloru/kozera)
     const isPlayable = isCardPlayable(cardCode, myHand, tableCards, activeState.trump_suit);
     if (!isPlayable) {
-        alert("Niedozwolony ruch! Musisz dokładać do koloru, a jeśli nie masz - do kozera!");
+        alert("Niedozwolony ruch!");
         return;
+    }
+
+    const clickedCard = document.querySelector(`.playing-card[data-card="${cardCode}"]`);
+    if (clickedCard) {
+        clickedCard.style.transition = 'all 0.2s ease-out';
+        clickedCard.style.opacity = '0';
+        clickedCard.style.width = '0px';
+        clickedCard.style.marginRight = '-25px'; 
+        clickedCard.style.transform = 'translateY(-40px)'; 
     }
 
     // 2. Usuwamy kartę z ręki gracza
@@ -927,25 +976,31 @@ async function playCard(cardCode) {
     let currentTricksPoints = activeState.tricks_points || {};
     if (!currentTricksPoints[viewerName]) currentTricksPoints[viewerName] = 0;
 
+    // Meldujemy tylko wtedy, gdy wychodzimy jako pierwsi do lewy!
     if (tableCards.length === 0) {
         const [val, suit] = cardCode.split('_');
+        
+        // Sprawdzamy czy rzucono Króla (K) lub Damę (Q)
         if (val === 'K' || val === 'Q') {
             const partnerVal = val === 'K' ? 'Q' : 'K';
             const partnerCard = `${partnerVal}_${suit}`;
+
+            // Jeśli drugi element pary jest nadal w naszej ręce (nowej ręce bez rzuconej karty)
             if (newHand.includes(partnerCard)) {
                 const MELD_VALUES = { 'H': 100, 'D': 80, 'C': 60, 'S': 40 };
                 const meldPoints = MELD_VALUES[suit] || 0;
                 
-                newTrumpSuit = suit;
-                currentTricksPoints[viewerName] += meldPoints;
+                newTrumpSuit = suit; // Nowy kozioł zostaje ustalony!
+                currentTricksPoints[viewerName] += meldPoints; // Punkty dopisujemy od razu na żywo!
+                
+                console.log(`Zgłoszono meldunek w kolorze ${suit}! Dodano +${meldPoints} pkt.`);
             }
         }
     }
 
-    // Zapisujemy stan bezpośrednio do bazy, aby oba urządzenia go zobaczyły
     const updatedState = {
         table_cards: newTableCards,
-        turn_player: isTrickComplete ? "" : opponentName, // Blokujemy ruchy, jeśli są 2 karty
+        turn_player: isTrickComplete ? "" : opponentName,
         hands: {
             ...activeState.hands,
             [viewerName]: newHand
@@ -958,12 +1013,10 @@ async function playCard(cardCode) {
 }
 
 /**
- * Walidacja dorzucania kart w Tysiącu (z uwzględnieniem obowiązku przebijania!):
- * 1. Absolutny obowiązek dorzucenia do koloru.
- *    - Jeśli masz silniejszą kartę w tym kolorze -> MUSISZ przebić.
- *    - Jeśli nie masz silniejszej, ale masz kolor -> dorzucasz dowolną z tego koloru.
- * 2. Jeśli brak koloru -> obowiązek dorzucenia kozery (atutu).
- * 3. Jeśli brak koloru i brak kozery -> wolny ruch (rzucasz cokolwiek).
+ * Walidacja dorzucania kart w Tysiącu:
+ * 1. Musisz dokładać do koloru pierwszej karty w lewie (jeśli masz).
+ * 2. Jeśli nie masz koloru, musisz rzucić kozera (jeśli jest i go masz).
+ * 3. Jeśli nie masz ani koloru, ani kozera -> możesz rzucić cokolwiek.
  */
 function isCardPlayable(cardCode, hand, tableCards, trumpSuit) {
     if (tableCards.length === 0) return true; // Pierwszy gracz rzuca cokolwiek
@@ -1225,7 +1278,7 @@ async function autoCollectTrick() {
 
     const isRoundOver = myHandCount === 0 && oppHandCount === 0;
 
-    // Zgarnia 4 dodatkowe karty jeśli to ostatnia lewa
+    // ZASADA OSTATNIEJ LEWY: Zgarnianie punktów z 4 odrzuconych kart
     let extraPoints = 0;
     if (isRoundOver) {
         const discarded = activeState.discarded_cards || [];
@@ -1264,3 +1317,4 @@ function logoutProfile() {
         location.reload(); // Przeładowanie strony zresetuje wszystkie zmienne i pokaże okno wyboru
     }
 }
+
