@@ -324,13 +324,14 @@ function renderGamePlay() {
             const currentBid = activeState.current_bid;
 
             const bidValues = [
-                110, 120, 130, 140,
-                150, 160, 170, 180,
-                190, 200, 210, 220,
-                230, 240, 250, 260,
-                270, 280, 290, 300,
-                310, 320, 330, 340,
-                350, 360, 370, 380
+                100, 110, 120, 130,
+                140, 150, 160, 170,
+                180, 190, 200, 210,
+                220, 230, 240, 250,
+                260, 270, 280, 290,
+                300, 310, 320, 330,
+                340, 350, 360, 370,
+                380, 390, 400, 410
             ];
             let gridButtonsHtml = '';
 
@@ -435,13 +436,14 @@ function renderGamePlay() {
 
             // Generujemy przyciski do ostatecznego podbicia gry
             const bidValues = [
-                110, 120, 130, 140,
-                150, 160, 170, 180,
-                190, 200, 210, 220,
-                230, 240, 250, 260,
-                270, 280, 290, 300,
-                310, 320, 330, 340,
-                350, 360, 370, 380
+                100, 110, 120, 130,
+                140, 150, 160, 170,
+                180, 190, 200, 210,
+                220, 230, 240, 250,
+                260, 270, 280, 290,
+                300, 310, 320, 330,
+                340, 350, 360, 370,
+                380, 390, 400, 410
             ];
             let gridButtonsHtml = '';
 
@@ -499,8 +501,8 @@ function renderGamePlay() {
 
             tableContentHtml = `
                 <div class="board-status-message" style="border-color: #d4af37;">
-                    <h3 style="color: #d4af37; margin: 0 0 5px 0;">Lewę zgarnia: <strong>${trickResult.winner}</strong> (+${trickResult.pts} pkt)</h3>
-                    <p style="font-size: 11px; color: #666; margin: 0;">Rozliczanie lewy...</p>
+                    <h3 style="color: #d4af37; margin: 0 0 5px 0;">Wygrał: <strong>${trickResult.winner}</strong> (+${trickResult.pts} pkt)</h3>
+                    <p style="font-size: 11px; color: #666; margin: 0;">Rozliczanie</p>
                 </div>
             `;
 
@@ -510,7 +512,7 @@ function renderGamePlay() {
                     window.autoCollectTimeout = setTimeout(async () => {
                         window.autoCollectTimeout = null;
                         await autoCollectTrick(); 
-                    }, 700); 
+                    }, 650); 
                 }
             }
         }
@@ -539,7 +541,7 @@ function renderGamePlay() {
 
                 <!-- Rzucone karty -->
                 <div class="played-cards-table">
-                    ${tableCards.length === 0 ? '<span style="color:rgba(255,255,255,0.4); font-style:italic;">Pusty stół (początek lewy)</span>' : playedCardsHtml}
+                    ${tableCards.length === 0 ? '<span style="color:rgba(255,255,255,0.4); font-style:italic;">Stół</span>' : playedCardsHtml}
                 </div>
                 <!-- Status lewy -->
                 ${tableContentHtml}
@@ -1126,7 +1128,6 @@ async function collectTrick() {
             extraPoints += (VALUES[val] || 0);
         });
         
-        console.log(`Ostatnia lewa! Dodano +${extraPoints} pkt z musika i odrzutów dla ${winner}`);
     }
 
     // Dodajemy punkty z lewy oraz punkty ekstra z ostatniego rozdania
