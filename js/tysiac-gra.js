@@ -548,7 +548,7 @@ function renderGamePlay() {
             </div>
         `;
     }
-    // --- FAZA F: PODSUMOWANIE RUNDY (Round End) ---
+// --- FAZA F: PODSUMOWANIE RUNDY (Round End) ---
     else if (activeState.phase === 'round_end') {
         const bidWinner = activeState.bid_winner;
         const bidAmount = activeState.current_bid || 0; 
@@ -592,6 +592,38 @@ function renderGamePlay() {
                 </div>
             `;
         });
+
+        // --- NOWE: OBLICZANIE PUNKTÓW I ODZYSKANIE 4 KART ZE STOŁU ---
+        const discarded = activeState.discarded_cards || []; // 2 odrzucone karty
+        const unchosenMusik = (activeState.musiks && activeState.musiks[0]) ? activeState.musiks[0] : []; // 2 karty z zamkniętego musika
+        const extraCards = [...discarded, ...unchosenMusik];
+        
+        let extraPoints = 0;
+        const VALUES = { 'A': 11, '10': 10, 'K': 4, 'Q': 3, 'J': 2, '9': 0 };
+        extraCards.forEach(c => {
+            const val = c.split('_')[0];
+            extraPoints += (VALUES[val] || 0);
+        });
+
+        // Zwycięzcą ostatniej lewy jest ten, na kim "utknęła" tura ruchu na końcu
+        const lastTrickWinner = activeState.turn_player;
+
+        // Renderujemy 4 karty na dole podsumowania (skalujemy je do 0.8, by były kompaktowe na telefonie)
+        let extraCardsHtml = extraCards.map(c => renderCardHTML(c)).join('');
+
+        summaryHtml += `
+            <div style="margin-top: 15px; border-top: 2px dashed #ddd; padding-top: 15px; text-align: center;">
+                <p style="margin: 0; font-size: 13px; color: #555;">
+                    Ostatnią lewę zgarnął: <strong style="color: #1a472a;">${lastTrickWinner}</strong> (+${extraPoints} pkt)
+                </p>
+                <p style="margin: 5px 0 10px 0; font-size: 11px; color: #888;">
+                    Karty z musika i odrzutów:
+                </p>
+                <div class="table-scroll" style="display: flex; gap: 5px; justify-content: center; transform: scale(0.85); height: 85px; margin-bottom: 5px; overflow: hidden;">
+                    ${extraCardsHtml || '<span style="color:#aaa; font-style:italic;">brak kart</span>'}
+                </div>
+            </div>
+        `;
 
         // SPRAWDZAMY CZY ZALOGOWANY GRACZ TO ZWYCIĘZCA LICYTACJI
         const isBidWinner = viewerName === bidWinner;
