@@ -81,10 +81,12 @@
             transition: transform 0.2s ease;
             margin-right: -20px; /* Wachlarzowy układ */
         }
-        .playing-card:hover {
-            transform: translateY(-15px);
-            z-index: 100 !important;
+        @media (hover: hover) {
+            .playing-card:hover {
+                transform: translateY(-15px);
+                z-index: 100 !important;
         }
+}
 
         .card-red { color: #d93025; }
         .card-black { color: #222; }
@@ -255,16 +257,28 @@
         padding: 4px !important;
     }
 
-    .playing-card:hover {
-        transform: translateY(-8px) !important; /* Mniejsze uniesienie na dotyk */
-    }
-
     .card-center {
         font-size: 18px !important; /* Mniejszy symbol na środku */
     }
 
     .card-corner {
         font-size: 11px !important; /* Mniejsze litery w rogach */
+    }
+    .card-back-count {
+        font-size: 11px !important;       /* Delikatnie mniejsza czcionka, by zmieściła się w jednej linii */
+        padding: 6px 12px !important;     /* Zmniejszony wewnętrzny margines */
+        border-radius: 8px !important;    /* Łagodniejsze zaokrąglenie (zapobiega deformacji przy zawinięciu) */
+        display: inline-block;            /* Pozwala tłu poprawnie dopasować się do tekstu */
+        line-height: 1.4;                 /* Lepszy odstęp między liniami w razie zawinięcia */
+        max-width: 95%;                   /* Bezpieczna szerokość przy krawędziach */
+        box-sizing: border-box;
+    }
+
+    /* Twój profil (dół ekranu) */
+    #my-profile-label {
+        font-size: 11px !important;       /* Mniejsza czcionka zapobiegająca rozbiciu na dole */
+        line-height: 1.4;
+        padding: 0 10px;
     }
 }
         

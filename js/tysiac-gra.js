@@ -648,46 +648,9 @@ function renderGamePlay() {
         `;
     }
 
-    // Rysowanie kart 
+    // Rysowanie kart w Twojej ręce (Dół ekranu)
     const myHandSorted = sortHand(myHandRaw);
 
-    // --- REKONSILIACJA DOM (ZAPOBIEGA MIGANIU I GUBIENIU ZDARZEŃ ONCLICK!) ---
-    if (activeState.phase === 'playing') {
-        const currentCardElems = Array.from(handContainer.querySelectorAll('.playing-card'));
-        
-        if (currentCardElems.length > 0) {
-            // 1. Najpierw usuwamy tylko te karty, które zostały rzucone na stół
-            currentCardElems.forEach(el => {
-                const cardCode = el.dataset.card;
-                if (!myHandSorted.includes(cardCode)) {
-                    el.style.transition = 'all 0.2s ease-out';
-                    el.style.opacity = '0';
-                    el.style.width = '0px';
-                    el.style.marginRight = '-25px';
-                    el.style.transform = 'translateY(-40px)';
-                    setTimeout(() => el.remove(), 200); 
-                }
-            });
-
-            // 2. BARDZO WAŻNE: Aktualizujemy atrybuty onclick na pozostałych kartach!
-            // Jeśli pominęliśmy to wcześniej, kliknięcie po usunięciu karty przestawało działać!
-            myHandSorted.forEach(cardCode => {
-                const el = handContainer.querySelector(`.playing-card[data-card="${cardCode}"]`);
-                if (el) {
-                    if (isMyTurn && !isTrickComplete) {
-                        el.setAttribute('onclick', `playCard('${cardCode}')`);
-                        el.style.cursor = 'pointer';
-                    } else {
-                        el.removeAttribute('onclick');
-                        el.style.cursor = 'default';
-                    }
-                }
-            });
-            return; // Bezpiecznie kończymy, bez czyszczenia całego kontenera!
-        }
-    }
-
-    // Dla pozostałych faz robimy tradycyjny, czysty render
     handContainer.innerHTML = '';
     myHandSorted.forEach(cardCode => {
         let isClickable = false;
@@ -988,15 +951,6 @@ async function playCard(cardCode) {
         return;
     }
 
-    const clickedCard = document.querySelector(`.playing-card[data-card="${cardCode}"]`);
-    if (clickedCard) {
-        clickedCard.style.transition = 'all 0.2s ease-out';
-        clickedCard.style.opacity = '0';
-        clickedCard.style.width = '0px';
-        clickedCard.style.marginRight = '-25px'; 
-        clickedCard.style.transform = 'translateY(-40px)'; 
-    }
-
     // 2. Usuwamy kartę z ręki gracza
     const newHand = myHand.filter(c => c !== cardCode);
 
@@ -1010,21 +964,16 @@ async function playCard(cardCode) {
     let currentTricksPoints = activeState.tricks_points || {};
     if (!currentTricksPoints[viewerName]) currentTricksPoints[viewerName] = 0;
 
-    // Meldujemy tylko wtedy, gdy wychodzimy jako pierwsi do lewy!
     if (tableCards.length === 0) {
         const [val, suit] = cardCode.split('_');
-        
-        // Sprawdzamy czy rzucono Króla (K) lub Damę (Q)
         if (val === 'K' || val === 'Q') {
             const partnerVal = val === 'K' ? 'Q' : 'K';
             const partnerCard = `${partnerVal}_${suit}`;
-
-            // Jeśli drugi element pary jest nadal w naszej ręce (nowej ręce bez rzuconej karty)
             if (newHand.includes(partnerCard)) {
                 const MELD_VALUES = { 'H': 100, 'D': 80, 'C': 60, 'S': 40 };
                 const meldPoints = MELD_VALUES[suit] || 0;
                 
-                newTrumpSuit = suit; // Nowy kozioł zostaje ustalony!
+                newTrumpSuit = suit; 
                 currentTricksPoints[viewerName] += meldPoints; // Punkty dopisujemy od razu na żywo!
                 
                 console.log(`Zgłoszono meldunek w kolorze ${suit}! Dodano +${meldPoints} pkt.`);
