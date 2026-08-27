@@ -291,6 +291,9 @@
                 <h1 style="font-size: 18px;" id="game-title">🃏 Tysiąc - Gra na żywo</h1>
             </div>
             <div class="actions">
+                    <button onclick="openHistoryModal()" class="btn-players" style="padding: 8px 12px; font-size: 13px;">
+                    📜 Historia
+                    </button>
                 <a href="#" id="back-to-details-link" class="btn-secondary">Tabela</a>
             </div>
         </header>
@@ -316,12 +319,23 @@
                     Twoje karty: ...
                 </div>
                 <div class="player-hand" id="my-hand-container">
-                    <!-- Karty wyrenderuje JS -->
                 </div>
             </div>
 
         </div>
     </div>
+
+    <div id="history-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <header class="modal-header">
+            <h2>📜 Historia rozdania</h2>
+            <button onclick="closeHistoryModal()" class="btn-close">&times;</button>
+        </header>
+        <div id="trick-log-list" style="max-height: 350px; overflow-y: auto; font-size: 13px; color: #333; text-align: left;">
+            <!-- Tutaj wpadną wpisy z JS -->
+        </div>
+    </div>
+</div>
 
     <!-- Biblioteki i Skrypty -->
     <script src="js/supaBaseScript.js"></script>
