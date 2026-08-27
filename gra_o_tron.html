@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Gra o Tron - Statystyki" />
+        <title>Gra o Tron - Statystyki</title>
+        <link rel="stylesheet" href="css/style.css" />
+        <style>
+            .got-setup-card {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 24px;
+                margin-bottom: 25px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+                display: none;
+            }
+            .houses-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            .house-field {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .house-field label {
+                font-weight: 600;
+                font-size: 13px;
+                color: #333;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .got-select, .got-input {
+                padding: 8px 12px;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                font-size: 14px;
+                width: 100%;
+                background: #fff;
+            }
+            .form-row-bottom {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            @media (max-width: 768px) {
+                .form-row-bottom { grid-template-columns: 1fr; }
+            }
+            .tag-wasal {
+                color: #856404;
+                background-color: #fff3cd;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            .tag-none {
+                color: #888;
+            }
+            .tag-winner {
+                font-weight: bold;
+                color: #1e8e3e;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header class="main-header">
+                <div class="header-actions" style="width: 100%; justify-content: space-between; display: flex;">
+                    <div class="action-column">
+                        <button id="btn-toggle-form" class="btn-primary" onclick="toggleNewGameForm()">
+                            <span class="icon">+</span> Nowa Gra
+                        </button>
+                    </div>
+
+                    <div class="action-column">
+                        <a href="index.html" class="btn-secondary"><span class="icon">🚀</span> Mars</a>
+                        <a href="remik_stats.html" class="btn-secondary"><span class="icon">🎴</span> Remik</a>
+                        <a href="tysiac.html" class="btn-secondary"><span class="icon">🃏</span> Tysiąc</a>
+                        <a href="world-cup-login.html" class="btn-secondary"><span class="icon">⚽</span> Mundial</a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- FORMULARZ DODAWANIA NOWEJ GRY -->
+            <div id="new-game-setup" class="got-setup-card">
+                <h3 style="margin-top: 0; margin-bottom: 15px;">🛡️ Nowa Partia Gry o Tron</h3>
+                
+                <div class="houses-grid">
+                    <div class="house-field">
+                        <label for="house-baratheon">👑 Baratheon</label>
+                        <select id="house-baratheon" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                    </div>
+                    <div class="house-field">
+                        <label for="house-lannister">🦁 Lannister</label>
+                        <select id="house-lannister" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                    </div>
+                    <div class="house-field">
+                        <label for="house-stark">🐺 Stark</label>
+                        <select id="house-stark" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                    </div>
+                    <div class="house-field">
+                        <label for="house-greyjoy">🦑 Greyjoy</label>
+                        <select id="house-greyjoy" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                    </div>
+                    <div class="house-field">
+                        <label for="house-tyrell">🌹 Tyrell</label>
+                        <select id="house-tyrell" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                    </div>
+                    <div class="house-field">
+                        <label for="house-martell">☀️ Martell</label>
+                        <select id="house-martell" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                    </div>
+                    <div class="house-field">
+                        <label for="house-arryn">🦅 Arryn</label>
+                        <select id="house-arryn" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                    </div>
+                    <div class="house-field">
+                        <label for="house-targaryen">🐉 Targaryen</label>
+                        <select id="house-targaryen" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                    </div>
+                </div>
+
+                <div class="form-row-bottom">
+                    <div class="house-field">
+                        <label for="game-winner">🏆 Kto wygrał?</label>
+                        <select id="game-winner" class="got-select">
+                            <option value="">-- Wybierz zwycięzcę --</option>
+                        </select>
+                    </div>
+                    <div class="house-field">
+                        <label for="game-image">🖼️ Zdjęcie z gry (opcjonalne)</label>
+                        <input type="file" id="game-image" accept="image/*" class="got-input" />
+                    </div>
+                </div>
+
+                <div class="house-field" style="margin-bottom: 20px;">
+                    <label for="game-comment">📝 Komentarz</label>
+                    <input type="text" id="game-comment" class="got-input" placeholder="Komentarz" />
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-primary" id="btn-save-got" onclick="saveGotGame()">Zapisz grę</button>
+                    <button class="btn-secondary" onclick="toggleNewGameForm(false)">Anuluj</button>
+                </div>
+            </div>
+
+            <!-- TABELA GIER -->
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th class="col-lp">Nr gry</th>
+                        <th>Baratheon</th>
+                        <th>Lannister</th>
+                        <th>Stark</th>
+                        <th>Greyjoy</th>
+                        <th>Tyrell</th>
+                        <th>Martell</th>
+                        <th>Arryn</th>
+                        <th>Targaryen</th>
+                        <th>Kto wygrał</th>
+                        <th>Zdjęcie</th>
+                        <th>Komentarz</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody id="got-results-body">
+                    <tr><td colspan="12" style="text-align:center; padding: 20px;">Ładowanie gier...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <script src="js/supaBaseScript.js"></script>
+        <script src="js/gra_o_tron.js"></script>
+    </body>
+</html>
