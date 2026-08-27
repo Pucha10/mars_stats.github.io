@@ -246,7 +246,8 @@ async function dealCardsAndStart() {
             [p1]: 0,
             [p2]: 0
         },
-        discarded_cards: []
+        discarded_cards: [],
+        tricks_history: []
     };
 
     try {
@@ -300,6 +301,10 @@ function renderGamePlay() {
         Ty (<strong>${viewerName}</strong>) | Wynik: <strong>${myTotalPoints}</strong> pkt (+${myRoundPoints} w rozdaniu)
         <a href="#" onclick="logoutProfile()" style="color: #ff9999; margin-left: 12px; text-decoration: underline; font-size: 11px; font-weight: bold;">Zmień profil 👤</a>
     `;
+
+    if (activeState && (activeState.phase === 'playing' || activeState.phase === 'round_end')) {
+        renderHistoryModalContent();
+    }
 
     const isMyTurn = viewerName === activeState.turn_player;
 
@@ -1274,15 +1279,25 @@ async function autoCollectTrick() {
         });
     }
 
+    const trickEntry = {
+        round_number: (activeState.tricks_history || []).length + 1,
+        cards: tableCards, // [ {player, card}, {player, card} ]
+        winner: winner,
+        pts: trickResult.pts
+    };
+    const newHistory = [...(activeState.tricks_history || []), trickEntry];
+
     // Dodanie punktów
     currentTricksPoints[winner] += trickResult.pts + extraPoints;
 
     const updatedState = {
-        table_cards: [],                       // Czyścimy stół w bazie
+        table_cards: [],                       // Czyścimy stół
         turn_player: winner,                   // Zwycięzca zaczyna kolejną lewę
         tricks_points: currentTricksPoints,    // Zapisujemy punkty
-        phase: isRoundOver ? 'round_end' : 'playing' // Przechodzimy do podsumowania na koniec
+        tricks_history: newHistory,            // Zapisujemy nową historię lew!
+        phase: isRoundOver ? 'round_end' : 'playing'
     };
+
 
     await patchActiveState(updatedState);
 }
@@ -1298,5 +1313,66 @@ function logoutProfile() {
         viewerName = null;
         location.reload(); // Przeładowanie strony zresetuje wszystkie zmienne i pokaże okno wyboru
     }
+}
+
+window.openHistoryModal = openHistoryModal;   // Wystawienie do HTML
+window.closeHistoryModal = closeHistoryModal; // Wystawienie do HTML
+
+/**
+ * Otwiera okno modalne historii lew
+ */
+function openHistoryModal() {
+    document.getElementById('history-modal').style.display = 'flex';
+    renderHistoryModalContent(); // Odświeżamy treść przy otwarciu
+}
+
+/**
+ * Zamyka okno historii lew
+ */
+function closeHistoryModal() {
+    document.getElementById('history-modal').style.display = 'none';
+}
+
+/**
+ * Renderuje treść historii lew wewnątrz okna modalnego
+ */
+function renderHistoryModalContent() {
+    const logList = document.getElementById('trick-log-list');
+    if (!logList || !activeState) return;
+
+    const history = activeState.tricks_history || [];
+    let logHtml = '';
+
+    const getCardSymbol = (code) => {
+        const [val, suit] = code.split('_');
+        const suitSymbol = { 'H': '♥', 'D': '♦', 'C': '♣', 'S': '♠' }[suit];
+        return `${val}${suitSymbol}`;
+    };
+
+    history.forEach(t => {
+        const c1 = t.cards[0];
+        const c2 = t.cards[1];
+        const displayCard1 = getCardSymbol(c1.card);
+        const displayCard2 = getCardSymbol(c2.card);
+
+        const isRed1 = c1.card.endsWith('_H') || c1.card.endsWith('_D');
+        const isRed2 = c2.card.endsWith('_H') || c2.card.endsWith('_D');
+
+        logHtml += `
+            <div style="padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <span>
+                    <strong>${t.round_number}.</strong> 
+                    ${c1.player} (<span style="color: ${isRed1 ? '#d93025' : '#333'}; font-weight: bold;">${displayCard1}</span>) vs 
+                    ${c2.player} (<span style="color: ${isRed2 ? '#d93025' : '#333'}; font-weight: bold;">${displayCard2}</span>)
+                </span>
+                <span style="font-weight: bold; color: #1e8e3e; margin-left: 10px;">➔ ${t.winner} (+${t.pts})</span>
+            </div>
+        `;
+    });
+
+    logList.innerHTML = logHtml || '<span style="color:#aaa; font-style:italic; display:block; text-align:center; padding: 20px 0;">Brak rzuconych kart w tym rozdaniu.</span>';
+    
+    // Automatyczny scroll do dołu
+    logList.scrollTop = logList.scrollHeight;
 }
 
