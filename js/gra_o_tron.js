@@ -31,13 +31,11 @@ async function loadInitialData() {
 }
 
 function initTomSelects() {
-    // 1. Inicjalizacja pól rodów
     HOUSES.forEach((house) => {
         const selectId = `house-${house.key}`;
         const selectElem = document.getElementById(selectId);
         if (!selectElem) return;
 
-        // Opcje dla rodu
         const options = [
             { value: "Nie uczestniczył", text: "-- Nie uczestniczył --" },
             { value: "Wasal", text: "🛡️ Wasal" },
@@ -59,7 +57,6 @@ function initTomSelects() {
         });
     });
 
-    // 2. Inicjalizacja pola zwycięzcy
     tomSelectInstances["winner"] = new TomSelect("#game-winner", {
         options: playersList.map((p) => ({ value: p.Name, text: p.Name })),
         valueField: "value",
@@ -77,7 +74,6 @@ function updateWinnerDropdown() {
 
     const currentVal = winnerTs.getValue();
 
-    // Pobierz graczy, którzy aktualnie grają rodami
     const activePlayers = [];
     HOUSES.forEach((house) => {
         const ts = tomSelectInstances[house.key];
@@ -93,7 +89,6 @@ function updateWinnerDropdown() {
 
     winnerTs.clearOptions();
 
-    // Dodaj najpierw graczy ze stołu, potem resztę
     activePlayers.forEach((p) => {
         winnerTs.addOption({ value: p, text: `👑 ${p} (przy stole)` });
     });
@@ -138,6 +133,7 @@ async function renderGotTable() {
             const row = document.createElement("div");
             row.className = "got-game-row";
 
+            // Mobilny chip rodu
             const getHouseChip = (val, label) => {
                 const isWinner = val && val === game.winner;
                 let chipClass = "got-house-chip";
@@ -161,6 +157,7 @@ async function renderGotTable() {
                 `;
             };
 
+            // Formatowanie komórki desktopowej
             const formatDesktopCell = (val) => {
                 if (!val || val === "Nie uczestniczył" || val === "-") return `<span class="tag-none">-</span>`;
                 if (val === "Wasal") return `<span class="tag-wasal">Wasal</span>`;
@@ -169,16 +166,13 @@ async function renderGotTable() {
             };
 
             row.innerHTML = `
-                <!-- NAGŁÓWEK MOBILNY -->
+                <!-- 1. NAGŁÓWEK MOBILNY (Tylko telefon) -->
                 <div class="got-mobile-header">
                     <span class="got-mobile-game-num">Gra #${game.game_number}</span>
                     <span class="got-mobile-winner">🏆 ${game.winner || "-"}</span>
                 </div>
 
-                <!-- DESKTOP NR GRY -->
-                <div class="got-cell-desktop-only" style="font-weight: bold;">${game.game_number}</div>
-
-                <!-- MOBILNE KAFELKI -->
+                <!-- 2. KAFELKI RODÓW (Tylko telefon) -->
                 <div class="got-houses-grid-mobile">
                     ${getHouseChip(game.baratheon, "👑 Baratheon")}
                     ${getHouseChip(game.lannister, "🦁 Lannister")}
@@ -190,30 +184,31 @@ async function renderGotTable() {
                     ${getHouseChip(game.targaryen, "🐉 Targaryen")}
                 </div>
 
-                <!-- DESKTOP KOLUMNY -->
-                <div class="got-cell-desktop-only">${formatDesktopCell(game.baratheon)}</div>
-                <div class="got-cell-desktop-only">${formatDesktopCell(game.lannister)}</div>
-                <div class="got-cell-desktop-only">${formatDesktopCell(game.stark)}</div>
-                <div class="got-cell-desktop-only">${formatDesktopCell(game.greyjoy)}</div>
-                <div class="got-cell-desktop-only">${formatDesktopCell(game.tyrell)}</div>
-                <div class="got-cell-desktop-only">${formatDesktopCell(game.martell)}</div>
-                <div class="got-cell-desktop-only">${formatDesktopCell(game.arryn)}</div>
-                <div class="got-cell-desktop-only">${formatDesktopCell(game.targaryen)}</div>
-                <div class="got-cell-desktop-only" style="font-weight: bold; color: #166534;">🏆 ${game.winner || "-"}</div>
+                <!-- 3. KOMÓRKI DESKTOPOWE (Dokładnie 10 kolumn dopasowanych do nagłówka) -->
+                <div class="got-desktop-cell" style="font-weight: bold;">${game.game_number}</div>
+                <div class="got-desktop-cell">${formatDesktopCell(game.baratheon)}</div>
+                <div class="got-desktop-cell">${formatDesktopCell(game.lannister)}</div>
+                <div class="got-desktop-cell">${formatDesktopCell(game.stark)}</div>
+                <div class="got-desktop-cell">${formatDesktopCell(game.greyjoy)}</div>
+                <div class="got-desktop-cell">${formatDesktopCell(game.tyrell)}</div>
+                <div class="got-desktop-cell">${formatDesktopCell(game.martell)}</div>
+                <div class="got-desktop-cell">${formatDesktopCell(game.arryn)}</div>
+                <div class="got-desktop-cell">${formatDesktopCell(game.targaryen)}</div>
+                <div class="got-desktop-cell" style="font-weight: bold; color: #166534;">🏆 ${game.winner || "-"}</div>
 
-                <!-- ZDJĘCIE -->
+                <!-- 4. ZDJĘCIE -->
                 <div class="got-cell-photo">
-                    ${game.img_url ? `<a href="${game.img_url}" target="_blank" style="text-decoration:none; font-weight:600; font-size:13px;">🖼️ Zobacz zdjęcie</a>` : '<span class="tag-none">Brak zdjęcia</span>'}
+                    ${game.img_url ? `<a href="${game.img_url}" target="_blank" style="text-decoration:none; font-weight:600; font-size:12px;">🖼️ Zobacz zdjęcie</a>` : '<span class="tag-none">-</span>'}
                 </div>
 
-                <!-- KOMENTARZ -->
+                <!-- 5. KOMENTARZ -->
                 <div class="got-cell-comment">
-                    ${game.comment ? `<div class="got-comment-box">💬 ${game.comment}</div>` : '<span class="tag-none">-</span>'}
+                    ${game.comment ? `<div class="got-comment-box" style="text-align: left; font-size: 12px;">💬 ${game.comment}</div>` : '<span class="tag-none">-</span>'}
                 </div>
 
-                <!-- AKCJE -->
+                <!-- 6. AKCJE -->
                 <div class="got-cell-actions">
-                    <button class="btn-action btn-delete" onclick="handleDeleteGotGame(${game.id}, ${game.game_number})">Usuń partię</button>
+                    <button class="btn-action btn-delete" onclick="handleDeleteGotGame(${game.id}, ${game.game_number})">Usuń</button>
                 </div>
             `;
 

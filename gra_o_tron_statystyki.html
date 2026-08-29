@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Gra o Tron - Statystyki Ogólne" />
+        <title>Gra o Tron - Statystyki</title>
+        <link rel="stylesheet" href="css/style.css" />
+        <style>
+            .stats-section {
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 18px;
+                margin-bottom: 25px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+                border: 1px solid #e2e8f0;
+            }
+
+            .section-title {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-top: 0;
+                margin-bottom: 14px;
+                font-size: 17px;
+                color: #0f172a;
+                border-bottom: 2px solid #f1f5f9;
+                padding-bottom: 8px;
+            }
+
+            /* --- SIATKA STATYSTYK RODÓW (5 KOLUMN) --- */
+            .houses-grid-header {
+                display: grid;
+                grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr;
+                gap: 4px;
+                background: #1e293b;
+                color: #ffffff;
+                padding: 10px 8px;
+                border-radius: 8px 8px 0 0;
+                font-weight: 700;
+                font-size: 12px;
+                text-align: center;
+                align-items: center;
+            }
+
+            .houses-grid-row {
+                display: grid;
+                grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr;
+                gap: 4px;
+                background: #fff;
+                border-bottom: 1px solid #f1f5f9;
+                padding: 10px 8px;
+                font-size: 13px;
+                text-align: center;
+                align-items: center;
+            }
+            .houses-grid-row:nth-child(even) {
+                background: #f8fafc;
+            }
+
+            /* --- SIATKA STATYSTYK GRACZY (6 KOLUMN) --- */
+            .players-grid-header {
+                display: grid;
+                grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1.1fr;
+                gap: 4px;
+                background: #1e293b;
+                color: #ffffff;
+                padding: 10px 8px;
+                border-radius: 8px 8px 0 0;
+                font-weight: 700;
+                font-size: 12px;
+                text-align: center;
+                align-items: center;
+            }
+
+            .players-grid-row {
+                display: grid;
+                grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1.1fr;
+                gap: 4px;
+                background: #fff;
+                border-bottom: 1px solid #f1f5f9;
+                padding: 10px 8px;
+                font-size: 13px;
+                text-align: center;
+                align-items: center;
+            }
+            .players-grid-row:nth-child(even) {
+                background: #f8fafc;
+            }
+
+            .col-name {
+                text-align: left !important;
+                padding-left: 8px;
+                font-weight: 700;
+                color: #0f172a;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* Tagi i przyciski */
+            .badge-games {
+                font-weight: 700;
+                background: #e2e8f0;
+                color: #334155;
+                padding: 2px 7px;
+                border-radius: 10px;
+                font-size: 12px;
+                display: inline-block;
+            }
+
+            .winrate-high {
+                color: #166534;
+                font-weight: 800;
+                background-color: #dcfce7;
+                padding: 2px 6px;
+                border-radius: 10px;
+                font-size: 12px;
+                display: inline-block;
+            }
+            .winrate-mid {
+                color: #1e293b;
+                font-weight: 700;
+                font-size: 12px;
+            }
+            .winrate-low {
+                color: #991b1b;
+                font-weight: 700;
+                font-size: 12px;
+            }
+
+            .btn-details {
+                background: #0ea5e9;
+                color: #fff;
+                border: none;
+                padding: 5px 8px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 11px;
+                transition: all 0.2s;
+                white-space: nowrap;
+            }
+            .btn-details:hover {
+                background: #0284c7;
+            }
+
+            /* --- STYLIZACJA MODALU SZCZEGÓŁÓW GRACZA --- */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(15, 23, 42, 0.7);
+                backdrop-filter: blur(3px);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                padding: 15px;
+                box-sizing: border-box;
+            }
+
+            .modal-card {
+                background: #ffffff;
+                border-radius: 16px;
+                max-width: 550px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+                display: flex;
+                flex-direction: column;
+            }
+
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px 20px;
+                background: #1e293b;
+                color: #ffffff;
+                border-radius: 16px 16px 0 0;
+            }
+            .modal-header h3 {
+                margin: 0;
+                font-size: 17px;
+            }
+            .btn-close-modal {
+                background: transparent;
+                border: none;
+                color: #cbd5e1;
+                font-size: 24px;
+                cursor: pointer;
+                line-height: 1;
+            }
+            .btn-close-modal:hover {
+                color: #ffffff;
+            }
+
+            .modal-body {
+                padding: 16px;
+            }
+
+            .player-summary-cards {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                margin-bottom: 18px;
+            }
+            .p-card {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 8px 4px;
+                text-align: center;
+            }
+            .p-card-val {
+                font-size: 16px;
+                font-weight: 800;
+                color: #0f172a;
+            }
+            .p-card-lbl {
+                font-size: 10px;
+                color: #64748b;
+                text-transform: uppercase;
+                font-weight: 600;
+                margin-top: 2px;
+            }
+
+            /* DOPASOWANIE DO TELEFONÓW */
+            @media (max-width: 600px) {
+                .stats-section {
+                    padding: 12px 8px;
+                }
+                .houses-grid-header,
+                .houses-grid-row {
+                    grid-template-columns: 1.8fr 0.8fr 0.8fr 0.8fr 1.2fr;
+                    padding: 8px 4px;
+                    font-size: 12px;
+                }
+                .players-grid-header,
+                .players-grid-row {
+                    grid-template-columns: 1.5fr 0.7fr 0.6fr 0.6fr 1fr 1fr;
+                    padding: 8px 4px;
+                    font-size: 12px;
+                }
+                .col-name {
+                    padding-left: 4px;
+                    font-size: 12px;
+                }
+                .btn-details {
+                    padding: 4px 6px;
+                    font-size: 10px;
+                }
+                .player-summary-cards {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header class="main-header">
+                <div
+                    class="header-actions"
+                    style="
+                        width: 100%;
+                        justify-content: space-between;
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                    "
+                >
+                    <div class="action-column">
+                        <a href="gra_o_tron.html" class="btn-primary">
+                            <span class="icon">⬅️</span> Powrót do gier
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 1. STATYSTYKI RODÓW -->
+            <section class="stats-section">
+                <h2 class="section-title">🛡️ Statystyki Rodów</h2>
+                <div class="houses-grid-header">
+                    <div style="text-align: left; padding-left: 8px">Ród</div>
+                    <div>Gry</div>
+                    <div style="color: #4ade80">Wygrane</div>
+                    <div style="color: #f87171">Porażki</div>
+                    <div>Win %</div>
+                </div>
+                <div id="houses-stats-body">
+                    <div
+                        style="
+                            text-align: center;
+                            padding: 15px;
+                            color: #64748b;
+                        "
+                    >
+                        Ładowanie statystyk...
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. STATYSTYKI GRACZY -->
+            <section class="stats-section">
+                <h2 class="section-title">👑 Statystyki Graczy</h2>
+                <div class="players-grid-header">
+                    <div style="text-align: left; padding-left: 8px">Gracz</div>
+                    <div>Gry</div>
+                    <div style="color: #4ade80">Wygr.</div>
+                    <div style="color: #f87171">Por.</div>
+                    <div>Win %</div>
+                    <div>Akcja</div>
+                </div>
+                <div id="players-stats-body">
+                    <div
+                        style="
+                            text-align: center;
+                            padding: 15px;
+                            color: #64748b;
+                        "
+                    >
+                        Ładowanie statystyk...
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- MODAL ZE SZCZEGÓŁAMI GRACZA -->
+        <div
+            id="player-modal"
+            class="modal-overlay"
+            onclick="closePlayerModalOutside(event)"
+        >
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3 id="modal-player-title">👤 Statystyki gracza</h3>
+                    <button
+                        class="btn-close-modal"
+                        onclick="closePlayerModal()"
+                    >
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-player-body">
+                    <!-- Dynamiczna treść per ród generowana przez JS -->
+                </div>
+            </div>
+        </div>
+
+        <script src="js/supaBaseScript.js"></script>
+        <script src="js/gra_o_tron_statystyki.js"></script>
+    </body>
+</html>

@@ -7,7 +7,7 @@
         <title>Gra o Tron - Statystyki</title>
         <link rel="stylesheet" href="css/style.css" />
 
-        <!-- Biblioteka TomSelect do wyszukiwania graczy -->
+        <!-- TomSelect (CSS i JS) -->
         <link
             href="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/css/tom-select.css"
             rel="stylesheet"
@@ -15,7 +15,7 @@
         <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/js/tom-select.complete.min.js"></script>
 
         <style>
-            /* Dopasowanie stylów TomSelect do motywu */
+            /* Dopasowanie TomSelect */
             .ts-control {
                 border-radius: 8px !important;
                 padding: 8px 12px !important;
@@ -85,16 +85,19 @@
                 font-weight: normal;
             }
 
-            /* --- KONTENER GIER (WIDOK DESKTOP) --- */
+            /* --- KONTENER GIER (DESKTOP) --- */
             .got-games-container {
                 width: 100%;
                 margin-top: 15px;
+                overflow-x: auto;
             }
 
             .got-desktop-header {
                 display: grid;
-                grid-template-columns: 60px repeat(8, 1fr) 110px 90px 1.5fr 70px;
-                gap: 6px;
+                grid-template-columns:
+                    60px repeat(8, 1fr)
+                    110px 100px 1.4fr 80px;
+                gap: 4px;
                 background: #1e293b;
                 color: #fff;
                 padding: 10px 8px;
@@ -103,50 +106,65 @@
                 font-weight: 700;
                 text-align: center;
                 align-items: center;
+                min-width: 1050px;
             }
 
             .got-game-row {
                 display: grid;
-                grid-template-columns: 60px repeat(8, 1fr) 110px 90px 1.5fr 70px;
-                gap: 6px;
+                grid-template-columns:
+                    60px repeat(8, 1fr)
+                    110px 100px 1.4fr 80px;
+                gap: 4px;
                 background: #fff;
                 border-bottom: 1px solid #e2e8f0;
-                padding: 8px;
+                padding: 10px 8px;
                 font-size: 13px;
                 text-align: center;
                 align-items: center;
+                min-width: 1050px;
             }
             .got-game-row:nth-child(even) {
                 background: #f8fafc;
             }
 
+            /* Na komputerze ukrywamy elementy mobilne */
             .got-mobile-header {
-                display: none;
+                display: none !important;
+            }
+            .got-houses-grid-mobile {
+                display: none !important;
             }
 
-            /* --- WIDOK MOBILNY (CZYSTE, KOMPAKTOWE KARTY) --- */
+            /* --- WIDOK MOBILNY (TELEFONY) --- */
             @media (max-width: 860px) {
                 .form-row-bottom {
                     grid-template-columns: 1fr;
                 }
                 .got-desktop-header {
-                    display: none;
+                    display: none !important;
                 }
 
                 .got-game-row {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                    background: #ffffff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 14px;
-                    padding: 12px;
-                    margin-bottom: 18px;
-                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 8px !important;
+                    background: #ffffff !important;
+                    border: 1px solid #e2e8f0 !important;
+                    border-radius: 14px !important;
+                    padding: 12px !important;
+                    margin-bottom: 18px !important;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05) !important;
+                    min-width: 0 !important;
                 }
 
+                /* Na telefonie ukrywamy komórki desktopowe */
+                .got-desktop-cell {
+                    display: none !important;
+                }
+
+                /* Pokazujemy nagłówek mobilny */
                 .got-mobile-header {
-                    display: flex;
+                    display: flex !important;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
@@ -174,8 +192,9 @@
                     border: 1px solid #bbf7d0;
                 }
 
+                /* Pokazujemy siatkę rodów */
                 .got-houses-grid-mobile {
-                    display: grid;
+                    display: grid !important;
                     grid-template-columns: 1fr 1fr;
                     gap: 6px;
                     width: 100%;
@@ -208,10 +227,6 @@
                     font-weight: 700;
                     color: #0f172a;
                     word-break: break-word;
-                }
-
-                .got-cell-desktop-only {
-                    display: none !important;
                 }
 
                 .got-cell-photo,
@@ -267,14 +282,16 @@
                     </div>
 
                     <div class="action-column">
-                        <a href="index.html" class="btn-secondary"
+                        <a
+                            href="gra_o_tron_statystyki.html"
+                            class="btn-secondary"
                             ><span class="icon">📊</span> Statystyki</a
                         >
                     </div>
                 </div>
             </header>
 
-            <!-- FORMULARZ NOWEJ GRY Z TOMSELECT -->
+            <!-- FORMULARZ NOWEJ GRY -->
             <div id="new-game-setup" class="got-setup-card">
                 <h3 style="margin-top: 0; margin-bottom: 15px">
                     🛡️ Nowa Partia Gry o Tron
@@ -372,7 +389,7 @@
                 </div>
             </div>
 
-            <!-- LISTA GIER -->
+            <!-- TABELA GIER -->
             <div class="got-games-container">
                 <div class="got-desktop-header">
                     <div>Nr gry</div>
