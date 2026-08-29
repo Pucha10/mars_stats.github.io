@@ -1,15 +1,16 @@
 let playersList = [];
 let gotGames = [];
+const tomSelectInstances = {};
 
 const HOUSES = [
-    "baratheon",
-    "lannister",
-    "stark",
-    "greyjoy",
-    "tyrell",
-    "martell",
-    "arryn",
-    "targaryen",
+    { key: "baratheon", label: "👑 Baratheon" },
+    { key: "lannister", label: "🦁 Lannister" },
+    { key: "stark", label: "🐺 Stark" },
+    { key: "greyjoy", label: "🦑 Greyjoy" },
+    { key: "tyrell", label: "🌹 Tyrell" },
+    { key: "martell", label: "☀️ Martell" },
+    { key: "arryn", label: "🦅 Arryn" },
+    { key: "targaryen", label: "🐉 Targaryen" },
 ];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -23,70 +24,94 @@ async function loadInitialData() {
         playersList = [...fetchedPlayers].sort((a, b) =>
             a.Name.localeCompare(b.Name, "pl"),
         );
-        populateHouseDropdowns();
+        initTomSelects();
     } catch (e) {
         console.error("Błąd pobierania listy graczy:", e);
     }
 }
 
-function populateHouseDropdowns() {
+function initTomSelects() {
+    // 1. Inicjalizacja pól rodów
     HOUSES.forEach((house) => {
-        const select = document.getElementById(`house-${house}`);
-        if (!select) return;
+        const selectId = `house-${house.key}`;
+        const selectElem = document.getElementById(selectId);
+        if (!selectElem) return;
 
-        let options = `
-            <option value="Nie uczestniczył">-- Nie uczestniczył --</option>
-            <option value="Wasal">🛡️ Wasal</option>
-            <optgroup label="Gracze">
-        `;
+        // Opcje dla rodu
+        const options = [
+            { value: "Nie uczestniczył", text: "-- Nie uczestniczył --" },
+            { value: "Wasal", text: "🛡️ Wasal" },
+            ...playersList.map((p) => ({ value: p.Name, text: p.Name })),
+        ];
 
-        playersList.forEach((player) => {
-            options += `<option value="${player.Name}">${player.Name}</option>`;
+        tomSelectInstances[house.key] = new TomSelect(`#${selectId}`, {
+            options: options,
+            valueField: "value",
+            labelField: "text",
+            searchField: ["text"],
+            create: false,
+            placeholder: `-- Wybierz gracza / status --`,
+            allowEmptyOption: false,
+            items: ["Nie uczestniczył"],
+            onChange: () => {
+                updateWinnerDropdown();
+            },
         });
+    });
 
-        options += `</optgroup>`;
-        select.innerHTML = options;
+    // 2. Inicjalizacja pola zwycięzcy
+    tomSelectInstances["winner"] = new TomSelect("#game-winner", {
+        options: playersList.map((p) => ({ value: p.Name, text: p.Name })),
+        valueField: "value",
+        labelField: "text",
+        searchField: ["text"],
+        create: false,
+        placeholder: `-- Wyszukaj lub wybierz zwycięzcę --`,
+        allowEmptyOption: true,
     });
 }
 
 function updateWinnerDropdown() {
-    const winnerSelect = document.getElementById("game-winner");
-    const currentVal = winnerSelect.value;
+    const winnerTs = tomSelectInstances["winner"];
+    if (!winnerTs) return;
 
-    const chosenPlayers = new Set();
+    const currentVal = winnerTs.getValue();
+
+    // Pobierz graczy, którzy aktualnie grają rodami
+    const activePlayers = [];
     HOUSES.forEach((house) => {
-        const val = document.getElementById(`house-${house}`).value;
-        if (val && val !== "Nie uczestniczył" && val !== "Wasal") {
-            chosenPlayers.add(val);
+        const ts = tomSelectInstances[house.key];
+        if (ts) {
+            const val = ts.getValue();
+            if (val && val !== "Nie uczestniczył" && val !== "Wasal") {
+                if (!activePlayers.includes(val)) {
+                    activePlayers.push(val);
+                }
+            }
         }
     });
 
-    let options = `<option value="">-- Wybierz zwycięzcę --</option>`;
-    
-    // Dodajemy graczy wybranych w rodach
-    if (chosenPlayers.size > 0) {
-        options += `<optgroup label="Gracze przy stole">`;
-        chosenPlayers.forEach((p) => {
-            options += `<option value="${p}" ${p === currentVal ? "selected" : ""}>${p}</option>`;
-        });
-        options += `</optgroup>`;
-    }
+    winnerTs.clearOptions();
 
-    // Dodajemy pozostałych na wszelki wypadek
-    options += `<optgroup label="Wszyscy gracze">`;
+    // Dodaj najpierw graczy ze stołu, potem resztę
+    activePlayers.forEach((p) => {
+        winnerTs.addOption({ value: p, text: `👑 ${p} (przy stole)` });
+    });
+
     playersList.forEach((p) => {
-        if (!chosenPlayers.has(p.Name)) {
-            options += `<option value="${p.Name}" ${p.Name === currentVal ? "selected" : ""}>${p.Name}</option>`;
+        if (!activePlayers.includes(p.Name)) {
+            winnerTs.addOption({ value: p.Name, text: p.Name });
         }
     });
-    options += `</optgroup>`;
 
-    winnerSelect.innerHTML = options;
+    if (currentVal) {
+        winnerTs.setValue(currentVal, true);
+    }
 }
 
 async function renderGotTable() {
-    const tbody = document.getElementById("got-results-body");
-    if (!tbody) return;
+    const container = document.getElementById("got-results-body");
+    if (!container) return;
 
     try {
         const response = await fetch(
@@ -102,51 +127,101 @@ async function renderGotTable() {
         if (!response.ok) throw new Error("Błąd pobierania partii Gry o Tron");
         gotGames = await response.json();
 
-        tbody.innerHTML = "";
+        container.innerHTML = "";
 
         if (gotGames.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 20px;">Brak zapisanych gier. Kliknij "+ Nowa Gra", aby dodać pierwszą!</td></tr>`;
+            container.innerHTML = `<div style="text-align:center; padding: 25px; background:#fff; border-radius:8px;">Brak zapisanych gier. Kliknij "+ Nowa Gra", aby dodać pierwszą!</div>`;
             return;
         }
 
         gotGames.forEach((game) => {
-            const tr = document.createElement("tr");
+            const row = document.createElement("div");
+            row.className = "got-game-row";
 
-            const formatPlayerCell = (val) => {
+            const getHouseChip = (val, label) => {
+                const isWinner = val && val === game.winner;
+                let chipClass = "got-house-chip";
+                let content = "";
+
                 if (!val || val === "Nie uczestniczył" || val === "-") {
-                    return `<span class="tag-none">-</span>`;
+                    chipClass += " is-empty";
+                    content = `<span class="tag-none">-</span>`;
+                } else if (val === "Wasal") {
+                    content = `<span class="tag-wasal">Wasal</span>`;
+                } else {
+                    if (isWinner) chipClass += " is-winner";
+                    content = `<span class="got-chip-player">${val}${isWinner ? " 🏆" : ""}</span>`;
                 }
-                if (val === "Wasal") {
-                    return `<span class="tag-wasal">Wasal</span>`;
-                }
-                return `<strong>${val}</strong>`;
+
+                return `
+                    <div class="${chipClass}">
+                        <div class="got-chip-title">${label}</div>
+                        ${content}
+                    </div>
+                `;
             };
 
-            tr.innerHTML = `
-                <td style="font-weight: bold; text-align: center;">${game.game_number}</td>
-                <td>${formatPlayerCell(game.baratheon)}</td>
-                <td>${formatPlayerCell(game.lannister)}</td>
-                <td>${formatPlayerCell(game.stark)}</td>
-                <td>${formatPlayerCell(game.greyjoy)}</td>
-                <td>${formatPlayerCell(game.tyrell)}</td>
-                <td>${formatPlayerCell(game.martell)}</td>
-                <td>${formatPlayerCell(game.arryn)}</td>
-                <td>${formatPlayerCell(game.targaryen)}</td>
-                <td class="tag-winner">${game.winner || "-"}</td>
-                <td>
-                    ${game.img_url ? `<a href="${game.img_url}" target="_blank">🖼️ Zdjęcie</a>` : "-"}
-                </td>
-                <td style="max-width: 250px; text-align: left; font-size: 13px;">${game.comment || "-"}</td>
-                <td>
-                    <button class="btn-action btn-delete" onclick="handleDeleteGotGame(${game.id}, ${game.game_number})">Usuń</button>
-                </td>
+            const formatDesktopCell = (val) => {
+                if (!val || val === "Nie uczestniczył" || val === "-") return `<span class="tag-none">-</span>`;
+                if (val === "Wasal") return `<span class="tag-wasal">Wasal</span>`;
+                const isWinner = val === game.winner;
+                return `<strong style="${isWinner ? 'color:#166534;' : ''}">${val}${isWinner ? ' 🏆' : ''}</strong>`;
+            };
+
+            row.innerHTML = `
+                <!-- NAGŁÓWEK MOBILNY -->
+                <div class="got-mobile-header">
+                    <span class="got-mobile-game-num">Gra #${game.game_number}</span>
+                    <span class="got-mobile-winner">🏆 ${game.winner || "-"}</span>
+                </div>
+
+                <!-- DESKTOP NR GRY -->
+                <div class="got-cell-desktop-only" style="font-weight: bold;">${game.game_number}</div>
+
+                <!-- MOBILNE KAFELKI -->
+                <div class="got-houses-grid-mobile">
+                    ${getHouseChip(game.baratheon, "👑 Baratheon")}
+                    ${getHouseChip(game.lannister, "🦁 Lannister")}
+                    ${getHouseChip(game.stark, "🐺 Stark")}
+                    ${getHouseChip(game.greyjoy, "🦑 Greyjoy")}
+                    ${getHouseChip(game.tyrell, "🌹 Tyrell")}
+                    ${getHouseChip(game.martell, "☀️ Martell")}
+                    ${getHouseChip(game.arryn, "🦅 Arryn")}
+                    ${getHouseChip(game.targaryen, "🐉 Targaryen")}
+                </div>
+
+                <!-- DESKTOP KOLUMNY -->
+                <div class="got-cell-desktop-only">${formatDesktopCell(game.baratheon)}</div>
+                <div class="got-cell-desktop-only">${formatDesktopCell(game.lannister)}</div>
+                <div class="got-cell-desktop-only">${formatDesktopCell(game.stark)}</div>
+                <div class="got-cell-desktop-only">${formatDesktopCell(game.greyjoy)}</div>
+                <div class="got-cell-desktop-only">${formatDesktopCell(game.tyrell)}</div>
+                <div class="got-cell-desktop-only">${formatDesktopCell(game.martell)}</div>
+                <div class="got-cell-desktop-only">${formatDesktopCell(game.arryn)}</div>
+                <div class="got-cell-desktop-only">${formatDesktopCell(game.targaryen)}</div>
+                <div class="got-cell-desktop-only" style="font-weight: bold; color: #166534;">🏆 ${game.winner || "-"}</div>
+
+                <!-- ZDJĘCIE -->
+                <div class="got-cell-photo">
+                    ${game.img_url ? `<a href="${game.img_url}" target="_blank" style="text-decoration:none; font-weight:600; font-size:13px;">🖼️ Zobacz zdjęcie</a>` : '<span class="tag-none">Brak zdjęcia</span>'}
+                </div>
+
+                <!-- KOMENTARZ -->
+                <div class="got-cell-comment">
+                    ${game.comment ? `<div class="got-comment-box">💬 ${game.comment}</div>` : '<span class="tag-none">-</span>'}
+                </div>
+
+                <!-- AKCJE -->
+                <div class="got-cell-actions">
+                    <button class="btn-action btn-delete" onclick="handleDeleteGotGame(${game.id}, ${game.game_number})">Usuń partię</button>
+                </div>
             `;
 
-            tbody.appendChild(tr);
+            container.appendChild(row);
         });
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = `<tr><td colspan="12" style="color:red; text-align:center;">Wystąpił błąd podczas ładowania danych.</td></tr>`;
+        container.innerHTML = `<div style="color:red; text-align:center; padding:20px;">Wystąpił błąd podczas ładowania danych.</div>`;
     }
 }
 
@@ -167,7 +242,7 @@ function toggleNewGameForm(forceState) {
 
 async function saveGotGame() {
     const btn = document.getElementById("btn-save-got");
-    const winner = document.getElementById("game-winner").value;
+    const winner = tomSelectInstances["winner"] ? tomSelectInstances["winner"].getValue() : "";
 
     if (!winner) {
         alert("Wybierz zwycięzcę partii!");
@@ -178,7 +253,6 @@ async function saveGotGame() {
     btn.textContent = "Zapisywanie...";
 
     try {
-        // Upload zdjęcia (używa Twojej funkcji z supaBaseScript.js)
         const fileInput = document.getElementById("game-image");
         let uploadedImageUrl = null;
         if (fileInput && fileInput.files.length > 0) {
@@ -192,14 +266,14 @@ async function saveGotGame() {
 
         const payload = {
             game_number: nextGameNumber,
-            baratheon: document.getElementById("house-baratheon").value,
-            lannister: document.getElementById("house-lannister").value,
-            stark: document.getElementById("house-stark").value,
-            greyjoy: document.getElementById("house-greyjoy").value,
-            tyrell: document.getElementById("house-tyrell").value,
-            martell: document.getElementById("house-martell").value,
-            arryn: document.getElementById("house-arryn").value,
-            targaryen: document.getElementById("house-targaryen").value,
+            baratheon: tomSelectInstances["baratheon"].getValue() || "Nie uczestniczył",
+            lannister: tomSelectInstances["lannister"].getValue() || "Nie uczestniczył",
+            stark: tomSelectInstances["stark"].getValue() || "Nie uczestniczył",
+            greyjoy: tomSelectInstances["greyjoy"].getValue() || "Nie uczestniczył",
+            tyrell: tomSelectInstances["tyrell"].getValue() || "Nie uczestniczył",
+            martell: tomSelectInstances["martell"].getValue() || "Nie uczestniczył",
+            arryn: tomSelectInstances["arryn"].getValue() || "Nie uczestniczył",
+            targaryen: tomSelectInstances["targaryen"].getValue() || "Nie uczestniczył",
             winner: winner,
             img_url: uploadedImageUrl,
             comment: document.getElementById("game-comment").value.trim(),
@@ -219,8 +293,14 @@ async function saveGotGame() {
         if (!response.ok) throw new Error("Błąd podczas zapisu do bazy.");
 
         // Reset formularza
-        HOUSES.forEach((h) => (document.getElementById(`house-${h}`).value = "Nie uczestniczył"));
-        document.getElementById("game-winner").value = "";
+        HOUSES.forEach((h) => {
+            if (tomSelectInstances[h.key]) {
+                tomSelectInstances[h.key].setValue("Nie uczestniczył");
+            }
+        });
+        if (tomSelectInstances["winner"]) {
+            tomSelectInstances["winner"].clear();
+        }
         document.getElementById("game-comment").value = "";
         if (fileInput) fileInput.value = "";
 

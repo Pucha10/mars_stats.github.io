@@ -6,11 +6,34 @@
         <meta name="description" content="Gra o Tron - Statystyki" />
         <title>Gra o Tron - Statystyki</title>
         <link rel="stylesheet" href="css/style.css" />
+
+        <!-- Biblioteka TomSelect do wyszukiwania graczy -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/css/tom-select.css"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/js/tom-select.complete.min.js"></script>
+
         <style>
+            /* Dopasowanie stylów TomSelect do motywu */
+            .ts-control {
+                border-radius: 8px !important;
+                padding: 8px 12px !important;
+                border: 1px solid #cbd5e1 !important;
+                font-size: 14px !important;
+                min-height: 40px !important;
+            }
+            .ts-dropdown {
+                border-radius: 8px !important;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+                z-index: 9999 !important;
+            }
+
+            /* Formularz nowej gry */
             .got-setup-card {
                 background: #ffffff;
                 border-radius: 12px;
-                padding: 24px;
+                padding: 20px;
                 margin-bottom: 25px;
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
                 display: none;
@@ -18,160 +41,367 @@
             .houses-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-                gap: 15px;
-                margin-bottom: 20px;
+                gap: 12px;
+                margin-bottom: 18px;
             }
             .house-field {
                 display: flex;
                 flex-direction: column;
-                gap: 6px;
+                gap: 4px;
             }
             .house-field label {
-                font-weight: 600;
+                font-weight: 700;
                 font-size: 13px;
-                color: #333;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
+                color: #334155;
             }
-            .got-select, .got-input {
-                padding: 8px 12px;
-                border: 1px solid #ccc;
-                border-radius: 6px;
+            .got-input {
+                padding: 9px 12px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
                 font-size: 14px;
                 width: 100%;
                 background: #fff;
+                box-sizing: border-box;
             }
             .form-row-bottom {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 15px;
-                margin-bottom: 20px;
+                margin-bottom: 15px;
             }
-            @media (max-width: 768px) {
-                .form-row-bottom { grid-template-columns: 1fr; }
-            }
+
+            /* Tagi stanów */
             .tag-wasal {
-                color: #856404;
-                background-color: #fff3cd;
+                color: #854d0e;
+                background-color: #fef9c3;
                 padding: 2px 6px;
                 border-radius: 4px;
-                font-weight: bold;
-                font-size: 12px;
+                font-weight: 600;
+                font-size: 11px;
+                display: inline-block;
             }
             .tag-none {
-                color: #888;
+                color: #94a3b8;
+                font-weight: normal;
             }
-            .tag-winner {
-                font-weight: bold;
-                color: #1e8e3e;
+
+            /* --- KONTENER GIER (WIDOK DESKTOP) --- */
+            .got-games-container {
+                width: 100%;
+                margin-top: 15px;
+            }
+
+            .got-desktop-header {
+                display: grid;
+                grid-template-columns: 60px repeat(8, 1fr) 110px 90px 1.5fr 70px;
+                gap: 6px;
+                background: #1e293b;
+                color: #fff;
+                padding: 10px 8px;
+                border-radius: 8px 8px 0 0;
+                font-size: 12px;
+                font-weight: 700;
+                text-align: center;
+                align-items: center;
+            }
+
+            .got-game-row {
+                display: grid;
+                grid-template-columns: 60px repeat(8, 1fr) 110px 90px 1.5fr 70px;
+                gap: 6px;
+                background: #fff;
+                border-bottom: 1px solid #e2e8f0;
+                padding: 8px;
+                font-size: 13px;
+                text-align: center;
+                align-items: center;
+            }
+            .got-game-row:nth-child(even) {
+                background: #f8fafc;
+            }
+
+            .got-mobile-header {
+                display: none;
+            }
+
+            /* --- WIDOK MOBILNY (CZYSTE, KOMPAKTOWE KARTY) --- */
+            @media (max-width: 860px) {
+                .form-row-bottom {
+                    grid-template-columns: 1fr;
+                }
+                .got-desktop-header {
+                    display: none;
+                }
+
+                .got-game-row {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 14px;
+                    padding: 12px;
+                    margin-bottom: 18px;
+                    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+                }
+
+                .got-mobile-header {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                    background: #f8fafc;
+                    margin: -12px -12px 6px -12px;
+                    padding: 10px;
+                    border-radius: 14px 14px 0 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    width: calc(100% + 24px);
+                    box-sizing: border-box;
+                }
+                .got-mobile-game-num {
+                    font-size: 16px;
+                    font-weight: 800;
+                    color: #0f172a;
+                }
+                .got-mobile-winner {
+                    background: #dcfce7;
+                    color: #166534;
+                    font-weight: 700;
+                    padding: 3px 14px;
+                    border-radius: 20px;
+                    font-size: 13px;
+                    border: 1px solid #bbf7d0;
+                }
+
+                .got-houses-grid-mobile {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 6px;
+                    width: 100%;
+                }
+
+                .got-house-chip {
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    padding: 6px 4px;
+                    text-align: center;
+                    box-sizing: border-box;
+                }
+                .got-house-chip.is-winner {
+                    background: #f0fdf4;
+                    border-color: #86efac;
+                }
+                .got-house-chip.is-empty {
+                    opacity: 0.45;
+                }
+                .got-chip-title {
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: #64748b;
+                    text-transform: uppercase;
+                    margin-bottom: 1px;
+                }
+                .got-chip-player {
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: #0f172a;
+                    word-break: break-word;
+                }
+
+                .got-cell-desktop-only {
+                    display: none !important;
+                }
+
+                .got-cell-photo,
+                .got-cell-comment,
+                .got-cell-actions {
+                    width: 100%;
+                    text-align: center;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .got-comment-box {
+                    background: #f1f5f9;
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    font-size: 12px;
+                    color: #334155;
+                    text-align: center;
+                    width: 100%;
+                    box-sizing: border-box;
+                    line-height: 1.4;
+                }
+
+                .got-cell-actions {
+                    border-top: 1px solid #f1f5f9;
+                    padding-top: 8px;
+                    margin-top: 2px;
+                }
             }
         </style>
     </head>
     <body>
         <div class="container">
             <header class="main-header">
-                <div class="header-actions" style="width: 100%; justify-content: space-between; display: flex;">
+                <div
+                    class="header-actions"
+                    style="
+                        width: 100%;
+                        justify-content: space-between;
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                    "
+                >
                     <div class="action-column">
-                        <button id="btn-toggle-form" class="btn-primary" onclick="toggleNewGameForm()">
+                        <button
+                            id="btn-toggle-form"
+                            class="btn-primary"
+                            onclick="toggleNewGameForm()"
+                        >
                             <span class="icon">+</span> Nowa Gra
                         </button>
                     </div>
 
                     <div class="action-column">
-                        <a href="index.html" class="btn-secondary"><span class="icon">🚀</span> Mars</a>
-                        <a href="remik_stats.html" class="btn-secondary"><span class="icon">🎴</span> Remik</a>
-                        <a href="tysiac.html" class="btn-secondary"><span class="icon">🃏</span> Tysiąc</a>
-                        <a href="world-cup-login.html" class="btn-secondary"><span class="icon">⚽</span> Mundial</a>
+                        <a href="index.html" class="btn-secondary"
+                            ><span class="icon">📊</span> Statystyki</a
+                        >
                     </div>
                 </div>
             </header>
 
-            <!-- FORMULARZ DODAWANIA NOWEJ GRY -->
+            <!-- FORMULARZ NOWEJ GRY Z TOMSELECT -->
             <div id="new-game-setup" class="got-setup-card">
-                <h3 style="margin-top: 0; margin-bottom: 15px;">🛡️ Nowa Partia Gry o Tron</h3>
-                
+                <h3 style="margin-top: 0; margin-bottom: 15px">
+                    🛡️ Nowa Partia Gry o Tron
+                </h3>
+
                 <div class="houses-grid">
                     <div class="house-field">
                         <label for="house-baratheon">👑 Baratheon</label>
-                        <select id="house-baratheon" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                        <select
+                            id="house-baratheon"
+                            class="house-select"
+                        ></select>
                     </div>
                     <div class="house-field">
                         <label for="house-lannister">🦁 Lannister</label>
-                        <select id="house-lannister" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                        <select
+                            id="house-lannister"
+                            class="house-select"
+                        ></select>
                     </div>
                     <div class="house-field">
                         <label for="house-stark">🐺 Stark</label>
-                        <select id="house-stark" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                        <select id="house-stark" class="house-select"></select>
                     </div>
                     <div class="house-field">
                         <label for="house-greyjoy">🦑 Greyjoy</label>
-                        <select id="house-greyjoy" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                        <select
+                            id="house-greyjoy"
+                            class="house-select"
+                        ></select>
                     </div>
                     <div class="house-field">
                         <label for="house-tyrell">🌹 Tyrell</label>
-                        <select id="house-tyrell" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                        <select id="house-tyrell" class="house-select"></select>
                     </div>
                     <div class="house-field">
                         <label for="house-martell">☀️ Martell</label>
-                        <select id="house-martell" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                        <select
+                            id="house-martell"
+                            class="house-select"
+                        ></select>
                     </div>
                     <div class="house-field">
                         <label for="house-arryn">🦅 Arryn</label>
-                        <select id="house-arryn" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                        <select id="house-arryn" class="house-select"></select>
                     </div>
                     <div class="house-field">
                         <label for="house-targaryen">🐉 Targaryen</label>
-                        <select id="house-targaryen" class="got-select house-select" onchange="updateWinnerDropdown()"></select>
+                        <select
+                            id="house-targaryen"
+                            class="house-select"
+                        ></select>
                     </div>
                 </div>
 
                 <div class="form-row-bottom">
                     <div class="house-field">
                         <label for="game-winner">🏆 Kto wygrał?</label>
-                        <select id="game-winner" class="got-select">
-                            <option value="">-- Wybierz zwycięzcę --</option>
-                        </select>
+                        <select id="game-winner"></select>
                     </div>
                     <div class="house-field">
-                        <label for="game-image">🖼️ Zdjęcie z gry (opcjonalne)</label>
-                        <input type="file" id="game-image" accept="image/*" class="got-input" />
+                        <label for="game-image"
+                            >🖼️ Zdjęcie z gry (opcjonalne)</label
+                        >
+                        <input
+                            type="file"
+                            id="game-image"
+                            accept="image/*"
+                            class="got-input"
+                        />
                     </div>
                 </div>
 
-                <div class="house-field" style="margin-bottom: 20px;">
-                    <label for="game-comment">📝 Komentarz</label>
-                    <input type="text" id="game-comment" class="got-input" placeholder="Komentarz" />
+                <div class="house-field" style="margin-bottom: 20px">
+                    <label for="game-comment"
+                        >📝 Komentarz / Szczegóły punktów</label
+                    >
+                    <input type="text" id="game-comment" class="got-input" />
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn-primary" id="btn-save-got" onclick="saveGotGame()">Zapisz grę</button>
-                    <button class="btn-secondary" onclick="toggleNewGameForm(false)">Anuluj</button>
+                <div style="display: flex; gap: 10px">
+                    <button
+                        class="btn-primary"
+                        id="btn-save-got"
+                        onclick="saveGotGame()"
+                    >
+                        Zapisz grę
+                    </button>
+                    <button
+                        class="btn-secondary"
+                        onclick="toggleNewGameForm(false)"
+                    >
+                        Anuluj
+                    </button>
                 </div>
             </div>
 
-            <!-- TABELA GIER -->
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th class="col-lp">Nr gry</th>
-                        <th>Baratheon</th>
-                        <th>Lannister</th>
-                        <th>Stark</th>
-                        <th>Greyjoy</th>
-                        <th>Tyrell</th>
-                        <th>Martell</th>
-                        <th>Arryn</th>
-                        <th>Targaryen</th>
-                        <th>Kto wygrał</th>
-                        <th>Zdjęcie</th>
-                        <th>Komentarz</th>
-                        <th>Akcje</th>
-                    </tr>
-                </thead>
-                <tbody id="got-results-body">
-                    <tr><td colspan="12" style="text-align:center; padding: 20px;">Ładowanie gier...</td></tr>
-                </tbody>
-            </table>
+            <!-- LISTA GIER -->
+            <div class="got-games-container">
+                <div class="got-desktop-header">
+                    <div>Nr gry</div>
+                    <div>Baratheon</div>
+                    <div>Lannister</div>
+                    <div>Stark</div>
+                    <div>Greyjoy</div>
+                    <div>Tyrell</div>
+                    <div>Martell</div>
+                    <div>Arryn</div>
+                    <div>Targaryen</div>
+                    <div>Kto wygrał</div>
+                    <div>Zdjęcie</div>
+                    <div>Komentarz</div>
+                    <div>Akcje</div>
+                </div>
+                <div id="got-results-body">
+                    <div
+                        style="
+                            text-align: center;
+                            padding: 25px;
+                            background: #fff;
+                            border-radius: 8px;
+                        "
+                    >
+                        Ładowanie partii...
+                    </div>
+                </div>
+            </div>
         </div>
 
         <script src="js/supaBaseScript.js"></script>
