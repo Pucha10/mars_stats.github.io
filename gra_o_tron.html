@@ -94,9 +94,7 @@
 
             .got-desktop-header {
                 display: grid;
-                grid-template-columns:
-                    60px repeat(8, 1fr)
-                    110px 100px 1.4fr 80px;
+                grid-template-columns: 60px repeat(8, 1fr) 110px 100px 1.4fr 80px;
                 gap: 4px;
                 background: #1e293b;
                 color: #fff;
@@ -111,9 +109,7 @@
 
             .got-game-row {
                 display: grid;
-                grid-template-columns:
-                    60px repeat(8, 1fr)
-                    110px 100px 1.4fr 80px;
+                grid-template-columns: 60px repeat(8, 1fr) 110px 100px 1.4fr 80px;
                 gap: 4px;
                 background: #fff;
                 border-bottom: 1px solid #e2e8f0;
@@ -128,21 +124,13 @@
             }
 
             /* Na komputerze ukrywamy elementy mobilne */
-            .got-mobile-header {
-                display: none !important;
-            }
-            .got-houses-grid-mobile {
-                display: none !important;
-            }
+            .got-mobile-header { display: none !important; }
+            .got-houses-grid-mobile { display: none !important; }
 
-            /* --- WIDOK MOBILNY (TELEFONY) --- */
+            /* --- WIDOK MOBILNY --- */
             @media (max-width: 860px) {
-                .form-row-bottom {
-                    grid-template-columns: 1fr;
-                }
-                .got-desktop-header {
-                    display: none !important;
-                }
+                .form-row-bottom { grid-template-columns: 1fr; }
+                .got-desktop-header { display: none !important; }
 
                 .got-game-row {
                     display: flex !important;
@@ -157,12 +145,8 @@
                     min-width: 0 !important;
                 }
 
-                /* Na telefonie ukrywamy komórki desktopowe */
-                .got-desktop-cell {
-                    display: none !important;
-                }
+                .got-desktop-cell { display: none !important; }
 
-                /* Pokazujemy nagłówek mobilny */
                 .got-mobile-header {
                     display: flex !important;
                     flex-direction: column;
@@ -192,7 +176,6 @@
                     border: 1px solid #bbf7d0;
                 }
 
-                /* Pokazujemy siatkę rodów */
                 .got-houses-grid-mobile {
                     display: grid !important;
                     grid-template-columns: 1fr 1fr;
@@ -229,9 +212,7 @@
                     word-break: break-word;
                 }
 
-                .got-cell-photo,
-                .got-cell-comment,
-                .got-cell-actions {
+                .got-cell-photo, .got-cell-comment, .got-cell-actions {
                     width: 100%;
                     text-align: center;
                     display: flex;
@@ -256,6 +237,95 @@
                     margin-top: 2px;
                 }
             }
+
+            /* --- MODAL PRZYDZIAŁU RODÓW --- */
+            .modal-overlay {
+                position: fixed;
+                top: 0; left: 0;
+                width: 100vw; height: 100vh;
+                background: rgba(15, 23, 42, 0.7);
+                backdrop-filter: blur(4px);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                padding: 15px;
+                box-sizing: border-box;
+            }
+            .modal-card {
+                background: #ffffff;
+                border-radius: 16px;
+                max-width: 550px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+                display: flex;
+                flex-direction: column;
+            }
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px 20px;
+                background: #1e293b;
+                color: #ffffff;
+                border-radius: 16px 16px 0 0;
+            }
+            .modal-header h3 { margin: 0; font-size: 17px; }
+            .btn-close-modal {
+                background: transparent; border: none;
+                color: #cbd5e1; font-size: 24px;
+                cursor: pointer; line-height: 1;
+            }
+            .btn-close-modal:hover { color: #ffffff; }
+            .modal-body { padding: 18px; }
+
+            .draft-result-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin: 15px 0;
+            }
+            .draft-item {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 8px 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            .draft-item-house {
+                font-size: 11px;
+                font-weight: 700;
+                color: #64748b;
+                text-transform: uppercase;
+            }
+            .draft-item-player {
+                font-size: 14px;
+                font-weight: 800;
+                color: #0f172a;
+            }
+            .draft-item-meta {
+                font-size: 10px;
+                color: #166534;
+                font-weight: 600;
+            }
+            .draft-item-meta.repeated {
+                color: #b45309;
+            }
+            .btn-draft-action {
+                background: #4f46e5;
+                color: #fff;
+                font-weight: 700;
+                border: none;
+                padding: 10px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            .btn-draft-action:hover { background: #4338ca; }
         </style>
     </head>
     <body>
@@ -271,7 +341,7 @@
                         gap: 10px;
                     "
                 >
-                    <div class="action-column">
+                    <div class="action-column" style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button
                             id="btn-toggle-form"
                             class="btn-primary"
@@ -279,14 +349,19 @@
                         >
                             <span class="icon">+</span> Nowa Gra
                         </button>
+                        <button
+                            class="btn-primary"
+                            style="background: #4f46e5;"
+                            onclick="openDraftModal()"
+                        >
+                            <span class="icon">🎲</span> Przydziel rody
+                        </button>
                     </div>
 
                     <div class="action-column">
-                        <a
-                            href="gra_o_tron_statystyki.html"
-                            class="btn-secondary"
-                            ><span class="icon">📊</span> Statystyki</a
-                        >
+                        <a href="gra_o_tron_statystyki.html" class="btn-secondary">
+                            <span class="icon">📊</span> Statystyki
+                        </a>
                     </div>
                 </div>
             </header>
@@ -300,17 +375,11 @@
                 <div class="houses-grid">
                     <div class="house-field">
                         <label for="house-baratheon">👑 Baratheon</label>
-                        <select
-                            id="house-baratheon"
-                            class="house-select"
-                        ></select>
+                        <select id="house-baratheon" class="house-select"></select>
                     </div>
                     <div class="house-field">
                         <label for="house-lannister">🦁 Lannister</label>
-                        <select
-                            id="house-lannister"
-                            class="house-select"
-                        ></select>
+                        <select id="house-lannister" class="house-select"></select>
                     </div>
                     <div class="house-field">
                         <label for="house-stark">🐺 Stark</label>
@@ -318,10 +387,7 @@
                     </div>
                     <div class="house-field">
                         <label for="house-greyjoy">🦑 Greyjoy</label>
-                        <select
-                            id="house-greyjoy"
-                            class="house-select"
-                        ></select>
+                        <select id="house-greyjoy" class="house-select"></select>
                     </div>
                     <div class="house-field">
                         <label for="house-tyrell">🌹 Tyrell</label>
@@ -329,10 +395,7 @@
                     </div>
                     <div class="house-field">
                         <label for="house-martell">☀️ Martell</label>
-                        <select
-                            id="house-martell"
-                            class="house-select"
-                        ></select>
+                        <select id="house-martell" class="house-select"></select>
                     </div>
                     <div class="house-field">
                         <label for="house-arryn">🦅 Arryn</label>
@@ -340,10 +403,7 @@
                     </div>
                     <div class="house-field">
                         <label for="house-targaryen">🐉 Targaryen</label>
-                        <select
-                            id="house-targaryen"
-                            class="house-select"
-                        ></select>
+                        <select id="house-targaryen" class="house-select"></select>
                     </div>
                 </div>
 
@@ -353,39 +413,19 @@
                         <select id="game-winner"></select>
                     </div>
                     <div class="house-field">
-                        <label for="game-image"
-                            >🖼️ Zdjęcie z gry (opcjonalne)</label
-                        >
-                        <input
-                            type="file"
-                            id="game-image"
-                            accept="image/*"
-                            class="got-input"
-                        />
+                        <label for="game-image">🖼️ Zdjęcie z gry (opcjonalne)</label>
+                        <input type="file" id="game-image" accept="image/*" class="got-input" />
                     </div>
                 </div>
 
                 <div class="house-field" style="margin-bottom: 20px">
-                    <label for="game-comment"
-                        >📝 Komentarz / Szczegóły punktów</label
-                    >
-                    <input type="text" id="game-comment" class="got-input" />
+                    <label for="game-comment">📝 Komentarz / Szczegóły punktów</label>
+                    <input type="text" id="game-comment" class="got-input" placeholder="np. 7 zamków w 8 rundzie..." />
                 </div>
 
                 <div style="display: flex; gap: 10px">
-                    <button
-                        class="btn-primary"
-                        id="btn-save-got"
-                        onclick="saveGotGame()"
-                    >
-                        Zapisz grę
-                    </button>
-                    <button
-                        class="btn-secondary"
-                        onclick="toggleNewGameForm(false)"
-                    >
-                        Anuluj
-                    </button>
+                    <button class="btn-primary" id="btn-save-got" onclick="saveGotGame()">Zapisz grę</button>
+                    <button class="btn-secondary" onclick="toggleNewGameForm(false)">Anuluj</button>
                 </div>
             </div>
 
@@ -407,15 +447,47 @@
                     <div>Akcje</div>
                 </div>
                 <div id="got-results-body">
-                    <div
-                        style="
-                            text-align: center;
-                            padding: 25px;
-                            background: #fff;
-                            border-radius: 8px;
-                        "
-                    >
+                    <div style="text-align: center; padding: 25px; background: #fff; border-radius: 8px;">
                         Ładowanie partii...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL PRZYDZIAŁU RODÓW -->
+        <div id="draft-modal" class="modal-overlay" onclick="closeDraftModalOutside(event)">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>🎲 Inteligentny Przydział Rodów</h3>
+                    <button class="btn-close-modal" onclick="closeDraftModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin: 0 0 8px 0; font-size: 13px; color: #475569;">
+                        Wybierz graczy biorących udział w partii (od 3 do 8 osób):
+                    </p>
+                    <div style="margin-bottom: 15px;">
+                        <select id="draft-players-select" multiple placeholder="Wybierz od 3 do 8 graczy..."></select>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                        <button class="btn-draft-action" style="width: 100%;" onclick="runDraftAlgorithm()">
+                            🎲 Wylosuj przydział rodów
+                        </button>
+                    </div>
+
+                    <!-- WYNIK LOSOWANIA -->
+                    <div id="draft-result-area" style="display: none;">
+                        <h4 style="margin: 10px 0 6px 0; font-size: 14px; color: #0f172a;">🛡️ Wynik przydziału:</h4>
+                        <div id="draft-result-grid" class="draft-result-grid"></div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 15px;">
+                            <button class="btn-primary" style="flex: 1;" onclick="applyDraftToForm()">
+                                📋 Zastosuj w nowej grze
+                            </button>
+                            <button class="btn-secondary" onclick="runDraftAlgorithm()">
+                                🔄 Losuj ponownie
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,6 +1,8 @@
 let playersList = [];
 let gotGames = [];
 const tomSelectInstances = {};
+let draftTomSelect = null;
+let lastDraftResult = null;
 
 const HOUSES = [
     { key: "baratheon", label: "👑 Baratheon" },
@@ -66,6 +68,20 @@ function initTomSelects() {
         placeholder: `-- Wyszukaj lub wybierz zwycięzcę --`,
         allowEmptyOption: true,
     });
+
+    // Inicjalizacja TomSelect dla wyboru graczy do losowania
+    const draftElem = document.getElementById("draft-players-select");
+    if (draftElem) {
+        draftTomSelect = new TomSelect("#draft-players-select", {
+            options: playersList.map((p) => ({ value: p.Name, text: p.Name })),
+            valueField: "value",
+            labelField: "text",
+            searchField: ["text"],
+            maxItems: 8,
+            plugins: ["remove_button"],
+            placeholder: "Wybierz graczy (3 - 8 osób)...",
+        });
+    }
 }
 
 function updateWinnerDropdown() {
@@ -133,7 +149,6 @@ async function renderGotTable() {
             const row = document.createElement("div");
             row.className = "got-game-row";
 
-            // Mobilny chip rodu
             const getHouseChip = (val, label) => {
                 const isWinner = val && val === game.winner;
                 let chipClass = "got-house-chip";
@@ -157,22 +172,21 @@ async function renderGotTable() {
                 `;
             };
 
-            // Formatowanie komórki desktopowej
             const formatDesktopCell = (val) => {
-                if (!val || val === "Nie uczestniczył" || val === "-") return `<span class="tag-none">-</span>`;
-                if (val === "Wasal") return `<span class="tag-wasal">Wasal</span>`;
+                if (!val || val === "Nie uczestniczył" || val === "-")
+                    return `<span class="tag-none">-</span>`;
+                if (val === "Wasal")
+                    return `<span class="tag-wasal">Wasal</span>`;
                 const isWinner = val === game.winner;
-                return `<strong style="${isWinner ? 'color:#166534;' : ''}">${val}${isWinner ? ' 🏆' : ''}</strong>`;
+                return `<strong style="${isWinner ? "color:#166534;" : ""}">${val}${isWinner ? " 🏆" : ""}</strong>`;
             };
 
             row.innerHTML = `
-                <!-- 1. NAGŁÓWEK MOBILNY (Tylko telefon) -->
                 <div class="got-mobile-header">
                     <span class="got-mobile-game-num">Gra #${game.game_number}</span>
                     <span class="got-mobile-winner">🏆 ${game.winner || "-"}</span>
                 </div>
 
-                <!-- 2. KAFELKI RODÓW (Tylko telefon) -->
                 <div class="got-houses-grid-mobile">
                     ${getHouseChip(game.baratheon, "👑 Baratheon")}
                     ${getHouseChip(game.lannister, "🦁 Lannister")}
@@ -184,7 +198,6 @@ async function renderGotTable() {
                     ${getHouseChip(game.targaryen, "🐉 Targaryen")}
                 </div>
 
-                <!-- 3. KOMÓRKI DESKTOPOWE (Dokładnie 10 kolumn dopasowanych do nagłówka) -->
                 <div class="got-desktop-cell" style="font-weight: bold;">${game.game_number}</div>
                 <div class="got-desktop-cell">${formatDesktopCell(game.baratheon)}</div>
                 <div class="got-desktop-cell">${formatDesktopCell(game.lannister)}</div>
@@ -196,17 +209,14 @@ async function renderGotTable() {
                 <div class="got-desktop-cell">${formatDesktopCell(game.targaryen)}</div>
                 <div class="got-desktop-cell" style="font-weight: bold; color: #166534;">🏆 ${game.winner || "-"}</div>
 
-                <!-- 4. ZDJĘCIE -->
                 <div class="got-cell-photo">
                     ${game.img_url ? `<a href="${game.img_url}" target="_blank" style="text-decoration:none; font-weight:600; font-size:12px;">🖼️ Zobacz zdjęcie</a>` : '<span class="tag-none">-</span>'}
                 </div>
 
-                <!-- 5. KOMENTARZ -->
                 <div class="got-cell-comment">
                     ${game.comment ? `<div class="got-comment-box" style="text-align: left; font-size: 12px;">💬 ${game.comment}</div>` : '<span class="tag-none">-</span>'}
                 </div>
 
-                <!-- 6. AKCJE -->
                 <div class="got-cell-actions">
                     <button class="btn-action btn-delete" onclick="handleDeleteGotGame(${game.id}, ${game.game_number})">Usuń</button>
                 </div>
@@ -237,7 +247,9 @@ function toggleNewGameForm(forceState) {
 
 async function saveGotGame() {
     const btn = document.getElementById("btn-save-got");
-    const winner = tomSelectInstances["winner"] ? tomSelectInstances["winner"].getValue() : "";
+    const winner = tomSelectInstances["winner"]
+        ? tomSelectInstances["winner"].getValue()
+        : "";
 
     if (!winner) {
         alert("Wybierz zwycięzcę partii!");
@@ -261,14 +273,23 @@ async function saveGotGame() {
 
         const payload = {
             game_number: nextGameNumber,
-            baratheon: tomSelectInstances["baratheon"].getValue() || "Nie uczestniczył",
-            lannister: tomSelectInstances["lannister"].getValue() || "Nie uczestniczył",
+            baratheon:
+                tomSelectInstances["baratheon"].getValue() ||
+                "Nie uczestniczył",
+            lannister:
+                tomSelectInstances["lannister"].getValue() ||
+                "Nie uczestniczył",
             stark: tomSelectInstances["stark"].getValue() || "Nie uczestniczył",
-            greyjoy: tomSelectInstances["greyjoy"].getValue() || "Nie uczestniczył",
-            tyrell: tomSelectInstances["tyrell"].getValue() || "Nie uczestniczył",
-            martell: tomSelectInstances["martell"].getValue() || "Nie uczestniczył",
+            greyjoy:
+                tomSelectInstances["greyjoy"].getValue() || "Nie uczestniczył",
+            tyrell:
+                tomSelectInstances["tyrell"].getValue() || "Nie uczestniczył",
+            martell:
+                tomSelectInstances["martell"].getValue() || "Nie uczestniczył",
             arryn: tomSelectInstances["arryn"].getValue() || "Nie uczestniczył",
-            targaryen: tomSelectInstances["targaryen"].getValue() || "Nie uczestniczył",
+            targaryen:
+                tomSelectInstances["targaryen"].getValue() ||
+                "Nie uczestniczył",
             winner: winner,
             img_url: uploadedImageUrl,
             comment: document.getElementById("game-comment").value.trim(),
@@ -287,7 +308,6 @@ async function saveGotGame() {
 
         if (!response.ok) throw new Error("Błąd podczas zapisu do bazy.");
 
-        // Reset formularza
         HOUSES.forEach((h) => {
             if (tomSelectInstances[h.key]) {
                 tomSelectInstances[h.key].setValue("Nie uczestniczył");
@@ -336,4 +356,202 @@ async function handleDeleteGotGame(id, gameNumber) {
     } catch (error) {
         console.error("Błąd usuwania:", error);
     }
+}
+
+// ==========================================
+// --- INTELIGENTNY ALGORYTM PRZYDZIAŁU RODÓW ---
+// ==========================================
+
+function openDraftModal() {
+    document.getElementById("draft-modal").style.display = "flex";
+}
+
+function closeDraftModal() {
+    document.getElementById("draft-modal").style.display = "none";
+}
+
+function closeDraftModalOutside(event) {
+    if (event.target.id === "draft-modal") {
+        closeDraftModal();
+    }
+}
+
+function runDraftAlgorithm() {
+    if (!draftTomSelect) return;
+    const selectedPlayers = draftTomSelect.getValue();
+
+    if (!selectedPlayers || selectedPlayers.length < 3) {
+        alert("Wybierz przynajmniej 3 graczy do gry!");
+        return;
+    }
+    if (selectedPlayers.length > 8) {
+        alert("Maksymalna liczba graczy w Grze o Tron to 8!");
+        return;
+    }
+
+    // 1. Zliczamy historię gier per gracz per ród z bazy (gotGames)
+    const playCounts = {};
+    selectedPlayers.forEach((p) => {
+        playCounts[p] = {};
+        HOUSES.forEach((h) => (playCounts[p][h.key] = 0));
+    });
+
+    gotGames.forEach((game) => {
+        HOUSES.forEach((h) => {
+            const p = game[h.key];
+            if (p && playCounts[p] && playCounts[p][h.key] !== undefined) {
+                playCounts[p][h.key]++;
+            }
+        });
+    });
+
+    // 2. Obliczamy koszt z uwzględnieniem cyklu:
+    // Jeśli gracz zagrał już każdym rodem po 1 razie, minCount wynosi 1 i znów ma koszt 0 dla wszystkich
+    const costs = {};
+    selectedPlayers.forEach((p) => {
+        const minCount = Math.min(...HOUSES.map((h) => playCounts[p][h.key]));
+        costs[p] = {};
+        HOUSES.forEach((h) => {
+            costs[p][h.key] = playCounts[p][h.key] - minCount;
+        });
+    });
+
+    // 3. Globalny algorytm z nawrotami (Backtracking) z losowym doborem
+    // Minimalizuje max koszt per gracz, a następnie sumę kosztów w grupie
+    let bestSolutions = [];
+    let bestMaxCost = Infinity;
+    let bestSumCost = Infinity;
+
+    const shuffledPlayers = [...selectedPlayers].sort(
+        () => Math.random() - 0.5,
+    );
+    const shuffledHouses = [...HOUSES].sort(() => Math.random() - 0.5);
+
+    function solve(
+        playerIdx,
+        currentAssignment,
+        currentMaxCost,
+        currentSumCost,
+        usedHouses,
+    ) {
+        if (
+            currentMaxCost > bestMaxCost ||
+            (currentMaxCost === bestMaxCost && currentSumCost > bestSumCost)
+        ) {
+            return;
+        }
+
+        if (playerIdx === shuffledPlayers.length) {
+            if (
+                currentMaxCost < bestMaxCost ||
+                (currentMaxCost === bestMaxCost && currentSumCost < bestSumCost)
+            ) {
+                bestMaxCost = currentMaxCost;
+                bestSumCost = currentSumCost;
+                bestSolutions = [{ ...currentAssignment }];
+            } else if (
+                currentMaxCost === bestMaxCost &&
+                currentSumCost === bestSumCost
+            ) {
+                bestSolutions.push({ ...currentAssignment });
+            }
+            return;
+        }
+
+        const player = shuffledPlayers[playerIdx];
+        const availableHouses = shuffledHouses.filter(
+            (h) => !usedHouses.has(h.key),
+        );
+
+        // Sortujemy rody od najmniej granych przez tego gracza + losowy tie-breaker
+        availableHouses.sort(
+            (a, b) =>
+                costs[player][a.key] - costs[player][b.key] ||
+                Math.random() - 0.5,
+        );
+
+        for (const house of availableHouses) {
+            const cost = costs[player][house.key];
+            usedHouses.add(house.key);
+            currentAssignment[player] = house;
+
+            solve(
+                playerIdx + 1,
+                currentAssignment,
+                Math.max(currentMaxCost, cost),
+                currentSumCost + cost,
+                usedHouses,
+            );
+
+            usedHouses.delete(house.key);
+            delete currentAssignment[player];
+        }
+    }
+
+    solve(0, {}, 0, 0, new Set());
+
+    if (bestSolutions.length === 0) {
+        alert("Nie udało się znaleźć dopasowania.");
+        return;
+    }
+
+    // Wybór losowego z optymalnych rozwiązań
+    const chosenAssignment =
+        bestSolutions[Math.floor(Math.random() * bestSolutions.length)];
+    lastDraftResult = chosenAssignment;
+
+    // Renderowanie wyniku w modalu
+    const grid = document.getElementById("draft-result-grid");
+    grid.innerHTML = "";
+
+    HOUSES.forEach((h) => {
+        // Sprawdzamy, który gracz otrzymał ten ród
+        const assignedPlayer = Object.keys(chosenAssignment).find(
+            (p) => chosenAssignment[p].key === h.key,
+        );
+
+        if (assignedPlayer) {
+            const plays = playCounts[assignedPlayer][h.key];
+            const isRepeat = costs[assignedPlayer][h.key] > 0;
+            const metaText =
+                plays === 0 ? "⭐ Pierwszy raz tym rodem" : `(grał ${plays}x)`;
+
+            const item = document.createElement("div");
+            item.className = "draft-item";
+            item.innerHTML = `
+                <div class="draft-item-house">${h.label}</div>
+                <div class="draft-item-player">${assignedPlayer}</div>
+                <div class="draft-item-meta ${isRepeat ? "repeated" : ""}">${metaText}</div>
+            `;
+            grid.appendChild(item);
+        }
+    });
+
+    document.getElementById("draft-result-area").style.display = "block";
+}
+
+function applyDraftToForm() {
+    if (!lastDraftResult) return;
+
+    // 1. Reset wszystkich rodów do 'Nie uczestniczył'
+    HOUSES.forEach((h) => {
+        if (tomSelectInstances[h.key]) {
+            tomSelectInstances[h.key].setValue("Nie uczestniczył", true);
+        }
+    });
+
+    // 2. Przypisanie wylosowanych graczy
+    Object.keys(lastDraftResult).forEach((player) => {
+        const houseKey = lastDraftResult[player].key;
+        if (tomSelectInstances[houseKey]) {
+            tomSelectInstances[houseKey].setValue(player, true);
+        }
+    });
+
+    updateWinnerDropdown();
+    closeDraftModal();
+    toggleNewGameForm(true);
+
+    const form = document.getElementById("new-game-setup");
+    if (form) form.scrollIntoView({ behavior: "smooth" });
 }
