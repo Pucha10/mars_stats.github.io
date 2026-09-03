@@ -168,7 +168,7 @@ function renderPlayersStats(games) {
         if (p.games > 0) {
             if (p.winRate >= 50) {
                 winRateHtml = `<span class="winrate-high">${p.winRate}%</span>`;
-            } else if (p.winRate <= 25) {
+            } else if (p.winRate <= 10) {
                 winRateHtml = `<span class="winrate-low">${p.winRate}%</span>`;
             }
         }
@@ -233,7 +233,8 @@ function openPlayerDetails(playerName) {
         };
     });
 
-    const totalWinRate = totalGames > 0 ? ((totalWins / totalGames) * 100).toFixed(1) : 0;
+    const totalWinRate =
+        totalGames > 0 ? ((totalWins / totalGames) * 100).toFixed(1) : 0;
 
     // Sortujemy rody: najpierw te, którymi gracz grał najczęściej
     houseDetails.sort((a, b) => b.games - a.games || b.winRate - a.winRate);
@@ -253,7 +254,7 @@ function openPlayerDetails(playerName) {
         }
 
         rowsHtml += `
-            <div class="houses-grid-row" style="${h.games === 0 ? 'opacity: 0.4;' : ''}">
+            <div class="houses-grid-row" style="${h.games === 0 ? "opacity: 0.4;" : ""}">
                 <div class="col-name">${h.icon} ${h.name}</div>
                 <div><span class="badge-games">${h.games}</span></div>
                 <div style="color: #166534; font-weight: bold;">${h.wins}</div>
