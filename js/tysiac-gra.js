@@ -20,7 +20,8 @@ if (!gameId) {
     window.location.href = "tysiac.html";
 }
 
-document.getElementById('back-to-details-link').href = `tysiac_detale.html?id=${gameId}`;
+document.getElementById("back-to-details-link").href =
+    `tysiac_detale.html?id=${gameId}`;
 
 document.addEventListener("DOMContentLoaded", () => {
     initGame();
@@ -36,7 +37,7 @@ async function initGame() {
 
     // 1. Zabezpieczenie na 2 graczy
     if (currentPlayers.length !== 2) {
-        document.getElementById('table-area-content').innerHTML = `
+        document.getElementById("table-area-content").innerHTML = `
             <div class="board-status-message">
                 <h3 style="color:#d93025;">Brak obsługi</h3>
                 <p>Wirtualna rozgrywka na telefonach obsługuje obecnie wyłącznie grę dla 2 graczy!</p>
@@ -52,7 +53,8 @@ async function initGame() {
         return;
     }
 
-    document.getElementById('my-profile-label').innerText = `Zalogowany jako: ${viewerName}`;
+    document.getElementById("my-profile-label").innerText =
+        `Zalogowany jako: ${viewerName}`;
 
     // 3. Pobranie rund i zliczenie zużytych bomb oraz sumy punktów (totals)
     const rounds = await getGameRounds(gameId);
@@ -69,7 +71,7 @@ async function initGame() {
     calculateTotals(game.players, rounds);
     if (game.status === "finished") {
         showEndGameScreen(game.winner);
-        return; 
+        return;
     }
     if (game.status === "ongoing") {
         let automaticWinner = null;
@@ -84,7 +86,7 @@ async function initGame() {
 
         if (automaticWinner) {
             await autoFinishGame(automaticWinner);
-            return; 
+            return;
         }
     }
 
@@ -127,33 +129,53 @@ async function initGame() {
 }
 
 async function getGameHeader(id) {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/tysiac_games?id=eq.${id}`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
+    const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/tysiac_games?id=eq.${id}`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
     const data = await resp.json();
     return data[0];
 }
 
 async function getGameRounds(id) {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/tysiac_rounds?game_id=eq.${id}&order=round_number.asc`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
+    const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/tysiac_rounds?game_id=eq.${id}&order=round_number.asc`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
     return await resp.json();
 }
 
 async function getActiveGameState(id) {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${id}`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
+    const resp = await fetch(
+        `${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${id}`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
     const data = await resp.json();
     return data[0];
 }
 
 function askWhoIsPlaying() {
-    const overlay = document.createElement('div');
-    overlay.id = 'profile-select-overlay';
-    overlay.className = 'modal';
-    let options = currentPlayers.map(p => `<option value="${p}">${p}</option>`).join('');
+    const overlay = document.createElement("div");
+    overlay.id = "profile-select-overlay";
+    overlay.className = "modal";
+    let options = currentPlayers
+        .map((p) => `<option value="${p}">${p}</option>`)
+        .join("");
     overlay.innerHTML = `
         <div class="modal-content" style="text-align: center;">
             <h2 style="color: #1a472a; margin-top: 0;">Kim jesteś?</h2>
@@ -168,12 +190,12 @@ function askWhoIsPlaying() {
 }
 
 function saveViewerProfile() {
-    const sel = document.getElementById('profile-select-dropdown').value;
+    const sel = document.getElementById("profile-select-dropdown").value;
     if (sel) {
         localStorage.setItem(`tysiac-profile-${gameId}`, sel);
         viewerName = sel;
-        document.getElementById('profile-select-overlay').remove();
-        initGame(); 
+        document.getElementById("profile-select-overlay").remove();
+        initGame();
     }
 }
 
@@ -188,20 +210,21 @@ function calculateNextMusik(players, rounds) {
 }
 
 async function renderSetupOrWaitingScreen(game) {
-    const tableArea = document.getElementById('table-area-content');
-    const handContainer = document.getElementById('my-hand-container');
-    const opponentLabel = document.getElementById('opponent-card-count');
+    const tableArea = document.getElementById("table-area-content");
+    const handContainer = document.getElementById("my-hand-container");
+    const opponentLabel = document.getElementById("opponent-card-count");
 
-    const dealer = nextShuffler; 
+    const dealer = nextShuffler;
     const isDealer = viewerName === dealer;
 
     opponentLabel.innerText = "Karty nie zostały jeszcze rozdane";
-    document.getElementById('my-profile-label').innerHTML = `
+    document.getElementById("my-profile-label").innerHTML = `
         Zalogowany jako: <strong>${viewerName}</strong>
         <a href="#" onclick="logoutProfile()" style="margin-left: 12px; font-size: 11px; color: inherit; text-decoration: none;">
             Zmień profil 👤
         </a>`;
-    handContainer.innerHTML = '<span style="color: #aaa;">Czekanie na karty...</span>';
+    handContainer.innerHTML =
+        '<span style="color: #aaa;">Czekanie na karty...</span>';
 
     if (isDealer) {
         tableArea.innerHTML = `
@@ -224,12 +247,12 @@ async function renderSetupOrWaitingScreen(game) {
 }
 
 async function dealCardsAndStart() {
-    const VALUES = ['9', 'J', 'Q', 'K', '10', 'A'];
-    const SUITS = ['H', 'D', 'C', 'S']; 
+    const VALUES = ["9", "J", "Q", "K", "10", "A"];
+    const SUITS = ["H", "D", "C", "S"];
     let deck = [];
 
-    SUITS.forEach(s => {
-        VALUES.forEach(v => {
+    SUITS.forEach((s) => {
+        VALUES.forEach((v) => {
             deck.push(`${v}_${s}`);
         });
     });
@@ -239,50 +262,53 @@ async function dealCardsAndStart() {
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
 
-    const hand1 = deck.slice(0, 10);       
-    const hand2 = deck.slice(10, 20);      
-    const musik1 = deck.slice(20, 22);     
-    const musik2 = deck.slice(22, 24);     
+    const hand1 = deck.slice(0, 10);
+    const hand2 = deck.slice(10, 20);
+    const musik1 = deck.slice(20, 22);
+    const musik2 = deck.slice(22, 24);
 
     const p1 = currentPlayers[0];
     const p2 = currentPlayers[1];
 
     const initialActiveState = {
         game_id: parseInt(gameId),
-        phase: 'bidding',                  
-        dealer: nextShuffler,               
-        musik_player: nextMusik,                   
+        phase: "bidding",
+        dealer: nextShuffler,
+        musik_player: nextMusik,
         current_bid: 100,
-        bid_winner: nextMusik,            
-        turn_player: nextShuffler,         
+        bid_winner: nextMusik,
+        turn_player: nextShuffler,
         hands: {
             [p1]: hand1,
-            [p2]: hand2
+            [p2]: hand2,
         },
         musiks: [musik1, musik2],
         table_cards: [],
         trump_suit: null,
         tricks_points: {
             [p1]: 0,
-            [p2]: 0
+            [p2]: 0,
         },
         discarded_cards: [],
-        tricks_history: []
+        tricks_history: [],
     };
 
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/tysiac_active_state`, {
-            method: "POST",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json"
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/tysiac_active_state`,
+            {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(initialActiveState),
             },
-            body: JSON.stringify(initialActiveState)
-        });
+        );
 
         if (response.ok) {
-            initGame(); 
+            initGame();
         } else {
             alert("Błąd rozdawania kart.");
         }
@@ -295,74 +321,83 @@ async function dealCardsAndStart() {
  * LOGIKA OBSŁUGI PLANSZY GRY
  */
 function renderGamePlay() {
-    const tableArea = document.getElementById('table-area-content');
-    const handContainer = document.getElementById('my-hand-container');
-    const opponentLabel = document.getElementById('opponent-card-count');
+    const tableArea = document.getElementById("table-area-content");
+    const handContainer = document.getElementById("my-hand-container");
+    const opponentLabel = document.getElementById("opponent-card-count");
 
     // Zabezpieczenie przed wiszącymi kartami na koniec rundy
-    const tableCards = activeState.phase === 'round_end' ? [] : (activeState.table_cards || []);
+    const tableCards =
+        activeState.phase === "round_end" ? [] : activeState.table_cards || [];
     const isTrickComplete = tableCards.length === 2;
 
-    const opponentName = currentPlayers.find(p => p !== viewerName);
+    const opponentName = currentPlayers.find((p) => p !== viewerName);
     const oppHand = activeState.hands[opponentName] || [];
 
     const myHandRaw = activeState.hands[viewerName] || [];
 
     // --- AKTUALIZACJA PUNKTACJI W ROZDANIU I GRZE NA ŻYWO (GÓRA I DÓŁ EKRANU) ---
-    const oppRoundPoints = activeState.tricks_points ? (activeState.tricks_points[opponentName] || 0) : 0;
-    const myRoundPoints = activeState.tricks_points ? (activeState.tricks_points[viewerName] || 0) : 0;
+    const oppRoundPoints = activeState.tricks_points
+        ? activeState.tricks_points[opponentName] || 0
+        : 0;
+    const myRoundPoints = activeState.tricks_points
+        ? activeState.tricks_points[viewerName] || 0
+        : 0;
     const oppTotalPoints = totals[opponentName] || 0;
     const myTotalPoints = totals[viewerName] || 0;
 
     opponentLabel.innerText = `${opponentName}: ${oppHand.length} kart | Wynik: ${oppTotalPoints} pkt (+${oppRoundPoints} w rozdaniu)`;
-    
+
     // Zmieniono na innerHTML, aby obsłużyć link do wylogowania
-    document.getElementById('my-profile-label').innerHTML = `
+    document.getElementById("my-profile-label").innerHTML = `
         Ty (<strong>${viewerName}</strong>) | Wynik: <strong>${myTotalPoints}</strong> pkt (+${myRoundPoints} w rozdaniu)
-        <a href="#" onclick="logoutProfile()" style="color: #ff9999; margin-left: 12px; text-decoration: underline; font-size: 11px; font-weight: bold;">Zmień profil 👤</a>
+        <a href="#" onclick="logoutProfile()" style="color: #ff9999; margin-left: 12px; text-decoration: underline; font-size: 11px; font-weight: bold; display: none;">Zmień profil 👤</a>
     `;
 
-    if (activeState && (activeState.phase === 'playing' || activeState.phase === 'round_end')) {
+    if (
+        activeState &&
+        (activeState.phase === "playing" || activeState.phase === "round_end")
+    ) {
         renderHistoryModalContent();
     }
 
     const isMyTurn = viewerName === activeState.turn_player;
 
-    const trumpSymbols = { 
-        'H': '♥ KIER (+100)', 
-        'D': '♦ KARO (+80)', 
-        'C': '♣ TREFL (+60)', 
-        'S': '♠ PIK (+40)' 
+    const trumpSymbols = {
+        H: "♥ KIER (+100)",
+        D: "♦ KARO (+80)",
+        C: "♣ TREFL (+60)",
+        S: "♠ PIK (+40)",
     };
-    const currentTrumpDisplay = activeState.trump_suit ? trumpSymbols[activeState.trump_suit] : 'brak';
-    const isTrumpRed = activeState.trump_suit === 'H' || activeState.trump_suit === 'D';
+    const currentTrumpDisplay = activeState.trump_suit
+        ? trumpSymbols[activeState.trump_suit]
+        : "brak";
+    const isTrumpRed =
+        activeState.trump_suit === "H" || activeState.trump_suit === "D";
 
     // Jeśli jesteśmy w fazie odrzucania kart, ustawiamy domyślny ostateczny bet na wygraną licytację
-    if (activeState.phase === 'discarding' && chosenFinalBid < activeState.current_bid) {
+    if (
+        activeState.phase === "discarding" &&
+        chosenFinalBid < activeState.current_bid
+    ) {
         chosenFinalBid = activeState.current_bid;
     }
 
     // --- FAZA A: LICYTACJA (Bidding) ---
-    if (activeState.phase === 'bidding') {
+    if (activeState.phase === "bidding") {
         if (isMyTurn) {
-            const maxAllowedBid = calculateMaxAllowedBid(myHandRaw); 
+            const maxAllowedBid = calculateMaxAllowedBid(myHandRaw);
             const currentBid = activeState.current_bid;
 
             const bidValues = [
-                100, 110, 120, 130,
-                140, 150, 160, 170,
-                180, 190, 200, 210,
-                220, 230, 240, 250,
-                260, 270, 280, 290,
-                300, 310, 320, 330,
-                340, 350, 360, 370,
-                380, 390, 400, 410
+                100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220,
+                230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350,
+                360, 370, 380, 390, 400, 410,
             ];
-            let gridButtonsHtml = '';
+            let gridButtonsHtml = "";
 
-            bidValues.forEach(val => {
+            bidValues.forEach((val) => {
                 const isDisabled = val <= currentBid || val > maxAllowedBid;
-                gridButtonsHtml += `<button class="bidding-btn" ${isDisabled ? 'disabled' : ''} onclick="submitCustomBid(${val})">${val}</button>`;
+                gridButtonsHtml += `<button class="bidding-btn" ${isDisabled ? "disabled" : ""} onclick="submitCustomBid(${val})">${val}</button>`;
             });
 
             const isBombDisabled = bombsUsedInGame[viewerName] === true;
@@ -371,7 +406,7 @@ function renderGamePlay() {
 
             tableArea.innerHTML = `
                 <div class="board-status-message" style="width: 100%; max-width: 340px; padding: 15px;">
-                    <h3 style="margin-bottom: 5px;">Twój ruch! Twój limit: <span style="color:#d4af37">${maxAllowedBid}</span></h3>
+                    <h3 style="margin-bottom: 5px;">Podejmij decyzję<span style="color:#d4af37"></span></h3>
                     <p style="font-size:12px; margin:0 0 10px 0;">Aktualna oferta: <strong>${currentBid}</strong> (${activeState.bid_winner})</p>
                     <div class="bidding-grid">${gridButtonsHtml}</div>
                 </div>
@@ -379,15 +414,15 @@ function renderGamePlay() {
         } else {
             tableArea.innerHTML = `
                 <div class="board-status-message">
-                    <h3>Licytacja - Ruch rywala</h3>
+                    <h3>Licytacja</h3>
                     <p>Aktualna oferta: <strong>${activeState.current_bid}</strong> (${activeState.bid_winner})</p>
                     <p>Czekaj na decyzję gracza <strong>${activeState.turn_player}</strong>...</p>
                 </div>
             `;
         }
-    } 
+    }
     // --- FAZA B: WYBÓR MUSIKA (Musik Choice) ---
-    else if (activeState.phase === 'musik_choice') {
+    else if (activeState.phase === "musik_choice") {
         if (isMyTurn) {
             tableArea.innerHTML = `
                 <div class="board-status-message">
@@ -410,10 +445,12 @@ function renderGamePlay() {
         }
     }
     // --- FAZA C: JAWNE POKAZANIE KART (Musik Reveal) ---
-    else if (activeState.phase === 'musik_reveal') {
+    else if (activeState.phase === "musik_reveal") {
         const isBidOver120 = activeState.current_bid > 120;
-        const revealedCards = activeState.discarded_cards || []; 
-        let revealedCardsHtml = revealedCards.map(c => renderCardHTML(c)).join('');
+        const revealedCards = activeState.discarded_cards || [];
+        let revealedCardsHtml = revealedCards
+            .map((c) => renderCardHTML(c))
+            .join("");
 
         if (isMyTurn) {
             tableArea.innerHTML = `
@@ -450,7 +487,7 @@ function renderGamePlay() {
         }
     }
     // --- FAZA D: ODRZUCANIE KART I OSTATECZNA DEKLARACJA (Discarding) ---
-    else if (activeState.phase === 'discarding') {
+    else if (activeState.phase === "discarding") {
         if (isMyTurn) {
             const selectedCount = selectedDiscards.length;
             const canDiscard = selectedCount === 2;
@@ -461,24 +498,19 @@ function renderGamePlay() {
 
             // Generujemy przyciski do ostatecznego podbicia gry
             const bidValues = [
-                100, 110, 120, 130,
-                140, 150, 160, 170,
-                180, 190, 200, 210,
-                220, 230, 240, 250,
-                260, 270, 280, 290,
-                300, 310, 320, 330,
-                340, 350, 360, 370,
-                380, 390, 400, 410
+                100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220,
+                230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350,
+                360, 370, 380, 390, 400, 410,
             ];
-            let gridButtonsHtml = '';
+            let gridButtonsHtml = "";
 
-            bidValues.forEach(val => {
+            bidValues.forEach((val) => {
                 const isDisabled = val < wonBid || val > maxAllowedBid;
-                const isSelected = val === chosenFinalBid; 
+                const isSelected = val === chosenFinalBid;
 
                 gridButtonsHtml += `
-                    <button class="bidding-btn ${isSelected ? 'selected-final-bid' : ''}" 
-                            ${isDisabled ? 'disabled' : ''} 
+                    <button class="bidding-btn ${isSelected ? "selected-final-bid" : ""}" 
+                            ${isDisabled ? "disabled" : ""} 
                             onclick="selectFinalBid(${val})">
                         ${val}
                     </button>
@@ -487,8 +519,8 @@ function renderGamePlay() {
 
             // Przycisk bomba
             const isBombDisabled = bombsUsedInGame[viewerName] === true;
-            gridButtonsHtml += `<button class="bidding-btn btn-bomba" ${isBombDisabled ? 'disabled' : ''} onclick="submitBiddingBomb()">bomba</button>`;
-            
+            gridButtonsHtml += `<button class="bidding-btn btn-bomba" ${isBombDisabled ? "disabled" : ""} onclick="submitBiddingBomb()">bomba</button>`;
+
             // Puste pole zamiast pasa (by zachować układ 4 kolumn)
             gridButtonsHtml += `<button class="bidding-btn" disabled style="background-color:#f5f5f5; grid-column: span 2;"></button>`;
 
@@ -501,7 +533,7 @@ function renderGamePlay() {
                     <!-- SIATKA OSTATECZNEJ DEKLARACJI -->
                     <div class="bidding-grid">${gridButtonsHtml}</div>
 
-                    <button class="btn-primary" ${!canDiscard ? 'disabled' : ''} onclick="submitDiscards()" style="width: 100%; height: 44px; margin-top: 15px;">
+                    <button class="btn-primary" ${!canDiscard ? "disabled" : ""} onclick="submitDiscards()" style="width: 100%; height: 44px; margin-top: 15px;">
                         Odrzuć i graj za ${chosenFinalBid}
                     </button>
                 </div>
@@ -517,11 +549,14 @@ function renderGamePlay() {
         }
     }
     // --- FAZA E: ROZGRYWKA WŁAŚCIWA (Playing tricks) ---
-    else if (activeState.phase === 'playing') {
-        let tableContentHtml = '';
+    else if (activeState.phase === "playing") {
+        let tableContentHtml = "";
 
         if (isTrickComplete) {
-            const trickResult = evaluateTrick(tableCards, activeState.trump_suit);
+            const trickResult = evaluateTrick(
+                tableCards,
+                activeState.trump_suit,
+            );
             const isMeWinner = viewerName === trickResult.winner;
 
             tableContentHtml = `
@@ -536,14 +571,14 @@ function renderGamePlay() {
                 if (!window.autoCollectTimeout) {
                     window.autoCollectTimeout = setTimeout(async () => {
                         window.autoCollectTimeout = null;
-                        await autoCollectTrick(); 
-                    }, 650); 
+                        await autoCollectTrick();
+                    }, 650);
                 }
             }
         }
 
-        let playedCardsHtml = '';
-        tableCards.forEach(tc => {
+        let playedCardsHtml = "";
+        tableCards.forEach((tc) => {
             playedCardsHtml += `
                 <div class="played-card-container">
                     ${renderCardHTML(tc.card)}
@@ -561,7 +596,7 @@ function renderGamePlay() {
 
                 <!-- WSKAŹNIK ATUTU (KOZERY) NA ŚRODKU STOŁU -->
                 <div style="display: inline-block; font-size: 14px; background: rgba(255,255,255,0.1); padding: 6px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px; font-weight: bold;">
-                    Atut: <strong style="color: ${isTrumpRed ? '#ff4d4d' : '#fff'}">${currentTrumpDisplay}</strong>
+                    Atut: <strong style="color: ${isTrumpRed ? "#ff4d4d" : "#fff"}">${currentTrumpDisplay}</strong>
                 </div>
 
                 <!-- Rzucone karty -->
@@ -573,15 +608,15 @@ function renderGamePlay() {
             </div>
         `;
     }
-// --- FAZA F: PODSUMOWANIE RUNDY (Round End) ---
-    else if (activeState.phase === 'round_end') {
+    // --- FAZA F: PODSUMOWANIE RUNDY (Round End) ---
+    else if (activeState.phase === "round_end") {
         const bidWinner = activeState.bid_winner;
-        const bidAmount = activeState.current_bid || 0; 
+        const bidAmount = activeState.current_bid || 0;
 
         let finalScores = {};
-        let summaryHtml = '';
+        let summaryHtml = "";
 
-        currentPlayers.forEach(p => {
+        currentPlayers.forEach((p) => {
             const rawPoints = activeState.tricks_points[p] || 0;
             let finalPoints = customRound(rawPoints);
 
@@ -599,20 +634,20 @@ function renderGamePlay() {
             } else if (isBlockedBy800) {
                 // Jeśli obrońca ma >= 800 punktów, nie może zdobyć punktów na cudzym rozdaniu
                 if (finalPoints > 0) {
-                    finalPoints = 0; 
+                    finalPoints = 0;
                 }
             }
 
             finalScores[p] = finalPoints;
 
             // Tworzymy jasną etykietę informującą o blokadzie 800 pkt
-            const blockLabel = isBlockedBy800 && rawPoints > 0 ? ', blokada 800' : '';
+            const blockLabel = isBlockedBy800 && rawPoints > 0 ? ", > 800" : "";
 
             summaryHtml += `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
                     <span><strong>${p}</strong> (ugrane: ${rawPoints}${blockLabel}):</span>
-                    <span style="font-weight: bold; color: ${finalPoints >= 0 ? '#1e8e3e' : '#d93025'}">
-                        ${finalPoints >= 0 ? '+' : ''}${finalPoints} pkt
+                    <span style="font-weight: bold; color: ${finalPoints >= 0 ? "#1e8e3e" : "#d93025"}">
+                        ${finalPoints >= 0 ? "+" : ""}${finalPoints} pkt
                     </span>
                 </div>
             `;
@@ -620,21 +655,24 @@ function renderGamePlay() {
 
         // --- NOWE: OBLICZANIE PUNKTÓW I ODZYSKANIE 4 KART ZE STOŁU ---
         const discarded = activeState.discarded_cards || []; // 2 odrzucone karty
-        const unchosenMusik = (activeState.musiks && activeState.musiks[0]) ? activeState.musiks[0] : []; // 2 karty z zamkniętego musika
+        const unchosenMusik =
+            activeState.musiks && activeState.musiks[0]
+                ? activeState.musiks[0]
+                : []; // 2 karty z zamkniętego musika
         const extraCards = [...discarded, ...unchosenMusik];
-        
+
         let extraPoints = 0;
-        const VALUES = { 'A': 11, '10': 10, 'K': 4, 'Q': 3, 'J': 2, '9': 0 };
-        extraCards.forEach(c => {
-            const val = c.split('_')[0];
-            extraPoints += (VALUES[val] || 0);
+        const VALUES = { A: 11, 10: 10, K: 4, Q: 3, J: 2, 9: 0 };
+        extraCards.forEach((c) => {
+            const val = c.split("_")[0];
+            extraPoints += VALUES[val] || 0;
         });
 
         // Zwycięzcą ostatniej lewy jest ten, na kim "utknęła" tura ruchu na końcu
         const lastTrickWinner = activeState.turn_player;
 
         // Renderujemy 4 karty na dole podsumowania (skalujemy je do 0.8, by były kompaktowe na telefonie)
-        let extraCardsHtml = extraCards.map(c => renderCardHTML(c)).join('');
+        let extraCardsHtml = extraCards.map((c) => renderCardHTML(c)).join("");
 
         summaryHtml += `
             <div style="margin-top: 15px; border-top: 2px dashed #ddd; padding-top: 15px; text-align: center;">
@@ -660,15 +698,19 @@ function renderGamePlay() {
                     ${summaryHtml}
                 </div>
                 <!-- Przycisk zapisu widzi tylko zwycięzca licytacji, rywal widzi komunikat oczekiwania -->
-                ${isBidWinner ? `
+                ${
+                    isBidWinner
+                        ? `
                     <button class="btn-primary" onclick="submitRoundEndToDatabase()" style="width: 100%; height: 48px; font-size: 16px;">
                         💾 Zapisz i przejdź dalej
                     </button>
-                ` : `
+                `
+                        : `
                     <p style="font-size: 13px; color: #666; font-style: italic; text-align: center; margin-top: 15px;">
                         Czekanie na zapis rozdania przez gracza <strong>${bidWinner}</strong>...
                     </p>
-                `}
+                `
+                }
             </div>
         `;
     }
@@ -676,15 +718,19 @@ function renderGamePlay() {
     // Rysowanie kart w Twojej ręce (Dół ekranu)
     const myHandSorted = sortHand(myHandRaw);
 
-    handContainer.innerHTML = '';
-    myHandSorted.forEach(cardCode => {
+    handContainer.innerHTML = "";
+    myHandSorted.forEach((cardCode) => {
         let isClickable = false;
-        let onClickJs = '';
+        let onClickJs = "";
 
-        if (activeState.phase === 'discarding' && isMyTurn) {
+        if (activeState.phase === "discarding" && isMyTurn) {
             isClickable = true;
             onClickJs = `toggleDiscardSelection('${cardCode}')`;
-        } else if (activeState.phase === 'playing' && isMyTurn && !isTrickComplete) {
+        } else if (
+            activeState.phase === "playing" &&
+            isMyTurn &&
+            !isTrickComplete
+        ) {
             isClickable = true;
             onClickJs = `playCard('${cardCode}')`;
         }
@@ -701,12 +747,12 @@ function renderGamePlay() {
 function toggleDiscardSelection(cardCode) {
     const idx = selectedDiscards.indexOf(cardCode);
     if (idx > -1) {
-        selectedDiscards.splice(idx, 1); 
+        selectedDiscards.splice(idx, 1);
     } else {
         if (selectedDiscards.length >= 2) {
             selectedDiscards.shift();
         }
-        selectedDiscards.push(cardCode); 
+        selectedDiscards.push(cardCode);
     }
     renderGamePlay(); // <--- POPRAWKA: Bezpieczne wywołanie bez parametrów!
 }
@@ -718,30 +764,34 @@ async function submitDiscards() {
     if (selectedDiscards.length !== 2) return;
 
     let myHand = activeState.hands[viewerName];
-    
+
     // Walidacja wybranej z siatki ostatecznej deklaracji (wykorzystujemy globalne chosenFinalBid)
     const maxAllowedBid = calculateMaxAllowedBid(myHand); // Liczymy limit na 12 kartach z musikiem!
 
     if (chosenFinalBid < activeState.current_bid) {
-        alert(`Nie możesz zadeklarować mniej niż stawka licytacji (${activeState.current_bid})!`);
+        alert(
+            `Nie możesz zadeklarować mniej niż stawka licytacji (${activeState.current_bid})!`,
+        );
         return;
     }
     if (chosenFinalBid > maxAllowedBid) {
-        alert(`Niedozwolona deklaracja! Twój limit z meldunków w ręce to ${maxAllowedBid}.`);
+        alert(
+            `Niedozwolona deklaracja! Twój limit z meldunków w ręce to ${maxAllowedBid}.`,
+        );
         return;
     }
 
-    const newHand = myHand.filter(c => !selectedDiscards.includes(c));
+    const newHand = myHand.filter((c) => !selectedDiscards.includes(c));
 
     const updatedState = {
-        phase: 'playing',                      
-        turn_player: activeState.bid_winner,   
+        phase: "playing",
+        turn_player: activeState.bid_winner,
         hands: {
             ...activeState.hands,
-            [viewerName]: newHand              
+            [viewerName]: newHand,
         },
         discarded_cards: selectedDiscards,
-        current_bid: chosenFinalBid 
+        current_bid: chosenFinalBid,
     };
 
     selectedDiscards = [];
@@ -755,12 +805,12 @@ async function submitDiscards() {
  */
 async function selectMusik(index) {
     const chosenMusik = activeState.musiks[index];
-    const remainingMusik = activeState.musiks[1 - index]; 
+    const remainingMusik = activeState.musiks[1 - index];
 
     const updatedState = {
-        phase: 'musik_reveal',
-        discarded_cards: chosenMusik, 
-        musiks: [remainingMusik] 
+        phase: "musik_reveal",
+        discarded_cards: chosenMusik,
+        musiks: [remainingMusik],
     };
 
     await patchActiveState(updatedState);
@@ -776,12 +826,12 @@ async function addMusikToHand() {
     const newHand = [...myCurrentHand, ...revealedCards];
 
     const updatedState = {
-        phase: 'discarding',
+        phase: "discarding",
         hands: {
             ...activeState.hands,
-            [viewerName]: newHand
+            [viewerName]: newHand,
         },
-        discarded_cards: [] 
+        discarded_cards: [],
     };
 
     await patchActiveState(updatedState);
@@ -791,12 +841,12 @@ async function addMusikToHand() {
  * WYSYŁANIE PODBICIA LICYTACJI
  */
 async function submitCustomBid(bidValue) {
-    const opponentName = currentPlayers.find(p => p !== viewerName);
+    const opponentName = currentPlayers.find((p) => p !== viewerName);
 
     const updatedState = {
         current_bid: bidValue,
-        bid_winner: viewerName,    
-        turn_player: opponentName  
+        bid_winner: viewerName,
+        turn_player: opponentName,
     };
 
     await patchActiveState(updatedState);
@@ -806,11 +856,15 @@ async function submitCustomBid(bidValue) {
  * RZUCENIE BOMBY PODCZAS LICYTACJI
  */
 async function submitBiddingBomb() {
-    if (!confirm("Czy na pewno chcesz rzucić BOMBĘ? Rozdanie zakończy się bez punktów, a Ty stracisz swoją jedyną bombę w tej grze.")) {
+    if (
+        !confirm(
+            "Czy na pewno chcesz rzucić BOMBĘ? Rozdanie zakończy się bez punktów, a Ty stracisz swoją jedyną bombę w tej grze.",
+        )
+    ) {
         return;
     }
 
-    const opponentName = currentPlayers.find(p => p !== viewerName);
+    const opponentName = currentPlayers.find((p) => p !== viewerName);
 
     const newRound = {
         game_id: parseInt(gameId),
@@ -820,29 +874,35 @@ async function submitBiddingBomb() {
         bid_amount: null,
         scores: {
             [viewerName]: "BOMBA",
-            [opponentName]: 0
-        }
+            [opponentName]: 0,
+        },
     };
 
     try {
-        const responseRound = await fetch(`${SUPABASE_URL}/rest/v1/tysiac_rounds`, {
-            method: "POST",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(newRound)
-        });
-
-        if (responseRound.ok) {
-            await fetch(`${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${gameId}`, {
-                method: "DELETE",
+        const responseRound = await fetch(
+            `${SUPABASE_URL}/rest/v1/tysiac_rounds`,
+            {
+                method: "POST",
                 headers: {
                     apikey: SUPABASE_KEY,
-                    Authorization: `Bearer ${SUPABASE_KEY}`
-                }
-            });
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(newRound),
+            },
+        );
+
+        if (responseRound.ok) {
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${gameId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        apikey: SUPABASE_KEY,
+                        Authorization: `Bearer ${SUPABASE_KEY}`,
+                    },
+                },
+            );
             initGame();
         } else {
             alert("Błąd podczas rzucania bomby.");
@@ -857,8 +917,8 @@ async function submitBiddingBomb() {
  */
 async function submitPass() {
     const updatedState = {
-        phase: 'musik_choice',
-        turn_player: activeState.bid_winner 
+        phase: "musik_choice",
+        turn_player: activeState.bid_winner,
     };
 
     await patchActiveState(updatedState);
@@ -866,18 +926,21 @@ async function submitPass() {
 
 async function patchActiveState(data) {
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${gameId}`, {
-            method: "PATCH",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json"
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${gameId}`,
+            {
+                method: "PATCH",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
             },
-            body: JSON.stringify(data)
-        });
+        );
 
         if (response.ok) {
-            initGame(); 
+            initGame();
         }
     } catch (err) {
         console.error("Błąd licytacji:", err);
@@ -886,10 +949,10 @@ async function patchActiveState(data) {
 
 function calculateTotals(players, rounds) {
     totals = {};
-    players.forEach(p => totals[p] = 0);
+    players.forEach((p) => (totals[p] = 0));
 
-    rounds.forEach(round => {
-        players.forEach(p => {
+    rounds.forEach((round) => {
+        players.forEach((p) => {
             const val = round.scores[p];
             if (val !== "BOMBA") {
                 totals[p] += parseInt(val) || 0;
@@ -902,13 +965,13 @@ function calculateTotals(players, rounds) {
  * SORTOWANIE KART: alfabetycznie kolorami, a wewnątrz starszeństwem Tysiąca (As ma 0, 9 ma 5)
  */
 function sortHand(hand) {
-    const SUIT_ORDER = { 'H': 0, 'D': 1, 'C': 2, 'S': 3 };
-    const VALUE_ORDER = { 'A': 0, '10': 1, 'K': 2, 'Q': 3, 'J': 4, '9': 5 };
+    const SUIT_ORDER = { H: 0, D: 1, C: 2, S: 3 };
+    const VALUE_ORDER = { A: 0, 10: 1, K: 2, Q: 3, J: 4, 9: 5 };
 
     return [...hand].sort((a, b) => {
-        const [valA, suitA] = a.split('_');
-        const [valB, suitB] = b.split('_');
-        
+        const [valA, suitA] = a.split("_");
+        const [valB, suitB] = b.split("_");
+
         if (suitA !== suitB) {
             return SUIT_ORDER[suitA] - SUIT_ORDER[suitB];
         }
@@ -916,17 +979,17 @@ function sortHand(hand) {
     });
 }
 
-function renderCardHTML(cardCode, isSelected = false, onClickJs = '') {
-    const [val, suit] = cardCode.split('_');
-    const isRed = suit === 'H' || suit === 'D';
-    const suitSymbol = { 'H': '♥', 'D': '♦', 'C': '♣', 'S': '♠' }[suit];
-    const colorClass = isRed ? 'card-red' : 'card-black';
-    const valDisplay = val === '10' ? '10' : val;
-    
-    const selectedClass = isSelected ? 'selected-for-discard' : '';
-    
+function renderCardHTML(cardCode, isSelected = false, onClickJs = "") {
+    const [val, suit] = cardCode.split("_");
+    const isRed = suit === "H" || suit === "D";
+    const suitSymbol = { H: "♥", D: "♦", C: "♣", S: "♠" }[suit];
+    const colorClass = isRed ? "card-red" : "card-black";
+    const valDisplay = val === "10" ? "10" : val;
+
+    const selectedClass = isSelected ? "selected-for-discard" : "";
+
     return `
-        <div class="playing-card ${colorClass} ${selectedClass}" ${onClickJs ? `onclick="${onClickJs}"` : ''} data-card="${cardCode}">
+        <div class="playing-card ${colorClass} ${selectedClass}" ${onClickJs ? `onclick="${onClickJs}"` : ""} data-card="${cardCode}">
             <div class="card-corner top-left">
                 <span>${valDisplay}</span>
                 <span>${suitSymbol}</span>
@@ -945,14 +1008,41 @@ function setupRealtimeListener() {
 
     supabaseClient
         .channel("tysiac-live-game-channel")
-        .on("postgres_changes", { event: "*", schema: "public", table: "tysiac_rounds", filter: `game_id=eq.${gameId}` }, () => initGame())
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tysiac_games", filter: `id=eq.${gameId}` }, () => initGame())
-        .on("postgres_changes", { event: "*", schema: "public", table: "tysiac_active_state", filter: `game_id=eq.${gameId}` }, () => initGame())
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "tysiac_rounds",
+                filter: `game_id=eq.${gameId}`,
+            },
+            () => initGame(),
+        )
+        .on(
+            "postgres_changes",
+            {
+                event: "UPDATE",
+                schema: "public",
+                table: "tysiac_games",
+                filter: `id=eq.${gameId}`,
+            },
+            () => initGame(),
+        )
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "tysiac_active_state",
+                filter: `game_id=eq.${gameId}`,
+            },
+            () => initGame(),
+        )
         .subscribe();
 }
 
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
         initGame();
     }
 });
@@ -963,26 +1053,34 @@ document.addEventListener('visibilitychange', () => {
  * Obsługuje rzucenie karty na stół (natychmiastowy zapis do bazy)
  */
 async function playCard(cardCode) {
-    if (activeState.phase !== 'playing') return;
+    if (activeState.phase !== "playing") return;
     if (viewerName !== activeState.turn_player) return;
 
     const myHand = activeState.hands[viewerName] || [];
     const tableCards = activeState.table_cards || [];
 
     // 1. Walidacja Tysiąca (dokładanie do koloru/kozera)
-    const isPlayable = isCardPlayable(cardCode, myHand, tableCards, activeState.trump_suit);
+    const isPlayable = isCardPlayable(
+        cardCode,
+        myHand,
+        tableCards,
+        activeState.trump_suit,
+    );
     if (!isPlayable) {
         alert("Niedozwolony ruch!");
         return;
     }
 
     // 2. Usuwamy kartę z ręki gracza
-    const newHand = myHand.filter(c => c !== cardCode);
+    const newHand = myHand.filter((c) => c !== cardCode);
 
     // 3. Dodajemy kartę na stół
-    const newTableCards = [...tableCards, { player: viewerName, card: cardCode }];
+    const newTableCards = [
+        ...tableCards,
+        { player: viewerName, card: cardCode },
+    ];
     const isTrickComplete = newTableCards.length === 2;
-    const opponentName = currentPlayers.find(p => p !== viewerName);
+    const opponentName = currentPlayers.find((p) => p !== viewerName);
 
     // --- AUTOMATYCZNE WYKRYWANIE MELDUNKU (MARRIAGE) ---
     let newTrumpSuit = activeState.trump_suit;
@@ -990,18 +1088,20 @@ async function playCard(cardCode) {
     if (!currentTricksPoints[viewerName]) currentTricksPoints[viewerName] = 0;
 
     if (tableCards.length === 0) {
-        const [val, suit] = cardCode.split('_');
-        if (val === 'K' || val === 'Q') {
-            const partnerVal = val === 'K' ? 'Q' : 'K';
+        const [val, suit] = cardCode.split("_");
+        if (val === "K" || val === "Q") {
+            const partnerVal = val === "K" ? "Q" : "K";
             const partnerCard = `${partnerVal}_${suit}`;
             if (newHand.includes(partnerCard)) {
-                const MELD_VALUES = { 'H': 100, 'D': 80, 'C': 60, 'S': 40 };
+                const MELD_VALUES = { H: 100, D: 80, C: 60, S: 40 };
                 const meldPoints = MELD_VALUES[suit] || 0;
-                
-                newTrumpSuit = suit; 
+
+                newTrumpSuit = suit;
                 currentTricksPoints[viewerName] += meldPoints; // Punkty dopisujemy od razu na żywo!
-                
-                console.log(`Zgłoszono meldunek w kolorze ${suit}! Dodano +${meldPoints} pkt.`);
+
+                console.log(
+                    `Zgłoszono meldunek w kolorze ${suit}! Dodano +${meldPoints} pkt.`,
+                );
             }
         }
     }
@@ -1011,10 +1111,10 @@ async function playCard(cardCode) {
         turn_player: isTrickComplete ? "" : opponentName,
         hands: {
             ...activeState.hands,
-            [viewerName]: newHand
+            [viewerName]: newHand,
         },
         trump_suit: newTrumpSuit,
-        tricks_points: currentTricksPoints
+        tricks_points: currentTricksPoints,
     };
 
     await patchActiveState(updatedState);
@@ -1030,34 +1130,36 @@ function isCardPlayable(cardCode, hand, tableCards, trumpSuit) {
     if (tableCards.length === 0) return true; // Pierwszy gracz rzuca cokolwiek
 
     const firstCard = tableCards[0].card;
-    const firstSuit = firstCard.split('_')[1];
-    const firstVal = firstCard.split('_')[0];
-    const [myVal, mySuit] = cardCode.split('_');
+    const firstSuit = firstCard.split("_")[1];
+    const firstVal = firstCard.split("_")[0];
+    const [myVal, mySuit] = cardCode.split("_");
 
-    const STRENGTH = { 'A': 5, '10': 4, 'K': 3, 'Q': 2, 'J': 1, '9': 0 };
+    const STRENGTH = { A: 5, 10: 4, K: 3, Q: 2, J: 1, 9: 0 };
 
-    const mySuitCards = hand.filter(c => c.split('_')[1] === firstSuit);
-    
+    const mySuitCards = hand.filter((c) => c.split("_")[1] === firstSuit);
+
     if (mySuitCards.length > 0) {
         // Obowiązek dorzucenia do koloru! (Jeśli rzucasz inny kolor -> błąd)
         if (mySuit !== firstSuit) return false;
 
         // Obowiązek PRZEBIJANIA wewnątrz koloru:
         // Sprawdzamy, czy mamy na ręce jakąkolwiek kartę w tym kolorze, która jest silniejsza od leżącej na stole
-        const canBeatInSuit = mySuitCards.some(c => STRENGTH[c.split('_')[0]] > STRENGTH[firstVal]);
-        
+        const canBeatInSuit = mySuitCards.some(
+            (c) => STRENGTH[c.split("_")[0]] > STRENGTH[firstVal],
+        );
+
         if (canBeatInSuit) {
             // Jeśli możemy przebić, to rzucana karta MUSI być silniejsza od leżącej na stole
             return STRENGTH[myVal] > STRENGTH[firstVal];
         }
-        
+
         return true; // Brak silniejszej karty w kolorze -> wolny ruch w obrębie tego koloru
     }
 
     // 2. Brak koloru pierwszej karty -> sprawdzamy obowiązek KOZERA
     if (trumpSuit) {
-        const myTrumpCards = hand.filter(c => c.split('_')[1] === trumpSuit);
-        
+        const myTrumpCards = hand.filter((c) => c.split("_")[1] === trumpSuit);
+
         if (myTrumpCards.length > 0) {
             // Mamy kozera, więc musimy go dorzucić!
             return mySuit === trumpSuit;
@@ -1073,12 +1175,12 @@ function isCardPlayable(cardCode, hand, tableCards, trumpSuit) {
 function evaluateTrick(tableCards, trumpSuit) {
     const card1 = tableCards[0];
     const card2 = tableCards[1];
-    
-    const [val1, suit1] = card1.card.split('_');
-    const [val2, suit2] = card2.card.split('_');
 
-    const STRENGTH = { 'A': 5, '10': 4, 'K': 3, 'Q': 2, 'J': 1, '9': 0 };
-    const VALUES = { 'A': 11, '10': 10, 'K': 4, 'Q': 3, 'J': 2, '9': 0 };
+    const [val1, suit1] = card1.card.split("_");
+    const [val2, suit2] = card2.card.split("_");
+
+    const STRENGTH = { A: 5, 10: 4, K: 3, Q: 2, J: 1, 9: 0 };
+    const VALUES = { A: 11, 10: 10, K: 4, Q: 3, J: 2, 9: 0 };
 
     let winner = card1.player; // Domyślnie wygrywa pierwszy rzucający
 
@@ -1088,7 +1190,8 @@ function evaluateTrick(tableCards, trumpSuit) {
         } else if (suit1 === trumpSuit && suit2 === trumpSuit) {
             if (STRENGTH[val2] > STRENGTH[val1]) winner = card2.player; // Obaj rzucili kozera - wygrywa silniejszy
         } else if (suit1 !== trumpSuit && suit2 !== trumpSuit) {
-            if (suit2 === suit1 && STRENGTH[val2] > STRENGTH[val1]) winner = card2.player; // Normalna walka w kolorze
+            if (suit2 === suit1 && STRENGTH[val2] > STRENGTH[val1])
+                winner = card2.player; // Normalna walka w kolorze
         }
     } else {
         if (suit2 === suit1 && STRENGTH[val2] > STRENGTH[val1]) {
@@ -1115,7 +1218,7 @@ async function collectTrick() {
     if (!currentTricksPoints[winner]) currentTricksPoints[winner] = 0;
 
     // Sprawdzamy czy to była ostatnia lewa (gracze nie mają już kart w rękach)
-    const opponentName = currentPlayers.find(p => p !== winner);
+    const opponentName = currentPlayers.find((p) => p !== winner);
     const myHandCount = (activeState.hands[winner] || []).length;
     const oppHandCount = (activeState.hands[opponentName] || []).length;
 
@@ -1125,25 +1228,27 @@ async function collectTrick() {
     let extraPoints = 0;
     if (isRoundOver) {
         const discarded = activeState.discarded_cards || []; // 2 odrzucone karty licytanta
-        const unchosenMusik = (activeState.musiks && activeState.musiks[0]) ? activeState.musiks[0] : []; // 2 karty z zamkniętego musika
+        const unchosenMusik =
+            activeState.musiks && activeState.musiks[0]
+                ? activeState.musiks[0]
+                : []; // 2 karty z zamkniętego musika
         const allExtraCards = [...discarded, ...unchosenMusik];
-        
-        const VALUES = { 'A': 11, '10': 10, 'K': 4, 'Q': 3, 'J': 2, '9': 0 };
-        allExtraCards.forEach(c => {
-            const val = c.split('_')[0];
-            extraPoints += (VALUES[val] || 0);
+
+        const VALUES = { A: 11, 10: 10, K: 4, Q: 3, J: 2, 9: 0 };
+        allExtraCards.forEach((c) => {
+            const val = c.split("_")[0];
+            extraPoints += VALUES[val] || 0;
         });
-        
     }
 
     // Dodajemy punkty z lewy oraz punkty ekstra z ostatniego rozdania
     currentTricksPoints[winner] += trickResult.pts + extraPoints;
 
     const updatedState = {
-        table_cards: [],                       // Czyścimy stół
-        turn_player: winner,                   // Zwycięzca zaczyna kolejną lewę
-        tricks_points: currentTricksPoints,    // Zapisujemy punkty
-        phase: isRoundOver ? 'round_end' : 'playing' // Przechodzimy do podsumowania na koniec
+        table_cards: [], // Czyścimy stół
+        turn_player: winner, // Zwycięzca zaczyna kolejną lewę
+        tricks_points: currentTricksPoints, // Zapisujemy punkty
+        phase: isRoundOver ? "round_end" : "playing", // Przechodzimy do podsumowania na koniec
     };
 
     await patchActiveState(updatedState);
@@ -1162,10 +1267,10 @@ async function submitRoundEndToDatabase() {
     }
 
     const bidWinner = activeState.bid_winner;
-    const bidAmount = activeState.current_bid || 0; 
-    
+    const bidAmount = activeState.current_bid || 0;
+
     let finalScores = {};
-    currentPlayers.forEach(p => {
+    currentPlayers.forEach((p) => {
         const rawPoints = activeState.tricks_points[p] || 0;
         let finalPoints = customRound(rawPoints);
 
@@ -1192,30 +1297,36 @@ async function submitRoundEndToDatabase() {
         shuffler: activeState.dealer,
         bid_winner: bidWinner || null,
         bid_amount: bidWinner ? bidAmount : null,
-        scores: finalScores
+        scores: finalScores,
     };
 
     try {
-        const responseRound = await fetch(`${SUPABASE_URL}/rest/v1/tysiac_rounds`, {
-            method: "POST",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json"
+        const responseRound = await fetch(
+            `${SUPABASE_URL}/rest/v1/tysiac_rounds`,
+            {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(newRound),
             },
-            body: JSON.stringify(newRound)
-        });
+        );
 
         if (responseRound.ok) {
             // Czyścimy planszę (usuwamy aktywny stan z tysiac_active_state)
-            await fetch(`${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${gameId}`, {
-                method: "DELETE",
-                headers: {
-                    apikey: SUPABASE_KEY,
-                    Authorization: `Bearer ${SUPABASE_KEY}`
-                }
-            });
-            
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/tysiac_active_state?game_id=eq.${gameId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        apikey: SUPABASE_KEY,
+                        Authorization: `Bearer ${SUPABASE_KEY}`,
+                    },
+                },
+            );
+
             initGame(); // Odświeżamy u siebie
         } else {
             alert("Błąd zapisu rundy do bazy.");
@@ -1227,10 +1338,10 @@ async function submitRoundEndToDatabase() {
 
 function calculateMaxAllowedBid(hand) {
     let maxBid = 120;
-    if (hand.includes('K_H') && hand.includes('Q_H')) maxBid += 100;
-    if (hand.includes('K_D') && hand.includes('Q_D')) maxBid += 80;
-    if (hand.includes('K_C') && hand.includes('Q_C')) maxBid += 60;
-    if (hand.includes('K_S') && hand.includes('Q_S')) maxBid += 40;
+    if (hand.includes("K_H") && hand.includes("Q_H")) maxBid += 100;
+    if (hand.includes("K_D") && hand.includes("Q_D")) maxBid += 80;
+    if (hand.includes("K_C") && hand.includes("Q_C")) maxBid += 60;
+    if (hand.includes("K_S") && hand.includes("Q_S")) maxBid += 40;
     return maxBid;
 }
 
@@ -1279,7 +1390,7 @@ async function autoCollectTrick() {
     if (!currentTricksPoints[winner]) currentTricksPoints[winner] = 0;
 
     // Sprawdzamy czy to była ostatnia lewa (gracze nie mają już kart w rękach)
-    const opponentName = currentPlayers.find(p => p !== winner);
+    const opponentName = currentPlayers.find((p) => p !== winner);
     const myHandCount = (activeState.hands[winner] || []).length;
     const oppHandCount = (activeState.hands[opponentName] || []).length;
 
@@ -1289,13 +1400,16 @@ async function autoCollectTrick() {
     let extraPoints = 0;
     if (isRoundOver) {
         const discarded = activeState.discarded_cards || [];
-        const unchosenMusik = (activeState.musiks && activeState.musiks[0]) ? activeState.musiks[0] : [];
+        const unchosenMusik =
+            activeState.musiks && activeState.musiks[0]
+                ? activeState.musiks[0]
+                : [];
         const allExtraCards = [...discarded, ...unchosenMusik];
-        
-        const VALUES = { 'A': 11, '10': 10, 'K': 4, 'Q': 3, 'J': 2, '9': 0 };
-        allExtraCards.forEach(c => {
-            const val = c.split('_')[0];
-            extraPoints += (VALUES[val] || 0);
+
+        const VALUES = { A: 11, 10: 10, K: 4, Q: 3, J: 2, 9: 0 };
+        allExtraCards.forEach((c) => {
+            const val = c.split("_")[0];
+            extraPoints += VALUES[val] || 0;
         });
     }
 
@@ -1303,7 +1417,7 @@ async function autoCollectTrick() {
         round_number: (activeState.tricks_history || []).length + 1,
         cards: tableCards, // [ {player, card}, {player, card} ]
         winner: winner,
-        pts: trickResult.pts
+        pts: trickResult.pts,
     };
     const newHistory = [...(activeState.tricks_history || []), trickEntry];
 
@@ -1311,13 +1425,12 @@ async function autoCollectTrick() {
     currentTricksPoints[winner] += trickResult.pts + extraPoints;
 
     const updatedState = {
-        table_cards: [],                       // Czyścimy stół
-        turn_player: winner,                   // Zwycięzca zaczyna kolejną lewę
-        tricks_points: currentTricksPoints,    // Zapisujemy punkty
-        tricks_history: newHistory,            // Zapisujemy nową historię lew!
-        phase: isRoundOver ? 'round_end' : 'playing'
+        table_cards: [], // Czyścimy stół
+        turn_player: winner, // Zwycięzca zaczyna kolejną lewę
+        tricks_points: currentTricksPoints, // Zapisujemy punkty
+        tricks_history: newHistory, // Zapisujemy nową historię lew!
+        phase: isRoundOver ? "round_end" : "playing",
     };
-
 
     await patchActiveState(updatedState);
 }
@@ -1328,21 +1441,25 @@ window.logoutProfile = logoutProfile; // Wystawienie do onclick
  * Czyści zapamiętany profil gracza na tym urządzeniu i przeładowuje grę
  */
 function logoutProfile() {
-    if (confirm("Czy na pewno chcesz wylogować się z tego profilu i wybrać innego gracza na tym urządzeniu?")) {
+    if (
+        confirm(
+            "Czy na pewno chcesz wylogować się z tego profilu i wybrać innego gracza na tym urządzeniu?",
+        )
+    ) {
         localStorage.removeItem(`tysiac-profile-${gameId}`);
         viewerName = null;
         location.reload(); // Przeładowanie strony zresetuje wszystkie zmienne i pokaże okno wyboru
     }
 }
 
-window.openHistoryModal = openHistoryModal;   // Wystawienie do HTML
+window.openHistoryModal = openHistoryModal; // Wystawienie do HTML
 window.closeHistoryModal = closeHistoryModal; // Wystawienie do HTML
 
 /**
  * Otwiera okno modalne historii lew
  */
 function openHistoryModal() {
-    document.getElementById('history-modal').style.display = 'flex';
+    document.getElementById("history-modal").style.display = "flex";
     renderHistoryModalContent(); // Odświeżamy treść przy otwarciu
 }
 
@@ -1350,48 +1467,50 @@ function openHistoryModal() {
  * Zamyka okno historii lew
  */
 function closeHistoryModal() {
-    document.getElementById('history-modal').style.display = 'none';
+    document.getElementById("history-modal").style.display = "none";
 }
 
 /**
  * Renderuje treść historii lew wewnątrz okna modalnego
  */
 function renderHistoryModalContent() {
-    const logList = document.getElementById('trick-log-list');
+    const logList = document.getElementById("trick-log-list");
     if (!logList || !activeState) return;
 
     const history = activeState.tricks_history || [];
-    let logHtml = '';
+    let logHtml = "";
 
     const getCardSymbol = (code) => {
-        const [val, suit] = code.split('_');
-        const suitSymbol = { 'H': '♥', 'D': '♦', 'C': '♣', 'S': '♠' }[suit];
+        const [val, suit] = code.split("_");
+        const suitSymbol = { H: "♥", D: "♦", C: "♣", S: "♠" }[suit];
         return `${val}${suitSymbol}`;
     };
 
-    history.forEach(t => {
+    history.forEach((t) => {
         const c1 = t.cards[0];
         const c2 = t.cards[1];
         const displayCard1 = getCardSymbol(c1.card);
         const displayCard2 = getCardSymbol(c2.card);
 
-        const isRed1 = c1.card.endsWith('_H') || c1.card.endsWith('_D');
-        const isRed2 = c2.card.endsWith('_H') || c2.card.endsWith('_D');
+        const isRed1 = c1.card.endsWith("_H") || c1.card.endsWith("_D");
+        const isRed2 = c2.card.endsWith("_H") || c2.card.endsWith("_D");
 
         logHtml += `
             <div style="padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
                 <span>
                     <strong>${t.round_number}.</strong> 
-                    ${c1.player} (<span style="color: ${isRed1 ? '#d93025' : '#333'}; font-weight: bold;">${displayCard1}</span>) vs 
-                    ${c2.player} (<span style="color: ${isRed2 ? '#d93025' : '#333'}; font-weight: bold;">${displayCard2}</span>)
+                    ${c1.player} (<span style="color: ${isRed1 ? "#d93025" : "#333"}; font-weight: bold;">${displayCard1}</span>) vs 
+                    ${c2.player} (<span style="color: ${isRed2 ? "#d93025" : "#333"}; font-weight: bold;">${displayCard2}</span>)
                 </span>
                 <span style="font-weight: bold; color: #1e8e3e; margin-left: 10px;">➔ ${t.winner} (+${t.pts})</span>
             </div>
         `;
     });
 
-    logList.innerHTML = logHtml || '<span style="color:#aaa; font-style:italic; display:block; text-align:center; padding: 20px 0;">Brak rzuconych kart w tym rozdaniu.</span>';
-    
+    logList.innerHTML =
+        logHtml ||
+        '<span style="color:#aaa; font-style:italic; display:block; text-align:center; padding: 20px 0;">Brak rzuconych kart w tym rozdaniu.</span>';
+
     // Automatyczny scroll do dołu
     logList.scrollTop = logList.scrollHeight;
 }
@@ -1422,12 +1541,12 @@ async function autoFinishGame(winnerName) {
 }
 
 function showEndGameScreen(winnerName) {
-    const tableArea = document.getElementById('table-area-content');
-    const handContainer = document.getElementById('my-hand-container');
-    const opponentLabel = document.getElementById('opponent-card-count');
-    
+    const tableArea = document.getElementById("table-area-content");
+    const handContainer = document.getElementById("my-hand-container");
+    const opponentLabel = document.getElementById("opponent-card-count");
+
     if (opponentLabel) opponentLabel.innerText = "🏆 Gra została zakończona";
-    if (handContainer) handContainer.innerHTML = ''; 
+    if (handContainer) handContainer.innerHTML = "";
 
     if (tableArea) {
         tableArea.innerHTML = `
@@ -1442,4 +1561,3 @@ function showEndGameScreen(winnerName) {
         `;
     }
 }
-
