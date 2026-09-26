@@ -1067,3 +1067,140 @@ async function addNewPlayerPrompt() {
     await addNewPlayer(trimmedName);
     loadPlayersIntoModal();
 }
+
+async function fetchRummikubGames() {
+    const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/rummikub_games?select=*&order=game_number.desc`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    return res.ok ? await res.json() : [];
+}
+
+async function addNewRummikubGame(gameData) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rummikub_games`, {
+        method: "POST",
+        headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            "Content-Type": "application/json",
+            Prefer: "return=representation",
+        },
+        body: JSON.stringify(gameData),
+    });
+    if (res.ok) {
+        window.location.reload();
+    } else {
+        alert("Błąd podczas tworzenia gry!");
+    }
+}
+
+async function deleteRummikubGame(id, pass) {
+    const check = await fetch(
+        `${SUPABASE_URL}/rest/v1/rummikub_games?id=eq.${id}&select=passwordHash`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    const data = await check.json();
+    if (!data.length || data[0].passwordHash !== pass) {
+        alert("Nieprawidłowe hasło!");
+        return;
+    }
+
+    await fetch(`${SUPABASE_URL}/rest/v1/rummikub_games?id=eq.${id}`, {
+        method: "DELETE",
+        headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+    });
+}
+
+async function getRummikubGameHeader(id) {
+    const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/rummikub_games?id=eq.${id}&select=*`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    const data = await res.json();
+    return data[0] || null;
+}
+
+async function getRummikubGameRounds(gameId) {
+    const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/rummikub_rounds?game_id=eq.${gameId}&select=*&order=round_number.asc`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    return res.ok ? await res.json() : [];
+}
+
+async function saveCurrentRummikubRound(roundData) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rummikub_rounds`, {
+        method: "POST",
+        headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(roundData),
+    });
+    if (res.ok) {
+        initDetails();
+    } else {
+        alert("Błąd zapisu rundy!");
+    }
+}
+
+async function delateOneRummikubRound(roundId, pass) {
+    const check = await fetch(
+        `${SUPABASE_URL}/rest/v1/rummikub_games?id=eq.${gameId}&select=passwordHash`,
+        {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+        },
+    );
+    const data = await check.json();
+    if (!data.length || data[0].passwordHash !== pass) {
+        alert("Nieprawidłowe hasło gry!");
+        return;
+    }
+
+    await fetch(`${SUPABASE_URL}/rest/v1/rummikub_rounds?id=eq.${roundId}`, {
+        method: "DELETE",
+        headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+    });
+}
+
+async function rummikubWinnerChange(winnerName, status, id) {
+    await fetch(`${SUPABASE_URL}/rest/v1/rummikub_games?id=eq.${id}`, {
+        method: "PATCH",
+        headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ winner: winnerName, status: status }),
+    });
+}

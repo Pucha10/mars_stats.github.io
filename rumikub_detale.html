@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Szczegóły Gry - Rumikub</title>
+        <link rel="stylesheet" href="css/remik-style.css" />
+        <style>
+            .winner-cell {
+                color: #1e8e3e;
+                font-weight: bold;
+            }
+            .loser-cell {
+                color: #d93025;
+            }
+            .shuffler-tag {
+                font-size: 0.8em;
+                color: #666;
+                font-style: italic;
+            }
+            tfoot tr {
+                background-color: #f8f9fa;
+                font-weight: bold;
+                border-top: 2px solid #333;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header class="main-header">
+                <div class="logo-area">
+                    <h1 id="game-title">🀄 Gra #...</h1>
+                </div>
+                <div class="actions">
+                    <button id="add-round-btn" class="btn-primary btn-add-round" onclick="showAddRoundForm()">
+                        + Dodaj rundę
+                    </button>
+                    <a href="rumikub.html" class="btn-secondary">Powrót</a>
+                </div>
+            </header>
+            
+            <div class="next-shuffler-box" id="next-shuffler-info">
+                Rozpoczyna rundę: <strong id="next-shuffler-name">...</strong>
+            </div>
+
+            <div class="bottom-actions" id="status-button-container"></div>
+            
+            <div class="table-container">
+                <table id="details-table">
+                    <thead id="details-thead"></thead>
+                    <tbody id="details-tbody"></tbody>
+                    <tfoot id="details-tfoot"></tfoot>
+                </table>
+            </div>
+
+            <div class="bottom-actions" style="margin-top: 15px; margin-bottom: 25px;">
+                <button id="add-round-btn-bottom" class="btn-primary btn-add-round" onclick="showAddRoundForm()">
+                    + Dodaj rundę
+                </button>
+            </div>
+
+            <div class="summary-container">
+                <h3>📊 Podsumowanie rund</h3>
+                <table id="rounds-summary-table">
+                    <thead>
+                        <tr>
+                            <th>Miejsce</th>
+                            <th>Gracz</th>
+                            <th>Suma punktów</th>
+                            <th>Wygrane rundy</th>
+                            <th>Skuteczność (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-tbody"></tbody>
+                </table>
+            </div>
+            <br />
+            
+            <div class="summary-container" id="trend-chart-container" style="display: none">
+                <h3 style="margin-top: 0; color: #1a472a; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;">
+                    📈 Trend miejsc w trakcie gry
+                </h3>
+                <div class="chart-scroll-container">
+                    <div class="canvas-wrapper" id="dynamic-canvas-wrapper">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="summary-container" id="points-chart-container" style="display: none; margin-top: 20px;">
+                <h3 style="margin-top: 0; color: #1a472a; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;">
+                    📊 Przewaga punktowa
+                </h3>
+                <div class="chart-scroll-container">
+                    <div class="canvas-wrapper" id="dynamic-points-wrapper" style="height: 500px;">
+                        <canvas id="pointsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="js/supaBaseScript.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="js/rumikub-rozdanie.js"></script>
+    </body>
+</html>
