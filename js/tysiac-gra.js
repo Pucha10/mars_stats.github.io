@@ -67,6 +67,26 @@ async function initGame() {
     });
 
     calculateTotals(game.players, rounds);
+    if (game.status === "finished") {
+        showEndGameScreen(game.winner);
+        return; 
+    }
+    if (game.status === "ongoing") {
+        let automaticWinner = null;
+        let maxScore = 999;
+
+        for (const [player, score] of Object.entries(totals)) {
+            if (score >= 1000 && score > maxScore) {
+                maxScore = score;
+                automaticWinner = player;
+            }
+        }
+
+        if (automaticWinner) {
+            await autoFinishGame(automaticWinner);
+            return; 
+        }
+    }
 
     // Ustalamy kolejnego rozdającego i musika wewnętrznie w JS
     nextShuffler = calculateNextShuffler(game.players, rounds);
@@ -346,7 +366,7 @@ function renderGamePlay() {
             });
 
             const isBombDisabled = bombsUsedInGame[viewerName] === true;
-            gridButtonsHtml += `<button class="bidding-btn btn-bomba" ${isBombDisabled ? 'disabled' : ''} onclick="submitBiddingBomb()">bomba</button>`;
+            gridButtonsHtml += `<button class="bidding-btn btn-bomba" disabled onclick="submitBiddingBomb()">bomba</button>`;
             gridButtonsHtml += `<button class="bidding-btn btn-pas" onclick="submitPass()">pas</button>`;
 
             tableArea.innerHTML = `
@@ -1374,5 +1394,52 @@ function renderHistoryModalContent() {
     
     // Automatyczny scroll do dołu
     logList.scrollTop = logList.scrollHeight;
+}
+
+async function autoFinishGame(winnerName) {
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/tysiac_games?id=eq.${gameId}`,
+            {
+                method: "PATCH",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    status: "finished",
+                    winner: winnerName,
+                }),
+            },
+        );
+
+        if (response.ok) {
+        }
+    } catch (err) {
+        console.error("Błąd automatycznego kończenia gry:", err);
+    }
+}
+
+function showEndGameScreen(winnerName) {
+    const tableArea = document.getElementById('table-area-content');
+    const handContainer = document.getElementById('my-hand-container');
+    const opponentLabel = document.getElementById('opponent-card-count');
+    
+    if (opponentLabel) opponentLabel.innerText = "🏆 Gra została zakończona";
+    if (handContainer) handContainer.innerHTML = ''; 
+
+    if (tableArea) {
+        tableArea.innerHTML = `
+            <div class="board-status-message" style="text-align: center; padding: 25px; border-color: #d4af37;">
+                <h2 style="font-size: 24px; color: #d4af37; margin-top: 0;">🏆 Gra Zakończona!</h2>
+                <p style="font-size: 18px; margin: 15px 0;">Zwycięzca: <strong style="font-size: 22px; color: #1e8e3e;">${winnerName}</strong></p>
+                <p style="font-size: 16px; margin-bottom: 20px;">Końcowy wynik: <strong>${totals[winnerName] || 0} pkt</strong></p>
+                <a href="tysiac.html" class="btn-primary" style="display: inline-block; text-decoration: none; padding: 12px 25px;">
+                    Powrót do menu gier
+                </a>
+            </div>
+        `;
+    }
 }
 
