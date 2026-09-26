@@ -75,7 +75,7 @@ function showAddRoundForm() {
         playerInputs += `
             <td>
                 <input type="number" class="input-score round-input" 
-                       data-player="${p}" placeholder="Płytki: ${p}" min="0" value="">
+                       data-player="${p}" placeholder="pkt" min="0" value="">
             </td>`;
     });
 
@@ -119,7 +119,7 @@ async function saveNewRound(btn) {
     };
 
     if (zeroCount === 0) {
-        alert("Zwycięzca rundy musi mieć wpisane 0 (pozostałe płytki)!");
+        alert("Zwycięzca rundy musi mieć wpisane 0!");
         reEnableButton();
         return;
     }
